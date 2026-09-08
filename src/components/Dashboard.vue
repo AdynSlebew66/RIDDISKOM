@@ -11,23 +11,19 @@
             <img src="../assets/logo.png" alt="Logo DISKOPUMKER" class="logo" />
           </div>
           
-          <!-- Menu Navigasi -->
+          <!-- Menu Navigasi (Panah Chevron Sudah Dihapus) -->
           <ul class="nav-links">
-            <li class="nav-item">
+            <li class="nav-item" @click="scrollToSection('hero')">
               Beranda
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             </li>
             <li class="nav-item">
               Profile
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" @click="scrollToSection('informasi')">
               Informasi
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" @click="scrollToSection('layanan')">
               Layanan
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             </li>
             
             <!-- Tombol Login -->
@@ -59,7 +55,7 @@
     </div>
 
     <!-- 2. INFORMASI TERKINI & PROFIL KEPALA DINAS -->
-    <section class="section-container info-section">
+    <section ref="informasiSection" class="section-container info-section">
       <div class="info-grid">
         <!-- Sisi Kiri: Informasi Terkini (Grid 2 Kolom) -->
         <div class="info-left">
@@ -98,8 +94,8 @@
     </section>
 
     <!-- 3. LAYANAN DISKOPUMKER -->
-    <section class="section-container services-section">
-      <h3 class="section-title">Layanan DISKOPUMKER</h3>
+    <section ref="layananSection" class="section-container services-section">
+      <h3 class="section-title">Layanan Dan Informasi DISKOPUMKER</h3>
       <div class="services-grid">
         <!-- Card 1: HI (Red) -->
         <div class="service-card card-red" @click="goToService('/hi')">
@@ -209,6 +205,20 @@ export default {
     },
     goToService(path) {
       this.$router.push(path)
+    },
+    scrollToSection(section) {
+      if (section === 'hero') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+
+      let targetRef = null
+      if (section === 'informasi') targetRef = this.$refs.informasiSection
+      if (section === 'layanan') targetRef = this.$refs.layananSection
+
+      if (targetRef) {
+        targetRef.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
     }
   }
 }
@@ -287,12 +297,6 @@ export default {
 
 .nav-item:hover {
   opacity: 0.8;
-}
-
-.icon-chevron {
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
 }
 
 .login-btn {
