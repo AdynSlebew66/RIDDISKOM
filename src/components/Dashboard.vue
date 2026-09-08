@@ -501,13 +501,13 @@ export default {
 }
 
 .card-red {
-  background-color: #f1f2f6;
-  color: #010000;
+  background-color: #c0392b;
+  color: #fffdfd;
 }
 
 .card-light {
-  background-color: #f1f2f6;
-  color: #1a1a1a;
+  background-color: #c0392b;
+  color: #fffdfd;
   border: 1px solid #e1e2e6;
 }
 
