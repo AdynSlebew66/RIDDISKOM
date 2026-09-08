@@ -84,14 +84,13 @@
                 <th>Kecamatan</th>
                 <th>Kelurahan</th>
                 <th>Judul KBLI</th>
-                <th>Publik</th>
                 <th class="text-center" style="width: 110px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <!-- Loading State -->
               <tr v-if="loading">
-                <td colspan="9" class="text-center py-5">
+                <td colspan="8" class="text-center py-5">
                   <div class="spinner"></div>
                   <p class="loading-text">Memuat data UMKM...</p>
                 </td>
@@ -99,7 +98,7 @@
 
               <!-- Empty State -->
               <tr v-else-if="displayedUmkmList.length === 0">
-                <td colspan="9" class="text-center py-5 empty-text">
+                <td colspan="8" class="text-center py-5 empty-text">
                   Data UMKM tidak ditemukan.
                 </td>
               </tr>
@@ -113,11 +112,6 @@
                 <td>{{ formatText(item?.kecamatan_usaha || item?.kecamatan?.nama) }}</td>
                 <td>{{ formatText(item?.kelurahan_usaha || item?.kelurahan?.nama) }}</td>
                 <td>{{ formatText(item?.judul_kbli || item?.kbli_data?.judul) }}</td>
-                <td>
-                  <span :class="['badge', item.is_publik ? 'badge-success' : 'badge-secondary']">
-                    {{ item.is_publik ? 'Ya' : 'Tidak' }}
-                  </span>
-                </td>
                 <td class="text-center">
                   <div class="action-buttons">
                     <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
@@ -126,7 +120,7 @@
                     <button class="btn-icon btn-edit" title="Edit" @click="handleEdit(item)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                    <button class="btn-icon btn-delete" title="Hapus" @click="handleDelete(item)" :disabled="deletingId === item.id">
+                    <button class="btn-icon btn-delete" title="Hapus" @click="handleDelete(item)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                   </div>
@@ -245,10 +239,6 @@
                   <strong>Judul:</strong> {{ formatText(selectedDetail.judul_kbli || selectedDetail.kbli_data?.judul) }}
                 </div>
               </div>
-              <div class="detail-group col-span-2">
-                <label>Status Publikasi</label>
-                <p>{{ selectedDetail.is_publik ? 'Dapat Diakses Publik (Aktif)' : 'Sembunyikan dari Publik' }}</p>
-              </div>
             </div>
           </div>
           
@@ -274,7 +264,7 @@
                 {{ formError }}
               </div>
 
-              <!-- Form Grid Sesuai Urutan Referensi Gambar -->
+              <!-- Form Grid -->
               <div class="form-grid">
                 <!-- 1. Nama Perusahaan -->
                 <div class="form-group">
@@ -285,7 +275,7 @@
                 <!-- 2. Nama Proyek -->
                 <div class="form-group">
                   <label>Nama Proyek</label>
-                  <input type="text" v-model="formData.nama_proyek" />
+                  <input type="text" v-model="formData.nama_proyek"  />
                 </div>
 
                 <!-- 3. Jenis Perusahaan -->
@@ -321,16 +311,16 @@
                 <!-- 6. Sektor Pembina -->
                 <div class="form-group">
                   <label>Sektor Pembina</label>
-                  <input type="text" v-model="formData.sektor_pembina"  />
+                  <input type="text" v-model="formData.sektor_pembina" />
                 </div>
 
-                <!-- 7. Alamat Usaha (Full Width) -->
+                <!-- 7. Alamat Usaha -->
                 <div class="form-group col-span-2">
                   <label>Alamat Usaha</label>
-                  <textarea v-model="formData.alamat_usaha" rows="2"></textarea>
+                  <textarea v-model="formData.alamat_usaha" rows="2" ></textarea>
                 </div>
 
-                <!-- 8. Kecamatan (Dropdown Select) -->
+                <!-- 8. Kecamatan -->
                 <div class="form-group">
                   <label>Kecamatan <span class="required">*</span></label>
                   <select v-model="formData.kecamatan_usaha" class="form-select" @change="onKecamatanChange" required>
@@ -341,7 +331,7 @@
                   </select>
                 </div>
 
-                <!-- 9. Kelurahan (Dependent Dropdown Select) -->
+                <!-- 9. Kelurahan -->
                 <div class="form-group">
                   <label>Kelurahan <span class="required">*</span></label>
                   <select 
@@ -357,7 +347,7 @@
                   </select>
                 </div>
 
-                <!-- 10. Kab / Kota Usaha (Locked / Readonly Input) -->
+                <!-- 10. Kab / Kota Usaha -->
                 <div class="form-group">
                   <label>Kab / Kota Usaha</label>
                   <input type="text" v-model="formData.kab_kota_usaha" class="form-readonly" readonly />
@@ -369,7 +359,7 @@
                   <input type="number" min="0" v-model.number="formData.jumlah_tki" placeholder="0" />
                 </div>
 
-                <!-- 12. Data KBLI (Kode & Judul KBLI) -->
+                <!-- 12. Data KBLI -->
                 <div class="form-group col-span-2 kbli-input-box">
                   <label class="kbli-section-label">Data KBLI</label>
                   <div class="form-grid inner-grid">
@@ -383,14 +373,6 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- Status Publikasi -->
-                <div class="form-group col-span-2 checkbox-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" v-model="formData.is_publik" />
-                    <span>Publikasikan Data Ini (Dapat dilihat oleh publik)</span>
-                  </label>
-                </div>
               </div>
             </div>
 
@@ -402,6 +384,34 @@
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal Konfirmasi Hapus Data (dengan Backdrop Blur) -->
+    <transition name="modal-fade">
+      <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
+        <div class="modal-container modal-sm">
+          <div class="modal-header header-delete">
+            <h3>Konfirmasi Hapus</h3>
+            <button class="btn-close" @click="closeDeleteModal">&times;</button>
+          </div>
+          <div class="modal-body text-center py-4">
+            <div class="delete-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </div>
+            <h4 class="delete-title">Hapus Data UMKM?</h4>
+            <p class="delete-desc">
+              Apakah kamu yakin ingin menghapus data <strong>"{{ itemToDelete?.nama_perusahaan }}"</strong>? Tindakan ini tidak dapat dibatalkan.
+            </p>
+          </div>
+          <div class="modal-footer footer-center">
+            <button type="button" class="btn-cancel" @click="closeDeleteModal" :disabled="deleting">Batal</button>
+            <button type="button" class="btn-delete-confirm" @click="confirmDelete" :disabled="deleting">
+              <span v-if="deleting" class="spinner-sm"></span>
+              <span>{{ deleting ? 'Menghapus...' : 'Ya, Hapus Data' }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -420,7 +430,6 @@ export default {
       searchTimeout: null,
       perPage: 10,
       sortOrder: 'desc',
-      deletingId: null,
       
       displayedUmkmList: [],
       pagination: {
@@ -440,6 +449,11 @@ export default {
       isEditMode: false,
       submittingForm: false,
       formError: '',
+
+      // Modal Delete States
+      showDeleteModal: false,
+      itemToDelete: null,
+      deleting: false,
 
       // Master Data Kecamatan & Kelurahan Kota Banjarmasin
       dataBanjarmasin: {
@@ -476,7 +490,7 @@ export default {
         jumlah_tki: 0,
         kbli: '',
         judul_kbli: '',
-        is_publik: true
+        is_publik: true // Tetap dikirim default true ke backend jika dibutuhkan
       }
     }
   },
@@ -503,7 +517,6 @@ export default {
       return pages
     },
 
-    // List kelurahan dinamis mengikuti kecamatan
     listKelurahan() {
       if (!this.formData.kecamatan_usaha) return []
       return this.dataBanjarmasin[this.formData.kecamatan_usaha] || []
@@ -617,7 +630,7 @@ export default {
         jumlah_tki: item.jumlah_tki || 0,
         kbli: item.kbli || item.kbli_data?.kode || '',
         judul_kbli: item.judul_kbli || item.kbli_data?.judul || '',
-        is_publik: item.is_publik !== undefined ? Boolean(item.is_publik) : true
+        is_publik: true
       }
       this.showFormModal = true
     },
@@ -670,10 +683,10 @@ export default {
 
         const method = isEdit ? 'PUT' : 'POST'
 
-        // Memastikan kab_kota_usaha selalu terkirim "Kota Banjarmasin"
         const payload = { 
           ...this.formData,
-          kab_kota_usaha: 'Kota Banjarmasin'
+          kab_kota_usaha: 'Kota Banjarmasin',
+          is_publik: true
         }
         delete payload.id
 
@@ -769,10 +782,25 @@ export default {
       }, 300)
     },
 
-    async handleDelete(item) {
-      if (!confirm(`Apakah Anda yakin ingin menghapus data "${item.nama_perusahaan}"?`)) return
+    // Buka Pop-up Hapus
+    handleDelete(item) {
+      this.itemToDelete = item
+      this.showDeleteModal = true
+    },
 
-      this.deletingId = item.id
+    // Tutup Pop-up Hapus
+    closeDeleteModal() {
+      if (this.deleting) return
+      this.showDeleteModal = false
+      setTimeout(() => {
+        this.itemToDelete = null
+      }, 300)
+    },
+
+    // Eksekusi API Hapus
+    async confirmDelete() {
+      if (!this.itemToDelete) return
+      this.deleting = true
       try {
         const token = this.getAuthToken()
         const headers = {
@@ -781,16 +809,17 @@ export default {
         }
         if (token) headers['Authorization'] = `Bearer ${token}`
 
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${item.id}`
+        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${this.itemToDelete.id}`
         const response = await fetch(url, { method: 'DELETE', headers })
 
         if (!response.ok) throw new Error('Gagal menghapus data dari server.')
 
+        this.closeDeleteModal()
         this.fetchUmkmData(this.pagination.current_page)
       } catch (error) {
         alert(`Error: ${error.message}`)
       } finally {
-        this.deletingId = null
+        this.deleting = false
       }
     },
 
@@ -894,10 +923,6 @@ export default {
 .data-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
 .data-table tbody tr:hover { background-color: #f8fafc; }
 
-.badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-.badge-success { background-color: #dcfce7; color: #166534; }
-.badge-secondary { background-color: #f1f5f9; color: #475569; }
-
 .action-buttons { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
 .btn-icon:hover { transform: scale(1.2); }
@@ -924,6 +949,7 @@ export default {
 .font-bold { font-weight: 700; }
 .text-uppercase { text-transform: uppercase; }
 .py-5 { padding-top: 40px; padding-bottom: 40px; }
+.py-4 { padding-top: 24px; padding-bottom: 24px; }
 .mt-3 { margin-top: 12px; }
 .loading-text, .empty-text { color: #64748b; font-weight: 500; margin-top: 10px; }
 
@@ -937,20 +963,25 @@ export default {
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* MODAL STYLES */
+/* MODAL OVERLAY WITH BLUR BACKDROP */
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(5px);
+  background-color: rgba(15, 23, 42, 0.4); 
+  backdrop-filter: blur(6px); /* Backdrop Blur Effect */
+  -webkit-backdrop-filter: blur(6px);
   display: flex; justify-content: center; align-items: center; z-index: 9999;
 }
 .modal-container {
   background-color: #ffffff; width: 90%; max-width: 680px; border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); overflow: hidden;
 }
+.modal-sm { max-width: 440px; }
+
 .modal-header {
   background-color: #1f2937; color: #ffffff; padding: 16px 24px;
   display: flex; justify-content: space-between; align-items: center;
 }
+.header-delete { background-color: #991b1b; }
 .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
 .btn-close { background: none; border: none; color: #ffffff; font-size: 1.5rem; cursor: pointer; opacity: 0.8; }
 .btn-close:hover { opacity: 1; }
@@ -984,9 +1015,14 @@ export default {
 }
 .kbli-section-label { font-size: 0.8rem; font-weight: 700; color: #334155; text-transform: uppercase; }
 
-.checkbox-group { display: flex; align-items: center; margin-top: 4px; }
-.checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #334155; cursor: pointer; }
-.checkbox-label input[type="checkbox"] { width: 18px; height: 18px; accent-color: #dc2626; cursor: pointer; }
+/* DELETE MODAL STYLES */
+.delete-icon-wrapper {
+  width: 64px; height: 64px; background-color: #fef2f2; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;
+}
+.delete-title { font-size: 1.15rem; font-weight: 700; color: #1e293b; margin: 0 0 8px 0; }
+.delete-desc { font-size: 0.88rem; color: #64748b; margin: 0; line-height: 1.5; }
+.footer-center { justify-content: center; }
 
 .modal-footer {
   padding: 16px 24px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;
@@ -998,13 +1034,13 @@ export default {
 }
 .btn-tutup:hover, .btn-cancel:hover { background-color: #475569; }
 
-.btn-submit {
+.btn-submit, .btn-delete-confirm {
   background-color: #dc2626; color: #ffffff; border: none; padding: 10px 24px;
   border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem;
   cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 8px;
 }
-.btn-submit:hover:not(:disabled) { background-color: #b91c1c; }
-.btn-submit:disabled, .btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-submit:hover:not(:disabled), .btn-delete-confirm:hover:not(:disabled) { background-color: #b91c1c; }
+.btn-submit:disabled, .btn-cancel:disabled, .btn-delete-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
