@@ -48,9 +48,23 @@
             placeholder="Cari Nama Perusahaan, Proyek, atau Kecamatan..."
           />
         </div>
+
+        <!-- Filter Urutan -->
+        <div class="sort-box">
+          <select v-model="sortOrder" @change="onSortChange" class="sort-select">
+            <option value="desc">Terbaru &rarr; Terlama</option>
+            <option value="asc">Terlama &rarr; Terbaru</option>
+          </select>
+        </div>
+
         <button class="btn-add" @click="openAddModal">
           Tambah
         </button>
+      </div>
+
+      <!-- Error Alert -->
+      <div v-if="errorMessage" class="error-alert">
+        {{ errorMessage }}
       </div>
 
       <!-- Table Card Wrapper -->
@@ -66,16 +80,18 @@
                 <th class="text-center" style="width: 60px;">No</th>
                 <th>Nama Perusahaan</th>
                 <th>Nama Proyek</th>
-                <th>Kecamatan Usaha</th>
-                <th>Kelurahan Usaha</th>
+                <th>Kab/Kota Usaha</th>
+                <th>Kecamatan</th>
+                <th>Kelurahan</th>
                 <th>Judul KBLI</th>
+                <th>Publik</th>
                 <th class="text-center" style="width: 110px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <!-- Loading State -->
               <tr v-if="loading">
-                <td colspan="7" class="text-center py-5">
+                <td colspan="9" class="text-center py-5">
                   <div class="spinner"></div>
                   <p class="loading-text">Memuat data UMKM...</p>
                 </td>
@@ -83,7 +99,7 @@
 
               <!-- Empty State -->
               <tr v-else-if="displayedUmkmList.length === 0">
-                <td colspan="7" class="text-center py-5 empty-text">
+                <td colspan="9" class="text-center py-5 empty-text">
                   Data UMKM tidak ditemukan.
                 </td>
               </tr>
@@ -93,9 +109,15 @@
                 <td class="text-center font-bold">{{ calculateRowIndex(index) }}</td>
                 <td class="font-bold text-uppercase">{{ formatText(item?.nama_perusahaan) }}</td>
                 <td>{{ formatText(item?.nama_proyek) }}</td>
-                <td>{{ item?.kecamatan?.nama || '-' }}</td>
-                <td>{{ item?.kelurahan?.nama || '-' }}</td>
-                <td>{{ item?.kbli_data?.judul || item?.kbli?.judul || '-' }}</td>
+                <td>{{ formatText(item?.kab_kota_usaha || item?.kab_kota?.nama) }}</td>
+                <td>{{ formatText(item?.kecamatan_usaha || item?.kecamatan?.nama) }}</td>
+                <td>{{ formatText(item?.kelurahan_usaha || item?.kelurahan?.nama) }}</td>
+                <td>{{ formatText(item?.judul_kbli || item?.kbli_data?.judul) }}</td>
+                <td>
+                  <span :class="['badge', item.is_publik ? 'badge-success' : 'badge-secondary']">
+                    {{ item.is_publik ? 'Ya' : 'Tidak' }}
+                  </span>
+                </td>
                 <td class="text-center">
                   <div class="action-buttons">
                     <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
@@ -104,7 +126,7 @@
                     <button class="btn-icon btn-edit" title="Edit" @click="handleEdit(item)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                    <button class="btn-icon btn-delete" title="Hapus" @click="handleDelete(item)">
+                    <button class="btn-icon btn-delete" title="Hapus" @click="handleDelete(item)" :disabled="deletingId === item.id">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                   </div>
@@ -117,46 +139,272 @@
         <!-- Footer Pagination -->
         <div class="card-footer-pagination">
           <div class="per-page-selector">
-            <select v-model.number="perPage" @change="onPerPageChange">
-              <option :value="15">15 Baris</option>
-              <option :value="25">25 Baris</option>
-              <option :value="50">50 Baris</option>
-              <option :value="100">100 Baris</option>
-            </select>
             <span class="total-info">Total: {{ pagination.total }} Data</span>
           </div>
 
-          <div class="pagination-controls">
+          <div v-if="pagination.last_page > 1" class="pagination-controls">
             <button 
-              class="page-nav-btn" 
-              :disabled="pagination.current_page <= 1" 
+              class="btn-page" 
+              :disabled="pagination.current_page === 1"
               @click="changePage(pagination.current_page - 1)"
             >
-              &larr; Previous
+              &laquo; Prev
             </button>
 
-            <div class="page-numbers">
-              <button 
-                v-for="(page, pIdx) in displayedPages" 
-                :key="pIdx"
-                :class="['page-num-btn', { active: page === pagination.current_page, disabled: page === '...' }]"
-                @click="typeof page === 'number' && changePage(page)"
-              >
-                {{ page }}
-              </button>
-            </div>
+            <button 
+              v-for="page in displayedPages" 
+              :key="page"
+              class="btn-page"
+              :class="{ active: page === pagination.current_page }"
+              :disabled="page === '...'"
+              @click="page !== '...' && changePage(page)"
+            >
+              {{ page }}
+            </button>
 
             <button 
-              class="page-nav-btn" 
-              :disabled="pagination.current_page >= pagination.last_page" 
+              class="btn-page" 
+              :disabled="pagination.current_page === pagination.last_page"
               @click="changePage(pagination.current_page + 1)"
             >
-              Next &rarr;
+              Next &raquo;
             </button>
           </div>
         </div>
       </div>
     </main>
+
+    <!-- Modal Detail Pop-up -->
+    <transition name="modal-fade">
+      <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>Informasi Detail UMKM</h3>
+            <button class="btn-close" @click="closeModal">&times;</button>
+          </div>
+          
+          <div class="modal-body">
+            <div v-if="loadingDetail" class="text-center py-5">
+              <div class="spinner"></div>
+              <p class="loading-text mt-3">Menarik data dari server...</p>
+            </div>
+
+            <div v-else-if="modalError" class="error-alert">
+              {{ modalError }}
+            </div>
+
+            <div v-else-if="selectedDetail" class="detail-grid">
+              <div class="detail-group">
+                <label>Nama Perusahaan</label>
+                <p class="font-bold text-uppercase">{{ formatText(selectedDetail.nama_perusahaan) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Nama Proyek</label>
+                <p>{{ formatText(selectedDetail.nama_proyek) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Jenis Perusahaan</label>
+                <p>{{ formatText(selectedDetail.jenis_perusahaan) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Risiko Proyek</label>
+                <p><span class="badge badge-risk">{{ formatText(selectedDetail.risiko_proyek) }}</span></p>
+              </div>
+              <div class="detail-group">
+                <label>Skala Usaha</label>
+                <p>{{ formatText(selectedDetail.skala_usaha) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Sektor Pembina</label>
+                <p>{{ formatText(selectedDetail.sektor_pembina) }}</p>
+              </div>
+              <div class="detail-group col-span-2">
+                <label>Alamat Usaha</label>
+                <p>{{ formatText(selectedDetail.alamat_usaha) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Kecamatan</label>
+                <p>{{ formatText(selectedDetail.kecamatan_usaha || selectedDetail.kecamatan?.nama) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Kelurahan</label>
+                <p>{{ formatText(selectedDetail.kelurahan_usaha || selectedDetail.kelurahan?.nama) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Kab / Kota Usaha</label>
+                <p>{{ formatText(selectedDetail.kab_kota_usaha || selectedDetail.kab_kota?.nama) }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Jumlah Tenaga Kerja (TKI)</label>
+                <p>{{ selectedDetail.jumlah_tki || 0 }} Orang</p>
+              </div>
+              <div class="detail-group col-span-2">
+                <label>Data KBLI</label>
+                <div class="kbli-box">
+                  <strong>Kode:</strong> {{ formatText(selectedDetail.kbli || selectedDetail.kbli_data?.kode) }} <br/>
+                  <strong>Judul:</strong> {{ formatText(selectedDetail.judul_kbli || selectedDetail.kbli_data?.judul) }}
+                </div>
+              </div>
+              <div class="detail-group col-span-2">
+                <label>Status Publikasi</label>
+                <p>{{ selectedDetail.is_publik ? 'Dapat Diakses Publik (Aktif)' : 'Sembunyikan dari Publik' }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <button class="btn-tutup" @click="closeModal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal Form (Tambah & Edit) -->
+    <transition name="modal-fade">
+      <div v-if="showFormModal" class="modal-overlay" @click.self="closeFormModal">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>{{ isEditMode ? 'Edit Data UMKM' : 'Tambah Data UMKM Baru' }}</h3>
+            <button class="btn-close" @click="closeFormModal">&times;</button>
+          </div>
+          
+          <form @submit.prevent="submitForm">
+            <div class="modal-body">
+              <div v-if="formError" class="error-alert">
+                {{ formError }}
+              </div>
+
+              <!-- Form Grid Sesuai Urutan Referensi Gambar -->
+              <div class="form-grid">
+                <!-- 1. Nama Perusahaan -->
+                <div class="form-group">
+                  <label>Nama Perusahaan <span class="required">*</span></label>
+                  <input type="text" v-model="formData.nama_perusahaan"  />
+                </div>
+
+                <!-- 2. Nama Proyek -->
+                <div class="form-group">
+                  <label>Nama Proyek</label>
+                  <input type="text" v-model="formData.nama_proyek" />
+                </div>
+
+                <!-- 3. Jenis Perusahaan -->
+                <div class="form-group">
+                  <label>Jenis Perusahaan</label>
+                  <input type="text" v-model="formData.jenis_perusahaan"  />
+                </div>
+
+                <!-- 4. Risiko Proyek -->
+                <div class="form-group">
+                  <label>Risiko Proyek</label>
+                  <select v-model="formData.risiko_proyek" class="form-select">
+                    <option value="">-- Pilih Risiko --</option>
+                    <option value="Rendah">Rendah</option>
+                    <option value="Menengah Rendah">Menengah Rendah</option>
+                    <option value="Menengah Tinggi">Menengah Tinggi</option>
+                    <option value="Tinggi">Tinggi</option>
+                  </select>
+                </div>
+
+                <!-- 5. Skala Usaha -->
+                <div class="form-group">
+                  <label>Skala Usaha</label>
+                  <select v-model="formData.skala_usaha" class="form-select">
+                    <option value="">-- Pilih Skala --</option>
+                    <option value="Usaha Mikro">Usaha Mikro</option>
+                    <option value="Usaha Kecil">Usaha Kecil</option>
+                    <option value="Usaha Menengah">Usaha Menengah</option>
+                    <option value="Usaha Besar">Usaha Besar</option>
+                  </select>
+                </div>
+
+                <!-- 6. Sektor Pembina -->
+                <div class="form-group">
+                  <label>Sektor Pembina</label>
+                  <input type="text" v-model="formData.sektor_pembina"  />
+                </div>
+
+                <!-- 7. Alamat Usaha (Full Width) -->
+                <div class="form-group col-span-2">
+                  <label>Alamat Usaha</label>
+                  <textarea v-model="formData.alamat_usaha" rows="2"></textarea>
+                </div>
+
+                <!-- 8. Kecamatan (Dropdown Select) -->
+                <div class="form-group">
+                  <label>Kecamatan <span class="required">*</span></label>
+                  <select v-model="formData.kecamatan_usaha" class="form-select" @change="onKecamatanChange" required>
+                    <option value="">-- Pilih Kecamatan --</option>
+                    <option v-for="(kelurahans, kec) in dataBanjarmasin" :key="kec" :value="kec">
+                      {{ kec }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- 9. Kelurahan (Dependent Dropdown Select) -->
+                <div class="form-group">
+                  <label>Kelurahan <span class="required">*</span></label>
+                  <select 
+                    v-model="formData.kelurahan_usaha" 
+                    class="form-select" 
+                    :disabled="!formData.kecamatan_usaha"
+                    required
+                  >
+                    <option value="">-- Pilih Kelurahan --</option>
+                    <option v-for="kel in listKelurahan" :key="kel" :value="kel">
+                      {{ kel }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- 10. Kab / Kota Usaha (Locked / Readonly Input) -->
+                <div class="form-group">
+                  <label>Kab / Kota Usaha</label>
+                  <input type="text" v-model="formData.kab_kota_usaha" class="form-readonly" readonly />
+                </div>
+
+                <!-- 11. Jumlah Tenaga Kerja (TKI) -->
+                <div class="form-group">
+                  <label>Jumlah Tenaga Kerja (TKI)</label>
+                  <input type="number" min="0" v-model.number="formData.jumlah_tki" placeholder="0" />
+                </div>
+
+                <!-- 12. Data KBLI (Kode & Judul KBLI) -->
+                <div class="form-group col-span-2 kbli-input-box">
+                  <label class="kbli-section-label">Data KBLI</label>
+                  <div class="form-grid inner-grid">
+                    <div class="form-group">
+                      <label>Kode KBLI</label>
+                      <input type="text" v-model="formData.kbli"/>
+                    </div>
+                    <div class="form-group">
+                      <label>Judul KBLI</label>
+                      <input type="text" v-model="formData.judul_kbli"  />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status Publikasi -->
+                <div class="form-group col-span-2 checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" v-model="formData.is_publik" />
+                    <span>Publikasikan Data Ini (Dapat dilihat oleh publik)</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn-cancel" @click="closeFormModal" :disabled="submittingForm">Batal</button>
+              <button type="submit" class="btn-submit" :disabled="submittingForm">
+                <span v-if="submittingForm" class="spinner-sm"></span>
+                <span>{{ submittingForm ? 'Menyimpan...' : (isEditMode ? 'Update Data' : 'Simpan Data') }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -167,16 +415,68 @@ export default {
     return {
       showDropdown: false,
       loading: false,
+      errorMessage: '',
       searchQuery: '',
       searchTimeout: null,
-      perPage: 15,
+      perPage: 10,
+      sortOrder: 'desc',
+      deletingId: null,
       
       displayedUmkmList: [],
-      
       pagination: {
         current_page: 1,
         last_page: 1,
         total: 0
+      },
+
+      // Modal Detail States
+      showModal: false,
+      loadingDetail: false,
+      selectedDetail: null,
+      modalError: '',
+
+      // Modal Form States (Tambah & Edit)
+      showFormModal: false,
+      isEditMode: false,
+      submittingForm: false,
+      formError: '',
+
+      // Master Data Kecamatan & Kelurahan Kota Banjarmasin
+      dataBanjarmasin: {
+        "Banjarmasin Barat": [
+          "Basirih", "Belitung Selatan", "Belitung Utara", "Kuin Cerucuk", "Kuin Selatan", "Pelambuan", "Telaga Biru", "Teluk Tiram"
+        ],
+        "Banjarmasin Selatan": [
+          "Basirih Selatan", "Kelayan Barat", "Kelayan Dalam", "Kelayan Selatan", "Kelayan Tengah", "Kelayan Timur", "Mantuil", "Murung Raya", "Pekauman", "Pemurus Baru", "Pemurus Dalam", "Tanjung Pagar"
+        ],
+        "Banjarmasin Tengah": [
+          "Antasan Besar", "Gadang", "Kelayan Luar", "Kertak Baru Ilir", "Kertak Baru Ulu", "Mawar", "Melayu", "Pasar Lama", "Pekapuran Laut", "Seberang Masjid", "Teluk Dalam"
+        ],
+        "Banjarmasin Timur": [
+          "Benua Anyar", "Karang Mekar", "Kebun Bunga", "Kuripan", "Pekapuran Raya", "Pemurus Luar", "Pengambangan", "Sungai Bilu"
+        ],
+        "Banjarmasin Utara": [
+          "Alalak Selatan", "Alalak Tengah", "Alalak Utara", "Antasan Kecil Timur", "Kuin Utara", "Pangeran", "Sungai Miai", "Sungai Andai", "Surgi Mufti"
+        ]
+      },
+
+      // Form Data Structure
+      formData: {
+        id: null,
+        nama_perusahaan: '',
+        nama_proyek: '',
+        jenis_perusahaan: '',
+        risiko_proyek: '',
+        skala_usaha: '',
+        sektor_pembina: '',
+        alamat_usaha: '',
+        kecamatan_usaha: '',
+        kelurahan_usaha: '',
+        kab_kota_usaha: 'Kota Banjarmasin',
+        jumlah_tki: 0,
+        kbli: '',
+        judul_kbli: '',
+        is_publik: true
       }
     }
   },
@@ -201,6 +501,12 @@ export default {
         pages.push(last)
       }
       return pages
+    },
+
+    // List kelurahan dinamis mengikuti kecamatan
+    listKelurahan() {
+      if (!this.formData.kecamatan_usaha) return []
+      return this.dataBanjarmasin[this.formData.kecamatan_usaha] || []
     }
   },
   mounted() {
@@ -216,7 +522,7 @@ export default {
             const parsed = JSON.parse(storedUser)
             token = parsed.token || parsed.access_token
           } catch (e) {
-            console.error('Error parsing user token:', e)
+            console.error('Error parsing token:', e)
           }
         }
       }
@@ -225,12 +531,13 @@ export default {
 
     async fetchUmkmData(page = 1) {
       this.loading = true
+      this.errorMessage = ''
       try {
         const token = this.getAuthToken()
-
         const queryParams = new URLSearchParams({
           page: page,
-          per_page: this.perPage
+          per_page: this.perPage,
+          'ngrok-skip-browser-warning': '69420'
         })
 
         if (this.searchQuery.trim()) {
@@ -239,47 +546,169 @@ export default {
 
         const headers = {
           'Accept': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'ngrok-skip-browser-warning': '69420'
         }
 
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`
-        }
+        if (token) headers['Authorization'] = `Bearer ${token}`
 
-        const response = await fetch(`https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm?${queryParams.toString()}`, {
-          method: 'GET',
-          headers: headers
-        })
+        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm?${queryParams.toString()}`
+        const response = await fetch(url, { method: 'GET', headers })
 
         if (response.status === 401) {
-          alert('Sesi login telah berakhir (401 Unauthorized). Silakan login kembali.')
           this.$router.push('/login')
           return
         }
 
-        if (!response.ok) {
-          throw new Error(`HTTP Error Status: ${response.status}`)
-        }
+        if (!response.ok) throw new Error(`Gagal mengambil data. Status: ${response.status}`)
 
         const result = await response.json()
-        
-        // Membaca paginated data dari objek result.data
         const pageData = result.data || {}
 
-        this.displayedUmkmList = pageData.data || []
-        this.pagination = {
-          current_page: Number(pageData.current_page) || page,
-          last_page: Number(pageData.last_page) || 1,
-          total: Number(pageData.total) || 0
+        if (pageData && Array.isArray(pageData.data)) {
+          this.displayedUmkmList = this.sortListLocally(pageData.data)
+          this.pagination = {
+            current_page: Number(pageData.current_page) || page,
+            last_page: Number(pageData.last_page) || 1,
+            total: Number(pageData.total) || 0
+          }
+        } else if (Array.isArray(result.data)) {
+          this.displayedUmkmList = this.sortListLocally(result.data)
+          this.pagination = {
+            current_page: 1,
+            last_page: 1,
+            total: result.data.length
+          }
         }
 
       } catch (error) {
-        console.error('Gagal mengambil data UMKM:', error)
+        this.errorMessage = `Error: ${error.message || 'Gagal terhubung ke API.'}`
         this.displayedUmkmList = []
-        this.pagination = { current_page: 1, last_page: 1, total: 0 }
       } finally {
         this.loading = false
       }
+    },
+
+    onKecamatanChange() {
+      this.formData.kelurahan_usaha = ''
+    },
+
+    openAddModal() {
+      this.isEditMode = false
+      this.formError = ''
+      this.resetFormData()
+      this.showFormModal = true
+    },
+
+    handleEdit(item) {
+      this.isEditMode = true
+      this.formError = ''
+      this.formData = {
+        id: item.id,
+        nama_perusahaan: item.nama_perusahaan || '',
+        nama_proyek: item.nama_proyek || '',
+        jenis_perusahaan: item.jenis_perusahaan || '',
+        risiko_proyek: item.risiko_proyek || '',
+        skala_usaha: item.skala_usaha || '',
+        sektor_pembina: item.sektor_pembina || '',
+        alamat_usaha: item.alamat_usaha || '',
+        kecamatan_usaha: item.kecamatan_usaha || item.kecamatan?.nama || '',
+        kelurahan_usaha: item.kelurahan_usaha || item.kelurahan?.nama || '',
+        kab_kota_usaha: 'Kota Banjarmasin',
+        jumlah_tki: item.jumlah_tki || 0,
+        kbli: item.kbli || item.kbli_data?.kode || '',
+        judul_kbli: item.judul_kbli || item.kbli_data?.judul || '',
+        is_publik: item.is_publik !== undefined ? Boolean(item.is_publik) : true
+      }
+      this.showFormModal = true
+    },
+
+    resetFormData() {
+      this.formData = {
+        id: null,
+        nama_perusahaan: '',
+        nama_proyek: '',
+        jenis_perusahaan: '',
+        risiko_proyek: '',
+        skala_usaha: '',
+        sektor_pembina: '',
+        alamat_usaha: '',
+        kecamatan_usaha: '',
+        kelurahan_usaha: '',
+        kab_kota_usaha: 'Kota Banjarmasin',
+        jumlah_tki: 0,
+        kbli: '',
+        judul_kbli: '',
+        is_publik: true
+      }
+    },
+
+    closeFormModal() {
+      this.showFormModal = false
+      setTimeout(() => {
+        this.resetFormData()
+        this.formError = ''
+      }, 300)
+    },
+
+    async submitForm() {
+      this.submittingForm = true
+      this.formError = ''
+
+      try {
+        const token = this.getAuthToken()
+        const headers = {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': '69420'
+        }
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const isEdit = this.isEditMode && this.formData.id
+        const url = isEdit 
+          ? `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${this.formData.id}`
+          : `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm`
+
+        const method = isEdit ? 'PUT' : 'POST'
+
+        // Memastikan kab_kota_usaha selalu terkirim "Kota Banjarmasin"
+        const payload = { 
+          ...this.formData,
+          kab_kota_usaha: 'Kota Banjarmasin'
+        }
+        delete payload.id
+
+        const response = await fetch(url, {
+          method: method,
+          headers: headers,
+          body: JSON.stringify(payload)
+        })
+
+        const resJson = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+          throw new Error(resJson.message || 'Gagal menyimpan data. Pastikan semua field wajib diisi.')
+        }
+
+        this.closeFormModal()
+        this.fetchUmkmData(this.pagination.current_page)
+      } catch (err) {
+        this.formError = err.message || 'Terjadi kesalahan saat memproses data.'
+      } finally {
+        this.submittingForm = false
+      }
+    },
+
+    sortListLocally(list) {
+      if (!Array.isArray(list)) return []
+      return [...list].sort((a, b) => {
+        const idA = Number(a.id) || 0
+        const idB = Number(b.id) || 0
+        return this.sortOrder === 'desc' ? idB - idA : idA - idB
+      })
+    },
+
+    onSortChange() {
+      this.displayedUmkmList = this.sortListLocally(this.displayedUmkmList)
     },
 
     changePage(page) {
@@ -287,8 +716,8 @@ export default {
       this.fetchUmkmData(page)
     },
 
-    onPerPageChange() {
-      this.fetchUmkmData(1)
+    calculateRowIndex(index) {
+      return (this.pagination.current_page - 1) * this.perPage + index + 1
     },
 
     handleSearch() {
@@ -298,27 +727,70 @@ export default {
       }, 400)
     },
 
-    calculateRowIndex(index) {
-      return (this.pagination.current_page - 1) * this.perPage + index + 1
-    },
-
     formatText(val) {
-      if (!val || val === 'null' || val === 'string') return '-'
+      if (!val || val === 'null' || val === 'string' || val === '-' || val === 'undefined') return '-'
       return val
     },
 
-    openAddModal() {
-      alert('Buka Form Tambah UMKM')
+    async handleDetail(item) {
+      this.showModal = true
+      this.loadingDetail = true
+      this.modalError = ''
+      this.selectedDetail = null
+
+      try {
+        const token = this.getAuthToken()
+        const headers = {
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': '69420'
+        }
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${item.id}?ngrok-skip-browser-warning=69420`
+        const response = await fetch(url, { method: 'GET', headers })
+
+        if (!response.ok) throw new Error('Gagal menarik data detail dari server.')
+
+        const result = await response.json()
+        this.selectedDetail = result.data
+
+      } catch (error) {
+        this.modalError = error.message || 'Terjadi kesalahan sistem.'
+      } finally {
+        this.loadingDetail = false
+      }
     },
-    handleDetail(item) {
-      alert(`Detail UMKM ID #${item.id}\nPerusahaan: ${item.nama_perusahaan || '-'}\nProyek: ${item.nama_proyek || '-'}\nAlamat: ${item.alamat_usaha || '-'}`)
+
+    closeModal() {
+      this.showModal = false
+      setTimeout(() => {
+        this.selectedDetail = null
+        this.modalError = ''
+      }, 300)
     },
-    handleEdit(item) {
-      alert(`Edit UMKM: ${item.nama_perusahaan || '-'}`)
-    },
-    handleDelete(item) {
-      if (confirm(`Apakah Anda yakin ingin menghapus "${item.nama_perusahaan}"?`)) {
-        alert(`Data ID ${item.id} berhasil dihapus.`)
+
+    async handleDelete(item) {
+      if (!confirm(`Apakah Anda yakin ingin menghapus data "${item.nama_perusahaan}"?`)) return
+
+      this.deletingId = item.id
+      try {
+        const token = this.getAuthToken()
+        const headers = {
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': '69420'
+        }
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${item.id}`
+        const response = await fetch(url, { method: 'DELETE', headers })
+
+        if (!response.ok) throw new Error('Gagal menghapus data dari server.')
+
+        this.fetchUmkmData(this.pagination.current_page)
+      } catch (error) {
+        alert(`Error: ${error.message}`)
+      } finally {
+        this.deletingId = null
       }
     },
 
@@ -343,14 +815,13 @@ export default {
 
 .admin-wrapper {
   min-height: 100vh;
-  background-color: #f1f3f6;
+  background-color: #f4f5f7;
   font-family: 'Poppins', sans-serif;
   color: #1e293b;
 }
 
-/* Header Navbar Dark Navy */
 .admin-navbar {
-  background-color: #111827;
+  background-color: #18181b;
   color: #ffffff;
   padding: 14px 40px;
   display: flex;
@@ -358,331 +829,183 @@ export default {
   align-items: center;
 }
 
-.nav-left {
-  display: flex;
-  gap: 25px;
-}
-
+.nav-left { display: flex; gap: 25px; }
 .nav-link {
-  color: #9ca3af;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 4px;
-  transition: all 0.2s ease;
+  color: #a1a1aa; text-decoration: none; font-weight: 600; font-size: 0.95rem;
+  display: flex; align-items: center; gap: 8px; padding-bottom: 6px; transition: all 0.2s;
+  border-bottom: 2px solid transparent;
 }
-
 .nav-link.active, .nav-link:hover {
   color: #ffffff;
-  border-bottom: 2px solid #ffffff;
+  border-bottom: 2px solid #dc2626;
 }
 
-/* User Profile Dropdown */
-.profile-container {
-  position: relative;
-}
-
+.profile-container { position: relative; }
 .user-profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  user-select: none;
+  display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem;
+  cursor: pointer; color: #ffffff; padding: 6px 12px; border-radius: 6px; user-select: none;
 }
-
-.user-profile:hover {
-  background-color: #1f2937;
-}
-
-.rotate-icon {
-  transform: rotate(180deg);
-  transition: transform 0.2s ease;
-}
-
+.user-profile:hover { background-color: #27272a; }
+.rotate-icon { transform: rotate(180deg); transition: transform 0.2s ease; }
 .profile-dropdown {
-  position: absolute;
-  top: 110%;
-  right: 0;
-  background-color: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  padding: 6px;
-  min-width: 160px;
-  z-index: 100;
+  position: absolute; top: 110%; right: 0; background-color: #27272a; border: 1px solid #3f3f46;
+  border-radius: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); padding: 6px; min-width: 160px; z-index: 100;
 }
-
 .dropdown-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: transparent;
-  border: none;
-  color: #f87171;
-  padding: 10px 12px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 6px;
+  width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none;
+  color: #f87171; padding: 10px 12px; font-family: 'Poppins', sans-serif; font-size: 0.85rem;
+  font-weight: 600; cursor: pointer; border-radius: 6px;
+}
+.dropdown-item:hover { background-color: #ef4444; color: #ffffff; }
+
+.admin-content { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
+.error-alert {
+  background-color: #fef2f2; border: 1px solid #fca5a5; color: #991b1b;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 500;
 }
 
-.dropdown-item:hover {
-  background-color: #ef4444;
-  color: #ffffff;
-}
-
-/* Main Content Layout */
-.admin-content {
-  padding: 28px 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* Search Bar & Button Action */
 .action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
+  display: flex; gap: 16px; align-items: center; margin-bottom: 20px;
+  background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 4px;
 }
-
-.search-box {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 16px;
-  color: #94a3b8;
-}
-
+.search-box { position: relative; flex: 1; display: flex; align-items: center; }
+.search-icon { position: absolute; left: 16px; color: #94a3b8; }
 .search-box input {
-  width: 100%;
-  padding: 12px 16px 12px 48px;
-  border: none;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.9rem;
-  outline: none;
-  color: #334155;
+  width: 100%; padding: 12px 16px 12px 48px; border: none; font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem; outline: none; color: #334155;
 }
-
+.sort-box { display: flex; align-items: center; }
+.sort-select {
+  padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #f8fafc;
+  font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; color: #334155; outline: none; cursor: pointer;
+}
 .btn-add {
-  background-color: #1e385c;
-  color: #ffffff;
-  border: none;
-  padding: 12px 32px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  background-color: #dc2626; color: #ffffff; border: none; padding: 12px 32px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
 }
+.btn-add:hover { background-color: #b91c1c; }
 
-.btn-add:hover {
-  background-color: #142640;
-}
+.data-card { background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); }
+.card-header-title { background-color: #1f2937; color: #ffffff; padding: 16px 24px; }
+.card-header-title h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.table-container { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { background-color: #ffffff; color: #1e293b; font-weight: 700; padding: 16px 18px; border-bottom: 2px solid #f1f5f9; text-align: left; }
+.data-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+.data-table tbody tr:hover { background-color: #f8fafc; }
 
-/* Data Card & Table */
-.data-card {
-  background-color: #ffffff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
+.badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+.badge-success { background-color: #dcfce7; color: #166534; }
+.badge-secondary { background-color: #f1f5f9; color: #475569; }
 
-.card-header-title {
-  background-color: #1e385c;
-  color: #ffffff;
-  padding: 16px 24px;
-}
-
-.card-header-title h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-
-.data-table th {
-  background-color: #ffffff;
-  color: #1e293b;
-  font-weight: 700;
-  padding: 16px 18px;
-  border-bottom: 2px solid #f1f5f9;
-  text-align: left;
-}
-
-.data-table td {
-  padding: 16px 18px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-  vertical-align: middle;
-}
-
-.data-table tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-/* Action Icons */
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.15s ease;
-}
-
-.btn-icon:hover {
-  transform: scale(1.2);
-}
-
+.action-buttons { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+.btn-icon:hover { transform: scale(1.2); }
+.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-info { color: #1e293b; }
 .btn-edit { color: #dc2626; }
 .btn-delete { color: #dc2626; }
 
-/* Pagination Footer */
 .card-footer-pagination {
-  padding: 16px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #f1f5f9;
+  padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9;
 }
+.total-info { font-size: 0.85rem; color: #64748b; font-weight: 600; }
 
-.per-page-selector {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.pagination-controls { display: flex; gap: 6px; align-items: center; }
+.btn-page {
+  background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 6px 12px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
 }
+.btn-page:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; }
+.btn-page.active { background-color: #dc2626; color: #ffffff; border-color: #dc2626; font-weight: 600; }
+.btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.per-page-selector select {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background-color: #ffffff;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #334155;
-  outline: none;
-  cursor: pointer;
-}
-
-.total-info {
-  font-size: 0.85rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.page-nav-btn {
-  background: none;
-  border: none;
-  color: #64748b;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.page-nav-btn:disabled {
-  color: #cbd5e1;
-  cursor: not-allowed;
-}
-
-.page-numbers {
-  display: flex;
-  gap: 4px;
-}
-
-.page-num-btn {
-  background: none;
-  border: none;
-  min-width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.page-num-btn.active {
-  background-color: #1e293b;
-  color: #ffffff;
-}
-
-.page-num-btn.disabled {
-  cursor: default;
-}
-
-/* Utilities */
 .text-center { text-align: center; }
 .font-bold { font-weight: 700; }
 .text-uppercase { text-transform: uppercase; }
 .py-5 { padding-top: 40px; padding-bottom: 40px; }
+.mt-3 { margin-top: 12px; }
 .loading-text, .empty-text { color: #64748b; font-weight: 500; margin-top: 10px; }
 
 .spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #1e385c;
-  border-radius: 50%;
-  margin: 0 auto;
-  animation: spin 0.8s linear infinite;
+  width: 28px; height: 28px; border: 3px solid #f3f3f3; border-top: 3px solid #dc2626;
+  border-radius: 50%; margin: 0 auto; animation: spin 0.8s linear infinite;
 }
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.spinner-sm {
+  width: 16px; height: 16px; border: 2px solid #ffffff; border-top: 2px solid transparent;
+  border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;
 }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-.dropdown-fade-enter-active, .dropdown-fade-leave-active { transition: all 0.2s ease; }
-.dropdown-fade-enter-from, .dropdown-fade-leave-to { opacity: 0; transform: translateY(-8px); }
+/* MODAL STYLES */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(5px);
+  display: flex; justify-content: center; align-items: center; z-index: 9999;
+}
+.modal-container {
+  background-color: #ffffff; width: 90%; max-width: 680px; border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); overflow: hidden;
+}
+.modal-header {
+  background-color: #1f2937; color: #ffffff; padding: 16px 24px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.btn-close { background: none; border: none; color: #ffffff; font-size: 1.5rem; cursor: pointer; opacity: 0.8; }
+.btn-close:hover { opacity: 1; }
+.modal-body { padding: 24px; max-height: 75vh; overflow-y: auto; overflow-x: hidden; }
+
+/* MODAL DETAIL STYLES */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.detail-group { background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+.col-span-2 { grid-column: span 2; }
+.detail-group label { display: block; font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; }
+.detail-group p { margin: 0; font-size: 0.9rem; color: #1e293b; word-break: break-word; }
+.badge-risk { background-color: #fef08a; color: #854d0e; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.kbli-box { background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 0.85rem; color: #334155; margin-top: 4px; }
+
+/* FORM MODAL STYLES */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.inner-grid { margin-top: 6px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+.required { color: #dc2626; }
+.form-group input, .form-group textarea, .form-select {
+  width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
+  font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: #1e293b; outline: none; transition: border-color 0.2s; box-sizing: border-box;
+}
+.form-group input:focus, .form-group textarea:focus, .form-select:focus { border-color: #dc2626; }
+.form-select:disabled { background-color: #f1f5f9; cursor: not-allowed; }
+.form-readonly { background-color: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; }
+
+.kbli-input-box {
+  background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px 16px; border-radius: 8px;
+}
+.kbli-section-label { font-size: 0.8rem; font-weight: 700; color: #334155; text-transform: uppercase; }
+
+.checkbox-group { display: flex; align-items: center; margin-top: 4px; }
+.checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #334155; cursor: pointer; }
+.checkbox-label input[type="checkbox"] { width: 18px; height: 18px; accent-color: #dc2626; cursor: pointer; }
+
+.modal-footer {
+  padding: 16px 24px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;
+  display: flex; justify-content: flex-end; gap: 12px;
+}
+.btn-tutup, .btn-cancel {
+  background-color: #64748b; color: #ffffff; border: none; padding: 10px 24px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
+}
+.btn-tutup:hover, .btn-cancel:hover { background-color: #475569; }
+
+.btn-submit {
+  background-color: #dc2626; color: #ffffff; border: none; padding: 10px 24px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem;
+  cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 8px;
+}
+.btn-submit:hover:not(:disabled) { background-color: #b91c1c; }
+.btn-submit:disabled, .btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>
