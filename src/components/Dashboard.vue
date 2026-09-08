@@ -95,7 +95,7 @@
 
     <!-- 3. LAYANAN DISKOPUMKER -->
     <section ref="layananSection" class="section-container services-section">
-      <h3 class="section-title">Layanan Dan Informasi DISKOPUMKER</h3>
+      <h3 class="section-title">Informasi Tentang DISKOPUMKER</h3>
       <div class="services-grid">
         <!-- Card 1: HI (Red) -->
         <div class="service-card card-red" @click="goToService('/hi')">
@@ -501,8 +501,8 @@ export default {
 }
 
 .card-red {
-  background-color: #c0392b;
-  color: #ffffff;
+  background-color: #f1f2f6;
+  color: #010000;
 }
 
 .card-light {

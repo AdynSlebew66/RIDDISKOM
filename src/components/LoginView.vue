@@ -122,8 +122,16 @@ export default {
         localStorage.setItem('access_token', data.access_token)
         localStorage.setItem('user', JSON.stringify(data.user))
 
-        // Redirect ke laman UMKM setelah login berhasil
-        this.$router.push('/umkm')
+        // Cek role user dari data backend atau dari email
+        const userRole = (data.user?.role || data.user?.type || '').toLowerCase()
+        const userEmail = this.email.toLowerCase()
+
+        // Redirect ke Dashboard Admin UMKM (UmkmView.vue) jika user bertipe/memiliki email UMKM
+        if (userRole.includes('umkm') || userEmail.includes('umkm')) {
+          this.$router.push('/admin/umkm')
+        } else {
+          this.$router.push('/dashboard')
+        }
       } catch (err) {
         this.errorMessage = err.message || 'Terjadi kesalahan koneksi ke server.'
       } finally {

@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import PublicDashboard from '../components/Dashboard.vue'
 import LoginView from '../components/LoginView.vue'
 import UmkmView from '../components/UmkmView.vue'
-import UmkmPublicView from '../components/UmkmPublicView.vue' // Import komponen Publik UMKM
+import UmkmPublicView from '../components/UmkmPublicView.vue'
 
 const routes = [
   {
@@ -16,12 +16,13 @@ const routes = [
     component: LoginView
   },
   {
-    path: '/umkm', // Route Halaman Publik UMKM (saat diklik dari Dashboard)
+    path: '/umkm', // Layanan UMKM Publik (Akses dari landing page)
     name: 'UmkmPublic',
     component: UmkmPublicView
   },
   {
-    path: '/umkm-dashboard', // Route Khusus setelah Login UMKM
+    path: '/admin/umkm', // Route Admin UMKM setelah Login
+    alias: '/umkm-dashboard', // Alias agar URL /umkm-dashboard tetap bisa diakses
     name: 'UmkmDashboard',
     component: UmkmView
   }
