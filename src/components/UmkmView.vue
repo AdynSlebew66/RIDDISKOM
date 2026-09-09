@@ -7,8 +7,13 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
           Dashboard
         </router-link>
+
         <router-link to="/admin/data" class="nav-link" active-class="active">
           Data UMKM
+        </router-link>
+
+        <router-link to="/admin/rasio" class="nav-link" active-class="active">
+          Rasio Kewirausahaan
         </router-link>
       </div>
       
@@ -82,7 +87,7 @@
           <div class="table-container">
             <table class="custom-table">
               <thead>
-                <tr>
+                <tr class="navy-header-row">
                   <th class="text-center" style="width: 70px;">No</th>
                   <th>{{ getColumnTitle(activeTab) }}</th>
                   <th v-if="activeTab === 'Kelurahan'">Kecamatan</th>
@@ -325,7 +330,7 @@ export default {
 
 /* Navbar Admin Dark */
 .admin-navbar {
-  background-color: #1a1a1a;
+  background-color: #1e385c;
   color: #ffffff;
   padding: 14px 40px;
   display: flex;
@@ -340,7 +345,7 @@ export default {
 }
 
 .nav-link {
-  color: #a0a0a0;
+  color: #ffffff;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
@@ -353,7 +358,7 @@ export default {
 
 .nav-link.active, .nav-link:hover {
   color: #ffffff;
-  border-bottom: 2px solid #c0392b;
+  border-bottom: 2px solid #ffffff;
 }
 
 /* Profile & Dropdown Logout */
@@ -416,7 +421,7 @@ export default {
 }
 
 .dropdown-item:hover {
-  background-color: #c0392b;
+  background-color: #dc2626;
   color: #ffffff;
 }
 
@@ -490,7 +495,7 @@ export default {
 }
 
 .tab-btn.active {
-  color: #c0392b;
+  color: #1e385c;
 }
 
 .tab-btn.active::after {
@@ -499,8 +504,8 @@ export default {
   bottom: -14px;
   left: 0;
   width: 100%;
-  height: 2px;
-  background-color: #c0392b;
+  height: 3px;
+  background-color: #1e385c;
 }
 
 /* Loading & Empty State */
@@ -515,7 +520,7 @@ export default {
   width: 32px;
   height: 32px;
   border: 3px solid #f3f3f3;
-  border-top: 3px solid #c0392b;
+  border-top: 3px solid #1e385c;
   border-radius: 50%;
   margin: 0 auto 12px auto;
   animation: spin 0.8s linear infinite;
@@ -540,12 +545,12 @@ export default {
   font-size: 0.9rem;
 }
 
-.custom-table th {
-  background-color: #fafafa;
-  color: #444444;
+.navy-header-row th {
+  background-color: #1e385c;
+  color: #ffffff;
   font-weight: 700;
   padding: 14px 18px;
-  border-bottom: 2px solid #eaeaea;
+  border-bottom: 2px solid #162a45;
   text-transform: uppercase;
   font-size: 0.8rem;
   letter-spacing: 0.5px;
@@ -558,7 +563,7 @@ export default {
 }
 
 .custom-table tbody tr:hover {
-  background-color: #fcf8f8;
+  background-color: #f8fafc;
 }
 
 .custom-table tbody tr:last-child td {
@@ -593,7 +598,7 @@ export default {
 
 /* Row Total / Summary Footer */
 .summary-row {
-  background-color: #f8f9fa;
+  background-color: #f8fafc;
   border-top: 2px solid #e2e8f0;
 }
 
@@ -604,7 +609,7 @@ export default {
 }
 
 .total-val {
-  color: #c0392b;
+  color: #1e385c;
   font-size: 1.1rem;
 }
 

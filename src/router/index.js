@@ -3,9 +3,8 @@ import PublicDashboard from '../components/Dashboard.vue'
 import LoginView from '../components/LoginView.vue'
 import UmkmView from '../components/UmkmView.vue'
 import UmkmPublicView from '../components/UmkmPublicView.vue'
-
-// 1. Import komponen untuk halaman Data (sesuaikan path & nama filenya)
 import DataUmkmView from '../components/DataUmkmView.vue'
+import RasioUmkmView from '../components/RasioUmkmView.vue' // Import komponen Rasio
 
 const routes = [
   {
@@ -19,21 +18,25 @@ const routes = [
     component: LoginView
   },
   {
-    path: '/umkm', // Layanan UMKM Publik (Akses dari landing page)
+    path: '/umkm',
     name: 'UmkmPublic',
     component: UmkmPublicView
   },
   {
-    path: '/admin/umkm', // Route Admin UMKM setelah Login
-    alias: '/umkm-dashboard', // Alias agar URL /umkm-dashboard tetap bisa diakses
+    path: '/admin/umkm',
+    alias: '/umkm-dashboard',
     name: 'UmkmDashboard',
     component: UmkmView
   },
-  // 2. Tambahkan Route untuk Halaman Data Admin di sini:
   {
     path: '/admin/data',
     name: 'AdminData',
     component: DataUmkmView
+  },
+  {
+    path: '/admin/rasio',
+    name: 'AdminRasio',
+    component: RasioUmkmView // Route untuk Halaman Rasio
   }
 ]
 

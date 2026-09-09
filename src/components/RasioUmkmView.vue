@@ -49,20 +49,20 @@
             type="text" 
             v-model="searchQuery" 
             @input="handleSearch"
-            placeholder="Cari Nama Perusahaan, Proyek, atau Kecamatan..."
+            placeholder="Cari berdasarkan Tahun..."
           />
         </div>
 
         <!-- Filter Urutan -->
         <div class="sort-box">
           <select v-model="sortOrder" @change="onSortChange" class="sort-select">
-            <option value="desc">Terbaru &rarr; Terlama</option>
-            <option value="asc">Terlama &rarr; Terbaru</option>
+            <option value="desc">Tahun Terbaru &rarr; Terlama</option>
+            <option value="asc">Tahun Terlama &rarr; Terbaru</option>
           </select>
         </div>
 
         <button class="btn-add" @click="openAddModal">
-          + Tambah
+          + Tambah Data
         </button>
       </div>
 
@@ -74,7 +74,7 @@
       <!-- Table Card Wrapper -->
       <div class="data-card">
         <div class="card-header-navy">
-          <h3>Data UMKM</h3>
+          <h3>Data Penduduk & Rasio Kewirausahaan</h3>
         </div>
 
         <div class="table-container">
@@ -82,40 +82,38 @@
             <thead>
               <tr>
                 <th class="text-center" style="width: 60px;">No</th>
-                <th>Nama Perusahaan</th>
-                <th>Nama Proyek</th>
-                <th>Kab/Kota Usaha</th>
-                <th>Kecamatan</th>
-                <th>Kelurahan</th>
-                <th>Judul KBLI</th>
+                <th class="text-center">Tahun</th>
+                <th class="text-right">Total UMKM</th>
+                <th class="text-right">Jumlah Penduduk</th>
+                <th class="text-center">Rasio Kewirausahaan</th>
                 <th class="text-center" style="width: 110px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <!-- Loading State -->
               <tr v-if="loading">
-                <td colspan="8" class="text-center py-5">
+                <td colspan="6" class="text-center py-5">
                   <div class="spinner"></div>
-                  <p class="loading-text">Memuat data UMKM...</p>
+                  <p class="loading-text">Memuat data rasio kewirausahaan...</p>
                 </td>
               </tr>
 
               <!-- Empty State -->
-              <tr v-else-if="displayedUmkmList.length === 0">
-                <td colspan="8" class="text-center py-5 empty-text">
-                  Data UMKM tidak ditemukan.
+              <tr v-else-if="displayedRasioList.length === 0">
+                <td colspan="6" class="text-center py-5 empty-text">
+                  Data penduduk & rasio tidak ditemukan.
                 </td>
               </tr>
 
               <!-- Data Rows -->
-              <tr v-else v-for="(item, index) in displayedUmkmList" :key="item.id || index">
+              <tr v-else v-for="(item, index) in displayedRasioList" :key="item.id || index">
                 <td class="text-center font-bold">{{ calculateRowIndex(index) }}</td>
-                <td class="font-bold text-uppercase">{{ formatText(item?.nama_perusahaan) }}</td>
-                <td>{{ formatText(item?.nama_proyek) }}</td>
-                <td>{{ formatText(item?.kab_kota_usaha || item?.kab_kota?.nama) }}</td>
-                <td>{{ formatText(item?.kecamatan_usaha || item?.kecamatan?.nama) }}</td>
-                <td>{{ formatText(item?.kelurahan_usaha || item?.kelurahan?.nama) }}</td>
-                <td>{{ formatText(item?.judul_kbli || item?.kbli_data?.judul) }}</td>
+                <td class="text-center font-bold">{{ item.tahun }}</td>
+                <td class="text-right font-mono">{{ formatNumber(item.total_umkm) }}</td>
+                <td class="text-right font-mono">{{ formatNumber(item.jumlah_penduduk) }}</td>
+                <td class="text-center">
+                  <span class="badge badge-ratio">{{ formatRasio(item.rasio) }}</span>
+                </td>
                 <td class="text-center">
                   <div class="action-buttons">
                     <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
@@ -177,7 +175,7 @@
       <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
         <div class="modal-container">
           <div class="modal-header">
-            <h3>Informasi Detail UMKM</h3>
+            <h3>Detail Rasio Kewirausahaan</h3>
             <button class="btn-close" @click="closeModal">&times;</button>
           </div>
           
@@ -193,55 +191,28 @@
 
             <div v-else-if="selectedDetail" class="detail-grid">
               <div class="detail-group">
-                <label>Nama Perusahaan</label>
-                <p class="font-bold text-uppercase">{{ formatText(selectedDetail.nama_perusahaan) }}</p>
+                <label>Tahun</label>
+                <p class="font-bold text-xl">{{ selectedDetail.tahun }}</p>
               </div>
               <div class="detail-group">
-                <label>Nama Proyek</label>
-                <p>{{ formatText(selectedDetail.nama_proyek) }}</p>
+                <label>Rasio Kewirausahaan</label>
+                <p><span class="badge badge-ratio-lg">{{ formatRasio(selectedDetail.rasio) }}</span></p>
               </div>
               <div class="detail-group">
-                <label>Jenis Perusahaan</label>
-                <p>{{ formatText(selectedDetail.jenis_perusahaan) }}</p>
+                <label>Total UMKM</label>
+                <p class="font-mono font-bold">{{ formatNumber(selectedDetail.total_umkm) }} Unit</p>
               </div>
               <div class="detail-group">
-                <label>Risiko Proyek</label>
-                <p><span class="badge badge-risk">{{ formatText(selectedDetail.risiko_proyek) }}</span></p>
+                <label>Jumlah Penduduk</label>
+                <p class="font-mono font-bold">{{ formatNumber(selectedDetail.jumlah_penduduk) }} Jiwa</p>
               </div>
               <div class="detail-group">
-                <label>Skala Usaha</label>
-                <p>{{ formatText(selectedDetail.skala_usaha) }}</p>
+                <label>Dibuat Pada</label>
+                <p>{{ formatDate(selectedDetail.created_at) }}</p>
               </div>
               <div class="detail-group">
-                <label>Sektor Pembina</label>
-                <p>{{ formatText(selectedDetail.sektor_pembina) }}</p>
-              </div>
-              <div class="detail-group col-span-2">
-                <label>Alamat Usaha</label>
-                <p>{{ formatText(selectedDetail.alamat_usaha) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Kecamatan</label>
-                <p>{{ formatText(selectedDetail.kecamatan_usaha || selectedDetail.kecamatan?.nama) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Kelurahan</label>
-                <p>{{ formatText(selectedDetail.kelurahan_usaha || selectedDetail.kelurahan?.nama) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Kab / Kota Usaha</label>
-                <p>{{ formatText(selectedDetail.kab_kota_usaha || selectedDetail.kab_kota?.nama) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Jumlah Tenaga Kerja (TKI)</label>
-                <p>{{ selectedDetail.jumlah_tki || 0 }} Orang</p>
-              </div>
-              <div class="detail-group col-span-2">
-                <label>Data KBLI</label>
-                <div class="kbli-box">
-                  <strong>Kode:</strong> {{ formatText(selectedDetail.kbli || selectedDetail.kbli_data?.kode) }} <br/>
-                  <strong>Judul:</strong> {{ formatText(selectedDetail.judul_kbli || selectedDetail.kbli_data?.judul) }}
-                </div>
+                <label>Terakhir Diperbarui</label>
+                <p>{{ formatDate(selectedDetail.updated_at) }}</p>
               </div>
             </div>
           </div>
@@ -256,9 +227,9 @@
     <!-- Modal Form (Tambah & Edit) -->
     <transition name="modal-fade">
       <div v-if="showFormModal" class="modal-overlay" @click.self="closeFormModal">
-        <div class="modal-container">
+        <div class="modal-container modal-sm">
           <div class="modal-header">
-            <h3>{{ isEditMode ? 'Edit Data UMKM' : 'Tambah Data UMKM Baru' }}</h3>
+            <h3>{{ isEditMode ? 'Edit Data Rasio' : 'Tambah Data Rasio' }}</h3>
             <button class="btn-close" @click="closeFormModal">&times;</button>
           </div>
           
@@ -268,114 +239,60 @@
                 {{ formError }}
               </div>
 
-              <!-- Form Grid -->
-              <div class="form-grid">
-                <!-- 1. Nama Perusahaan -->
+              <!-- Form Stack -->
+              <div class="form-stack">
+                <!-- 1. Tahun -->
                 <div class="form-group">
-                  <label>Nama Perusahaan <span class="required">*</span></label>
-                  <input type="text" v-model="formData.nama_perusahaan" />
+                  <label>Tahun <span class="required">*</span></label>
+                  <input 
+                    type="number" 
+                    min="2000" 
+                    max="2099" 
+                    v-model.number="formData.tahun" 
+                    @input="onTahunChange"
+                    required 
+                    placeholder="Contoh: 2026"
+                  />
                 </div>
 
-                <!-- 2. Nama Proyek -->
+                <!-- 2. Total UMKM (READONLY) -->
                 <div class="form-group">
-                  <label>Nama Proyek</label>
-                  <input type="text" v-model="formData.nama_proyek" />
+                  <label>Total UMKM <span class="required">*</span></label>
+                  <input 
+                    type="number" 
+                    v-model.number="formData.total_umkm" 
+                    readonly 
+                    class="input-readonly"
+                    placeholder="0"
+                  />
+                  <small class="help-text">*Diambil otomatis dari data UMKM yang tersimpan</small>
                 </div>
 
-                <!-- 3. Jenis Perusahaan -->
+                <!-- 3. Jumlah Penduduk -->
                 <div class="form-group">
-                  <label>Jenis Perusahaan</label>
-                  <input type="text" v-model="formData.jenis_perusahaan" />
+                  <label>Jumlah Penduduk <span class="required">*</span></label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    v-model.number="formData.jumlah_penduduk" 
+                    @input="autoCalculateRasio"
+                    required 
+                    placeholder="0"
+                  />
                 </div>
 
-                <!-- 4. Risiko Proyek -->
+                <!-- 4. Rasio (%) (READONLY) -->
                 <div class="form-group">
-                  <label>Risiko Proyek</label>
-                  <select v-model="formData.risiko_proyek" class="form-select">
-                    <option value="">-- Pilih Risiko --</option>
-                    <option value="Rendah">Rendah</option>
-                    <option value="Menengah Rendah">Menengah Rendah</option>
-                    <option value="Menengah Tinggi">Menengah Tinggi</option>
-                    <option value="Tinggi">Tinggi</option>
-                  </select>
-                </div>
-
-                <!-- 5. Skala Usaha -->
-                <div class="form-group">
-                  <label>Skala Usaha</label>
-                  <select v-model="formData.skala_usaha" class="form-select">
-                    <option value="">-- Pilih Skala --</option>
-                    <option value="Usaha Mikro">Usaha Mikro</option>
-                    <option value="Usaha Kecil">Usaha Kecil</option>
-                    <option value="Usaha Menengah">Usaha Menengah</option>
-                    <option value="Usaha Besar">Usaha Besar</option>
-                  </select>
-                </div>
-
-                <!-- 6. Sektor Pembina -->
-                <div class="form-group">
-                  <label>Sektor Pembina</label>
-                  <input type="text" v-model="formData.sektor_pembina" />
-                </div>
-
-                <!-- 7. Alamat Usaha -->
-                <div class="form-group col-span-2">
-                  <label>Alamat Usaha</label>
-                  <textarea v-model="formData.alamat_usaha" rows="2"></textarea>
-                </div>
-
-                <!-- 8. Kecamatan -->
-                <div class="form-group">
-                  <label>Kecamatan <span class="required">*</span></label>
-                  <select v-model="formData.kecamatan_usaha" class="form-select" @change="onKecamatanChange" required>
-                    <option value="">-- Pilih Kecamatan --</option>
-                    <option v-for="(kelurahans, kec) in dataBanjarmasin" :key="kec" :value="kec">
-                      {{ kec }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- 9. Kelurahan -->
-                <div class="form-group">
-                  <label>Kelurahan <span class="required">*</span></label>
-                  <select 
-                    v-model="formData.kelurahan_usaha" 
-                    class="form-select" 
-                    :disabled="!formData.kecamatan_usaha"
-                    required
-                  >
-                    <option value="">-- Pilih Kelurahan --</option>
-                    <option v-for="kel in listKelurahan" :key="kel" :value="kel">
-                      {{ kel }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- 10. Kab / Kota Usaha -->
-                <div class="form-group">
-                  <label>Kab / Kota Usaha</label>
-                  <input type="text" v-model="formData.kab_kota_usaha" class="form-readonly" readonly />
-                </div>
-
-                <!-- 11. Jumlah Tenaga Kerja (TKI) -->
-                <div class="form-group">
-                  <label>Jumlah Tenaga Kerja (TKI)</label>
-                  <input type="number" min="0" v-model.number="formData.jumlah_tki" placeholder="0" />
-                </div>
-
-                <!-- 12. Data KBLI -->
-                <div class="form-group col-span-2 kbli-input-box">
-                  <label class="kbli-section-label">Data KBLI</label>
-                  <div class="form-grid inner-grid">
-                    <div class="form-group">
-                      <label>Kode KBLI</label>
-                      <input type="text" v-model="formData.kbli"/>
-                    </div>
-                    <div class="form-group">
-                      <label>Judul KBLI</label>
-                      <input type="text" v-model="formData.judul_kbli" />
-                    </div>
-                  </div>
+                  <label>Rasio Kewirausahaan (%) <span class="required">*</span></label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    v-model.number="formData.rasio" 
+                    readonly 
+                    class="input-readonly"
+                    placeholder="0"
+                  />
+                  <small class="help-text">*Rasio otomatis dihitung dari (Total UMKM / Jumlah Penduduk) * 100</small>
                 </div>
               </div>
             </div>
@@ -404,9 +321,9 @@
             <div class="delete-icon-wrapper">
               <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </div>
-            <h4 class="delete-title">Hapus Data UMKM?</h4>
+            <h4 class="delete-title">Hapus Data Rasio?</h4>
             <p class="delete-desc">
-              Apakah kamu yakin ingin menghapus data <strong>"{{ itemToDelete?.nama_perusahaan }}"</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah kamu yakin ingin menghapus data rasio tahun <strong>"{{ itemToDelete?.tahun }}"</strong>? Tindakan ini tidak dapat dibatalkan.
             </p>
           </div>
           <div class="modal-footer footer-center">
@@ -424,7 +341,7 @@
 
 <script>
 export default {
-  name: 'DataUmkmView',
+  name: 'RasioKewirausahaanView',
   data() {
     return {
       showDropdown: false,
@@ -435,7 +352,7 @@ export default {
       perPage: 10,
       sortOrder: 'desc',
       
-      displayedUmkmList: [],
+      displayedRasioList: [],
       pagination: {
         current_page: 1,
         last_page: 1,
@@ -456,40 +373,12 @@ export default {
       itemToDelete: null,
       deleting: false,
 
-      dataBanjarmasin: {
-        "Banjarmasin Barat": [
-          "Basirih", "Belitung Selatan", "Belitung Utara", "Kuin Cerucuk", "Kuin Selatan", "Pelambuan", "Telaga Biru", "Teluk Tiram"
-        ],
-        "Banjarmasin Selatan": [
-          "Basirih Selatan", "Kelayan Barat", "Kelayan Dalam", "Kelayan Selatan", "Kelayan Tengah", "Kelayan Timur", "Mantuil", "Murung Raya", "Pekauman", "Pemurus Baru", "Pemurus Dalam", "Tanjung Pagar"
-        ],
-        "Banjarmasin Tengah": [
-          "Antasan Besar", "Gadang", "Kelayan Luar", "Kertak Baru Ilir", "Kertak Baru Ulu", "Mawar", "Melayu", "Pasar Lama", "Pekapuran Laut", "Seberang Masjid", "Teluk Dalam"
-        ],
-        "Banjarmasin Timur": [
-          "Benua Anyar", "Karang Mekar", "Kebun Bunga", "Kuripan", "Pekapuran Raya", "Pemurus Luar", "Pengambangan", "Sungai Bilu"
-        ],
-        "Banjarmasin Utara": [
-          "Alalak Selatan", "Alalak Tengah", "Alalak Utara", "Antasan Kecil Timur", "Kuin Utara", "Pangeran", "Sungai Miai", "Sungai Andai", "Surgi Mufti"
-        ]
-      },
-
       formData: {
         id: null,
-        nama_perusahaan: '',
-        nama_proyek: '',
-        jenis_perusahaan: '',
-        risiko_proyek: '',
-        skala_usaha: '',
-        sektor_pembina: '',
-        alamat_usaha: '',
-        kecamatan_usaha: '',
-        kelurahan_usaha: '',
-        kab_kota_usaha: 'Kota Banjarmasin',
-        jumlah_tki: 0,
-        kbli: '',
-        judul_kbli: '',
-        is_publik: true
+        tahun: new Date().getFullYear(),
+        total_umkm: 0,
+        jumlah_penduduk: 0,
+        rasio: 0
       }
     }
   },
@@ -514,15 +403,10 @@ export default {
         pages.push(last)
       }
       return pages
-    },
-
-    listKelurahan() {
-      if (!this.formData.kecamatan_usaha) return []
-      return this.dataBanjarmasin[this.formData.kecamatan_usaha] || []
     }
   },
   mounted() {
-    this.fetchUmkmData(1)
+    this.fetchRasioData(1)
   },
   methods: {
     getAuthToken() {
@@ -541,7 +425,7 @@ export default {
       return token || ''
     },
 
-    async fetchUmkmData(page = 1) {
+    async fetchRasioData(page = 1) {
       this.loading = true
       this.errorMessage = ''
       try {
@@ -563,7 +447,7 @@ export default {
 
         if (token) headers['Authorization'] = `Bearer ${token}`
 
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm?${queryParams.toString()}`
+        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk?${queryParams.toString()}`
         const response = await fetch(url, { method: 'GET', headers })
 
         if (response.status === 401) {
@@ -577,14 +461,14 @@ export default {
         const pageData = result.data || {}
 
         if (pageData && Array.isArray(pageData.data)) {
-          this.displayedUmkmList = this.sortListLocally(pageData.data)
+          this.displayedRasioList = this.sortListLocally(pageData.data)
           this.pagination = {
             current_page: Number(pageData.current_page) || page,
             last_page: Number(pageData.last_page) || 1,
             total: Number(pageData.total) || 0
           }
         } else if (Array.isArray(result.data)) {
-          this.displayedUmkmList = this.sortListLocally(result.data)
+          this.displayedRasioList = this.sortListLocally(result.data)
           this.pagination = {
             current_page: 1,
             last_page: 1,
@@ -594,20 +478,91 @@ export default {
 
       } catch (error) {
         this.errorMessage = `Error: ${error.message || 'Gagal terhubung ke API.'}`
-        this.displayedUmkmList = []
+        this.displayedRasioList = []
       } finally {
         this.loading = false
       }
     },
 
-    onKecamatanChange() {
-      this.formData.kelurahan_usaha = ''
+    // HIT API DETAIL: GET /api/admin/penduduk/{id}
+    async handleDetail(item) {
+      this.showModal = true
+      this.loadingDetail = true
+      this.modalError = ''
+      this.selectedDetail = null
+
+      try {
+        const token = this.getAuthToken()
+        const headers = {
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': '69420'
+        }
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk/${item.id}?ngrok-skip-browser-warning=69420`
+        const response = await fetch(url, { method: 'GET', headers })
+
+        if (!response.ok) throw new Error('Gagal menarik data detail dari server.')
+
+        const result = await response.json()
+        console.log('[DEBUG] Detail Response API:', result)
+
+        const apiData = result.data || {}
+        
+        // Gabungkan dengan total_umkm dari tabel & hitung rasio real-time
+        const totalUmkm = Number(item.total_umkm) || 0
+        const jumlahPenduduk = Number(apiData.jumlah_penduduk) || 0
+        const rasioCalc = jumlahPenduduk > 0 ? (totalUmkm / jumlahPenduduk) * 100 : 0
+
+        this.selectedDetail = {
+          id: apiData.id,
+          tahun: apiData.tahun || item.tahun,
+          jumlah_penduduk: jumlahPenduduk,
+          total_umkm: totalUmkm,
+          rasio: parseFloat(rasioCalc.toFixed(2)),
+          created_at: apiData.created_at,
+          updated_at: apiData.updated_at
+        }
+
+      } catch (error) {
+        console.error('[DEBUG] Fetch Detail Error:', error)
+        // Fallback memakai data baris jika API error
+        this.selectedDetail = item
+      } finally {
+        this.loadingDetail = false
+      }
+    },
+
+    syncTotalUmkm() {
+      const found = this.displayedRasioList.find(item => Number(item.tahun) === Number(this.formData.tahun))
+      if (found && found.total_umkm !== undefined) {
+        this.formData.total_umkm = Number(found.total_umkm)
+      } else if (this.displayedRasioList.length > 0) {
+        this.formData.total_umkm = Number(this.displayedRasioList[0].total_umkm) || 0
+      } else {
+        this.formData.total_umkm = 0
+      }
+      this.autoCalculateRasio()
+    },
+
+    onTahunChange() {
+      this.syncTotalUmkm()
+    },
+
+    autoCalculateRasio() {
+      if (this.formData.jumlah_penduduk > 0 && this.formData.total_umkm >= 0) {
+        const calc = (this.formData.total_umkm / this.formData.jumlah_penduduk) * 100
+        this.formData.rasio = parseFloat(calc.toFixed(2))
+      } else {
+        this.formData.rasio = 0
+      }
     },
 
     openAddModal() {
       this.isEditMode = false
       this.formError = ''
       this.resetFormData()
+      this.syncTotalUmkm()
       this.showFormModal = true
     },
 
@@ -616,41 +571,22 @@ export default {
       this.formError = ''
       this.formData = {
         id: item.id,
-        nama_perusahaan: item.nama_perusahaan || '',
-        nama_proyek: item.nama_proyek || '',
-        jenis_perusahaan: item.jenis_perusahaan || '',
-        risiko_proyek: item.risiko_proyek || '',
-        skala_usaha: item.skala_usaha || '',
-        sektor_pembina: item.sektor_pembina || '',
-        alamat_usaha: item.alamat_usaha || '',
-        kecamatan_usaha: item.kecamatan_usaha || item.kecamatan?.nama || '',
-        kelurahan_usaha: item.kelurahan_usaha || item.kelurahan?.nama || '',
-        kab_kota_usaha: 'Kota Banjarmasin',
-        jumlah_tki: item.jumlah_tki || 0,
-        kbli: item.kbli || item.kbli_data?.kode || '',
-        judul_kbli: item.judul_kbli || item.kbli_data?.judul || '',
-        is_publik: true
+        tahun: item.tahun || new Date().getFullYear(),
+        total_umkm: item.total_umkm || 0,
+        jumlah_penduduk: item.jumlah_penduduk || 0,
+        rasio: item.rasio || 0
       }
+      this.autoCalculateRasio()
       this.showFormModal = true
     },
 
     resetFormData() {
       this.formData = {
         id: null,
-        nama_perusahaan: '',
-        nama_proyek: '',
-        jenis_perusahaan: '',
-        risiko_proyek: '',
-        skala_usaha: '',
-        sektor_pembina: '',
-        alamat_usaha: '',
-        kecamatan_usaha: '',
-        kelurahan_usaha: '',
-        kab_kota_usaha: 'Kota Banjarmasin',
-        jumlah_tki: 0,
-        kbli: '',
-        judul_kbli: '',
-        is_publik: true
+        tahun: new Date().getFullYear(),
+        total_umkm: 0,
+        jumlah_penduduk: 0,
+        rasio: 0
       }
     },
 
@@ -677,17 +613,17 @@ export default {
 
         const isEdit = this.isEditMode && this.formData.id
         const url = isEdit 
-          ? `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${this.formData.id}`
-          : `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm`
+          ? `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk/${this.formData.id}`
+          : `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk`
 
         const method = isEdit ? 'PUT' : 'POST'
 
-        const payload = { 
-          ...this.formData,
-          kab_kota_usaha: 'Kota Banjarmasin',
-          is_publik: true
+        const payload = {
+          tahun: String(this.formData.tahun),
+          jumlah_penduduk: Number(this.formData.jumlah_penduduk)
         }
-        delete payload.id
+
+        console.log('[DEBUG] Sending Payload to API:', payload)
 
         const response = await fetch(url, {
           method: method,
@@ -697,88 +633,21 @@ export default {
 
         const resJson = await response.json().catch(() => ({}))
 
+        console.log('[DEBUG] Response Status Code:', response.status)
+        console.log('[DEBUG] Response Body:', resJson)
+
         if (!response.ok) {
-          throw new Error(resJson.message || 'Gagal menyimpan data. Pastikan semua field wajib diisi.')
+          throw new Error(resJson.message || 'Gagal menyimpan data. Pastikan input sudah benar.')
         }
 
         this.closeFormModal()
-        this.fetchUmkmData(this.pagination.current_page)
+        this.fetchRasioData(this.pagination.current_page)
       } catch (err) {
+        console.error('[DEBUG] Submit Form Error:', err)
         this.formError = err.message || 'Terjadi kesalahan saat memproses data.'
       } finally {
         this.submittingForm = false
       }
-    },
-
-    sortListLocally(list) {
-      if (!Array.isArray(list)) return []
-      return [...list].sort((a, b) => {
-        const idA = Number(a.id) || 0
-        const idB = Number(b.id) || 0
-        return this.sortOrder === 'desc' ? idB - idA : idA - idB
-      })
-    },
-
-    onSortChange() {
-      this.displayedUmkmList = this.sortListLocally(this.displayedUmkmList)
-    },
-
-    changePage(page) {
-      if (page < 1 || page > this.pagination.last_page || page === this.pagination.current_page) return
-      this.fetchUmkmData(page)
-    },
-
-    calculateRowIndex(index) {
-      return (this.pagination.current_page - 1) * this.perPage + index + 1
-    },
-
-    handleSearch() {
-      clearTimeout(this.searchTimeout)
-      this.searchTimeout = setTimeout(() => {
-        this.fetchUmkmData(1)
-      }, 400)
-    },
-
-    formatText(val) {
-      if (!val || val === 'null' || val === 'string' || val === '-' || val === 'undefined') return '-'
-      return val
-    },
-
-    async handleDetail(item) {
-      this.showModal = true
-      this.loadingDetail = true
-      this.modalError = ''
-      this.selectedDetail = null
-
-      try {
-        const token = this.getAuthToken()
-        const headers = {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }
-        if (token) headers['Authorization'] = `Bearer ${token}`
-
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${item.id}?ngrok-skip-browser-warning=69420`
-        const response = await fetch(url, { method: 'GET', headers })
-
-        if (!response.ok) throw new Error('Gagal menarik data detail dari server.')
-
-        const result = await response.json()
-        this.selectedDetail = result.data
-
-      } catch (error) {
-        this.modalError = error.message || 'Terjadi kesalahan sistem.'
-      } finally {
-        this.loadingDetail = false
-      }
-    },
-
-    closeModal() {
-      this.showModal = false
-      setTimeout(() => {
-        this.selectedDetail = null
-        this.modalError = ''
-      }, 300)
     },
 
     handleDelete(item) {
@@ -794,6 +663,7 @@ export default {
       }, 300)
     },
 
+    // FIX HAPUS DATA MODAL STUCK:
     async confirmDelete() {
       if (!this.itemToDelete) return
       this.deleting = true
@@ -805,18 +675,88 @@ export default {
         }
         if (token) headers['Authorization'] = `Bearer ${token}`
 
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${this.itemToDelete.id}`
+        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk/${this.itemToDelete.id}`
         const response = await fetch(url, { method: 'DELETE', headers })
 
         if (!response.ok) throw new Error('Gagal menghapus data dari server.')
 
-        this.closeDeleteModal()
-        this.fetchUmkmData(this.pagination.current_page)
+        // Reset state & tutup modal
+        this.deleting = false
+        this.showDeleteModal = false
+        this.itemToDelete = null
+
+        // Reload data tabel
+        this.fetchRasioData(this.pagination.current_page)
       } catch (error) {
+        console.error('[DEBUG] Delete Error:', error)
         alert(`Error: ${error.message}`)
-      } finally {
         this.deleting = false
       }
+    },
+
+    sortListLocally(list) {
+      if (!Array.isArray(list)) return []
+      return [...list].sort((a, b) => {
+        const yearA = Number(a.tahun) || 0
+        const yearB = Number(b.tahun) || 0
+        return this.sortOrder === 'desc' ? yearB - yearA : yearA - yearB
+      })
+    },
+
+    onSortChange() {
+      this.displayedRasioList = this.sortListLocally(this.displayedRasioList)
+    },
+
+    changePage(page) {
+      if (page < 1 || page > this.pagination.last_page || page === this.pagination.current_page) return
+      this.fetchRasioData(page)
+    },
+
+    calculateRowIndex(index) {
+      return (this.pagination.current_page - 1) * this.perPage + index + 1
+    },
+
+    handleSearch() {
+      clearTimeout(this.searchTimeout)
+      this.searchTimeout = setTimeout(() => {
+        this.fetchRasioData(1)
+      }, 400)
+    },
+
+    formatNumber(val) {
+      if (val === null || val === undefined || isNaN(val)) return '0'
+      return Number(val).toLocaleString('id-ID')
+    },
+
+    formatRasio(val) {
+      if (val === null || val === undefined || isNaN(val)) return '0%'
+      return `${Number(val).toFixed(2)}%`
+    },
+
+    formatDate(dateStr) {
+      if (!dateStr) return '-'
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return dateStr
+
+      const day = String(date.getDate()).padStart(2, '0')
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ]
+      const month = months[date.getMonth()]
+      const year = date.getFullYear()
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+
+      return `${day} ${month} ${year} pukul ${hours}.${minutes}`
+    },
+
+    closeModal() {
+      this.showModal = false
+      setTimeout(() => {
+        this.selectedDetail = null
+        this.modalError = ''
+      }, 300)
     },
 
     toggleDropdown() {
@@ -847,7 +787,7 @@ export default {
 
 .admin-navbar {
   background-color: #1e385c;
-  color: #ffffff;
+  color: #1e385c;
   padding: 14px 40px;
   display: flex;
   justify-content: space-between;
@@ -914,10 +854,17 @@ export default {
 .card-header-navy { background-color: #1e385c; color: #ffffff; padding: 16px 24px; }
 .card-header-navy h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
 .table-container { overflow-x: auto; }
-.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .data-table th { background-color: #ffffff; color: #1e293b; font-weight: 700; padding: 16px 18px; border-bottom: 2px solid #f1f5f9; text-align: left; }
 .data-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
 .data-table tbody tr:hover { background-color: #f8fafc; }
+
+.badge-ratio {
+  background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; display: inline-block;
+}
+.badge-ratio-lg {
+  background-color: #dbeafe; color: #1e40af; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 1.1rem; display: inline-block;
+}
 
 .action-buttons { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
@@ -942,8 +889,10 @@ export default {
 .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .text-center { text-align: center; }
+.text-right { text-align: right; }
 .font-bold { font-weight: 700; }
-.text-uppercase { text-transform: uppercase; }
+.font-mono { font-family: monospace; font-size: 0.95rem; }
+.font-xl { font-size: 1.25rem; }
 .py-5 { padding-top: 40px; padding-bottom: 40px; }
 .py-4 { padding-top: 24px; padding-bottom: 24px; }
 .mt-3 { margin-top: 12px; }
@@ -967,7 +916,7 @@ export default {
   display: flex; justify-content: center; align-items: center; z-index: 9999;
 }
 .modal-container {
-  background-color: #ffffff; width: 90%; max-width: 680px; border-radius: 12px;
+  background-color: #ffffff; width: 90%; max-width: 580px; border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); overflow: hidden;
 }
 .modal-sm { max-width: 440px; }
@@ -984,29 +933,27 @@ export default {
 
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .detail-group { background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
-.col-span-2 { grid-column: span 2; }
 .detail-group label { display: block; font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; }
 .detail-group p { margin: 0; font-size: 0.9rem; color: #1e293b; word-break: break-word; }
-.badge-risk { background-color: #fef08a; color: #854d0e; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
-.kbli-box { background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 0.85rem; color: #334155; margin-top: 4px; }
 
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.inner-grid { margin-top: 6px; }
+.form-stack { display: flex; flex-direction: column; gap: 16px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
 .required { color: #dc2626; }
-.form-group input, .form-group textarea, .form-select {
+.form-group input {
   width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
   font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: #1e293b; outline: none; transition: border-color 0.2s; box-sizing: border-box;
 }
-.form-group input:focus, .form-group textarea:focus, .form-select:focus { border-color: #1e385c; }
-.form-select:disabled { background-color: #f1f5f9; cursor: not-allowed; }
-.form-readonly { background-color: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; }
+.form-group input:focus { border-color: #1e385c; }
 
-.kbli-input-box {
-  background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px 16px; border-radius: 8px;
+.input-readonly {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  cursor: not-allowed;
+  border-color: #e2e8f0 !important;
 }
-.kbli-section-label { font-size: 0.8rem; font-weight: 700; color: #334155; text-transform: uppercase; }
+
+.help-text { font-size: 0.75rem; color: #64748b; font-style: italic; }
 
 .delete-icon-wrapper {
   width: 64px; height: 64px; background-color: #fef2f2; border-radius: 50%;
