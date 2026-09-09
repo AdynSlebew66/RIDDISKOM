@@ -81,7 +81,7 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th class="text-center" style="width: 60px;">No</th>
+                <th class="text-center" style="width: 30px;">No</th>
                 <th class="text-center">Tahun</th>
                 <th class="text-right">Total UMKM</th>
                 <th class="text-right">Jumlah Penduduk</th>
@@ -120,7 +120,7 @@
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                     </button>
                     <button class="btn-icon btn-edit" title="Edit" @click="handleEdit(item)">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
                     <button class="btn-icon btn-delete" title="Hapus" @click="handleDelete(item)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -255,17 +255,17 @@
                   />
                 </div>
 
-                <!-- 2. Total UMKM (READONLY) -->
+                <!-- 2. Total UMKM (SEKARANG BISA DI-EDIT) -->
                 <div class="form-group">
                   <label>Total UMKM <span class="required">*</span></label>
                   <input 
                     type="number" 
+                    min="0"
                     v-model.number="formData.total_umkm" 
-                    readonly 
-                    class="input-readonly"
+                    @input="autoCalculateRasio"
+                    required
                     placeholder="0"
                   />
-                  <small class="help-text">*Diambil otomatis dari data UMKM yang tersimpan</small>
                 </div>
 
                 <!-- 3. Jumlah Penduduk -->
@@ -281,7 +281,7 @@
                   />
                 </div>
 
-                <!-- 4. Rasio (%) (READONLY) -->
+                <!-- 4. Rasio (%) (READONLY - OTOMATIS BERDASARKAN DUA INPUT DI ATAS) -->
                 <div class="form-group">
                   <label>Rasio Kewirausahaan (%) <span class="required">*</span></label>
                   <input 
@@ -484,7 +484,6 @@ export default {
       }
     },
 
-    // HIT API DETAIL: GET /api/admin/penduduk/{id}
     async handleDetail(item) {
       this.showModal = true
       this.loadingDetail = true
@@ -505,11 +504,8 @@ export default {
         if (!response.ok) throw new Error('Gagal menarik data detail dari server.')
 
         const result = await response.json()
-        console.log('[DEBUG] Detail Response API:', result)
-
         const apiData = result.data || {}
         
-        // Gabungkan dengan total_umkm dari tabel & hitung rasio real-time
         const totalUmkm = Number(item.total_umkm) || 0
         const jumlahPenduduk = Number(apiData.jumlah_penduduk) || 0
         const rasioCalc = jumlahPenduduk > 0 ? (totalUmkm / jumlahPenduduk) * 100 : 0
@@ -526,7 +522,6 @@ export default {
 
       } catch (error) {
         console.error('[DEBUG] Fetch Detail Error:', error)
-        // Fallback memakai data baris jika API error
         this.selectedDetail = item
       } finally {
         this.loadingDetail = false
@@ -546,7 +541,11 @@ export default {
     },
 
     onTahunChange() {
-      this.syncTotalUmkm()
+      if (!this.isEditMode) {
+        this.syncTotalUmkm()
+      } else {
+        this.autoCalculateRasio()
+      }
     },
 
     autoCalculateRasio() {
@@ -620,6 +619,7 @@ export default {
 
         const payload = {
           tahun: String(this.formData.tahun),
+          total_umkm: Number(this.formData.total_umkm),
           jumlah_penduduk: Number(this.formData.jumlah_penduduk)
         }
 
@@ -632,9 +632,6 @@ export default {
         })
 
         const resJson = await response.json().catch(() => ({}))
-
-        console.log('[DEBUG] Response Status Code:', response.status)
-        console.log('[DEBUG] Response Body:', resJson)
 
         if (!response.ok) {
           throw new Error(resJson.message || 'Gagal menyimpan data. Pastikan input sudah benar.')
@@ -663,7 +660,6 @@ export default {
       }, 300)
     },
 
-    // FIX HAPUS DATA MODAL STUCK:
     async confirmDelete() {
       if (!this.itemToDelete) return
       this.deleting = true
@@ -680,12 +676,10 @@ export default {
 
         if (!response.ok) throw new Error('Gagal menghapus data dari server.')
 
-        // Reset state & tutup modal
         this.deleting = false
         this.showDeleteModal = false
         this.itemToDelete = null
 
-        // Reload data tabel
         this.fetchRasioData(this.pagination.current_page)
       } catch (error) {
         console.error('[DEBUG] Delete Error:', error)

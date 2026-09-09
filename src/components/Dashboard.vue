@@ -8,7 +8,7 @@
         <header class="navbar">
           <!-- Logo -->
           <div class="brand">
-            <img src="../assets/logo.png" alt="Logo DISKOPUMKER" class="logo" />
+            <img src="../assets/logoe.png" alt="Logo DISKOPUMKER" class="logo" />
           </div>
           
           <!-- Menu Navigasi (Panah Chevron Sudah Dihapus) -->

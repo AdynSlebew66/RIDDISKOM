@@ -127,7 +127,7 @@ export default {
   name: 'UmkmView',
   data() {
     return {
-      showSuccessAlert: true,
+      showSuccessAlert: false,
       showDropdown: false,
       activeTab: 'Sektor Usaha',
       tabs: ['Sektor Usaha', 'Kelurahan', 'Kecamatan', 'Penyerapan Tenaga kerja'],
@@ -201,9 +201,16 @@ export default {
   mounted() {
     this.fetchSektorData()
     
-    setTimeout(() => {
-      this.showSuccessAlert = false
-    }, 4000)
+    // Cek apakah alert login sudah pernah muncul dalam sesi ini
+    const hasShownAlert = sessionStorage.getItem('has_shown_login_alert')
+    if (!hasShownAlert) {
+      this.showSuccessAlert = true
+      sessionStorage.setItem('has_shown_login_alert', 'true')
+      
+      setTimeout(() => {
+        this.showSuccessAlert = false
+      }, 4000)
+    }
   },
   methods: {
     // Helper menyortir data & MENGHAPUS item "Lainnya"
@@ -313,6 +320,7 @@ export default {
     handleLogout() {
       localStorage.removeItem('access_token')
       localStorage.removeItem('user')
+      sessionStorage.removeItem('has_shown_login_alert')
       this.$router.push('/')
     }
   }
