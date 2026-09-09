@@ -95,7 +95,7 @@
 
     <!-- 3. LAYANAN DISKOPUMKER -->
     <section ref="layananSection" class="section-container services-section">
-      <h3 class="section-title">Informasi Tentang DISKOPUMKER</h3>
+      <h3 class="section-title">Informasi Dan Layanan DISKOPUMKER</h3>
       <div class="services-grid">
         <!-- Card 1: HI (Red) -->
         <div class="service-card card-red" @click="goToService('/hi')">

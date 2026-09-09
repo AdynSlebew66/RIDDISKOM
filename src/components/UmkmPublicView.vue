@@ -7,25 +7,13 @@
       </div>
       
       <ul class="nav-links">
-        <li class="nav-item" @click="$router.push('/')">
-          Beranda
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </li>
-        <li class="nav-item">
-          Profile
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </li>
-        <li class="nav-item">
-          Informasi
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </li>
-        <li class="nav-item">
-          Layanan
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </li>
+        <li class="nav-item" @click="$router.push('/')">Beranda</li>
+        <li class="nav-item" @click="scrollToGrafik">Grafik</li>
+        <li class="nav-item" @click="$router.push('/layanan')">Layanan</li>
+        <li class="nav-item" @click="$router.push('/galeri')">Galeri</li>
         <li class="nav-item login-btn" @click="$router.push('/login')">
-          Login
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon-login" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <span>Login</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-login" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
             <polyline points="10 17 15 12 10 7"></polyline>
             <line x1="15" y1="12" x2="3" y2="12"></line>
@@ -42,7 +30,7 @@
         <h1 class="main-heading">
           UMKM <span class="sub-heading">Usaha <span class="highlight-blue">Mikro</span>, <span class="highlight-green">Kecil</span>, dan <span class="highlight-orange">Menengah</span></span>
         </h1>
-        <h2 class="section-heading">Grafik Data UMKM</h2>
+        <h2 ref="grafikSection" class="section-heading">Grafik Data UMKM</h2>
       </div>
 
       <!-- Main Data Card -->
@@ -76,16 +64,14 @@
         <!-- TAB CONTENT -->
         <div v-else class="chart-content-grid">
           
-          <!-- TAB DOUGHNUT / PIE CHART (Sektor, Kecamatan, & Penyerapan Tenaga Kerja) -->
+          <!-- TAB DOUGHNUT / PIE CHART -->
           <template v-if="activeTab === 'sektor' || activeTab === 'tenaga-kerja' || activeTab === 'kecamatan'">
             <div class="chart-left">
               <div class="chart-container">
-                <!-- SVG Doughnut Chart dengan Angka & Persentase di Irisan -->
                 <div class="donut-wrapper">
                   <svg viewBox="0 0 300 300" class="donut-svg">
                     <g v-for="(slice, index) in donutSlices" :key="index">
-                      <path :d="slice.pathData" :fill="slice.color" stroke="#ffffff" stroke-width="2" />
-                      <!-- Text Jumlah Nilai -->
+                      <path :d="slice.pathData" :fill="slice.color" stroke="#f2f2ed" stroke-width="3" />
                       <text
                         v-if="slice.showText"
                         :x="slice.tx"
@@ -97,7 +83,6 @@
                       >
                         {{ slice.value.toLocaleString('id-ID') }}
                       </text>
-                      <!-- Text Persentase -->
                       <text
                         v-if="slice.showText"
                         :x="slice.tx"
@@ -110,15 +95,13 @@
                         {{ slice.percent }}%
                       </text>
                     </g>
-                    <!-- Center Circle & Total (Dihitung Dinamis) -->
-                    <circle cx="150" cy="150" r="55" fill="#f0f0eb" />
-                    <text x="150" y="155" text-anchor="middle" fill="#333333" font-size="15" font-weight="800">
+                    <circle cx="150" cy="150" r="55" fill="#f2f2ed" />
+                    <text x="150" y="155" text-anchor="middle" fill="#1a1a1a" font-size="16" font-weight="800">
                       {{ doughnutTotal.toLocaleString('id-ID') }}
                     </text>
                   </svg>
                 </div>
 
-                <!-- Legend -->
                 <div class="legend-container">
                   <div v-for="(item, index) in doughnutData" :key="index" class="legend-item">
                     <span class="dot" :style="{ backgroundColor: getColor(index) }"></span>
@@ -128,12 +111,19 @@
               </div>
             </div>
 
-            <!-- Right Stat Cards Doughnut (Satu sumber data dengan Doughnut) -->
-            <div class="chart-right">
-              <div v-for="item in doughnutData" :key="item.label" class="stat-card">
-                <span v-if="activeTab === 'sektor'" class="stat-year"></span>
+            <div class="chart-right grid-2-col">
+              <div v-for="item in doughnutCardData" :key="item.label" class="stat-card-framed">
                 <h3 class="stat-title">{{ item.label }}</h3>
-                <p class="stat-value">{{ item.value.toLocaleString('id-ID') }}</p>
+                <div class="card-inner-grid">
+                  <div class="inner-col">
+                    <span class="col-label">Jumlah</span>
+                    <span class="col-value">{{ item.value.toLocaleString('id-ID') }}</span>
+                  </div>
+                  <div class="inner-col highlight-col">
+                    <span class="col-label">Persentase</span>
+                    <span class="col-value percent-text">{{ item.percent }}%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
@@ -143,7 +133,6 @@
             <div class="chart-left bar-chart-left">
               <div class="bar-chart-card">
                 <div class="chart-grid-wrapper">
-                  <!-- Y-Axis Labels -->
                   <div class="y-axis">
                     <span>3000</span>
                     <span>2500</span>
@@ -154,39 +143,140 @@
                     <span>0</span>
                   </div>
 
-                  <!-- Chart Area with Grid Lines and Bars -->
-                  <div class="chart-area">
-                    <div class="grid-lines">
-                      <div class="grid-line" v-for="n in 7" :key="n"></div>
-                    </div>
+                  <div class="chart-area-scrollable">
+                    <div class="chart-area-inner" :style="{ minWidth: chartInnerWidth }">
+                      <div class="grid-lines">
+                        <div class="grid-line" v-for="n in 7" :key="n"></div>
+                      </div>
 
-                    <div class="bars-container">
-                      <div v-for="(item, idx) in currentBarData" :key="idx" class="bar-col">
-                        <div class="bar-track">
-                          <div class="bar-fill" :style="{ height: getBarHeightPercent(item.value, 3000) + '%' }">
-                            <span class="bar-val-text">{{ item.value.toLocaleString('id-ID') }}</span>
+                      <div class="bars-container">
+                        <div v-for="(item, idx) in currentBarData" :key="idx" class="bar-col">
+                          <div class="bar-track">
+                            <div class="bar-fill" :style="{ height: getBarHeightPercent(item.value, 3000) + '%' }">
+                              <span class="bar-val-badge">{{ item.value.toLocaleString('id-ID') }}</span>
+                            </div>
+                          </div>
+                          <div class="bar-x-label-wrapper">
+                            <span class="bar-x-label" :title="item.label">{{ item.label }}</span>
                           </div>
                         </div>
-                        <span class="bar-x-label">{{ item.label }}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- Chart Legend -->
                 <div class="bar-legend">
                   <span class="legend-square"></span>
-                  <span class="legend-text">Total_UMKM_Per_Kelurahan</span>
+                  <span class="legend-text">Total UMKM Per Kelurahan</span>
                 </div>
               </div>
             </div>
 
-            <!-- Right Stat Cards Bar Chart (Data Real) -->
-            <div class="chart-right">
-              <div v-for="(card, i) in currentRightCards" :key="i" class="stat-card">
+            <div class="chart-right grid-2-col">
+              <div v-for="(card, i) in kelurahanRightCards" :key="i" class="stat-card-framed">
                 <h3 class="stat-title">{{ card.title }}</h3>
-                <div class="stat-val-group">
-                  <p class="stat-value">{{ Number(card.value).toLocaleString('id-ID') }}</p>
+                <div class="card-inner-grid">
+                  <div class="inner-col">
+                    <span class="col-label">Jumlah</span>
+                    <span class="col-value">{{ Number(card.value).toLocaleString('id-ID') }}</span>
+                  </div>
+                  <div class="inner-col highlight-col">
+                    <span class="col-label">Porsi Kel.</span>
+                    <span class="col-value percent-text">{{ card.percent }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- TAB LINE CHART (Rasio Kewirausahaan) -->
+          <template v-else-if="activeTab === 'rasio-kewirausahaan'">
+            <div class="chart-left line-chart-left">
+              <div class="line-chart-card">
+                <div class="chart-grid-wrapper">
+                  <div class="y-axis">
+                    <span v-for="(tick, tIdx) in rasioYAxis.ticks" :key="tIdx">{{ tick }}</span>
+                  </div>
+
+                  <div class="chart-area line-area">
+                    <div class="grid-lines">
+                      <div class="grid-line" v-for="n in rasioYAxis.ticks.length" :key="n"></div>
+                    </div>
+
+                    <svg class="line-svg" viewBox="0 0 400 200" preserveAspectRatio="none">
+                      <polyline
+                        fill="none"
+                        stroke="#9f8eff"
+                        stroke-width="2.5"
+                        :points="rasioPolylinePoints"
+                      />
+                      <g v-for="(pt, idx) in rasioGraphPoints" :key="idx">
+                        <circle
+                          :cx="pt.x"
+                          :cy="pt.y"
+                          r="5"
+                          fill="#ffffff"
+                          stroke="#9f8eff"
+                          stroke-width="2.5"
+                        />
+                        <text
+                          :x="pt.x"
+                          :y="pt.y - 10"
+                          text-anchor="middle"
+                          fill="#1a1a1a"
+                          font-size="11"
+                          font-weight="700"
+                        >
+                          {{ pt.rasio_format }}
+                        </text>
+                      </g>
+                    </svg>
+
+                    <div class="x-axis-container">
+                      <span
+                        v-for="(pt, idx) in rasioGraphPoints"
+                        :key="idx"
+                        class="x-label-item"
+                        :style="{ left: pt.xPercent + '%' }"
+                      >
+                        {{ pt.tahun }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="line-legend">
+                  <span class="legend-line-dot"></span>
+                  <span class="legend-text">Rasio_Kewirausahaan</span>
+                </div>
+              </div>
+
+              <p class="footnote-text">
+                *Rasio Kewirausahaan adalah perbandingan antara jumlah penduduk atau populasi yang berwirausaha dengan total jumlah angkatan kerja dalam suatu negara atau wilayah pada tahun yang sama
+              </p>
+            </div>
+
+            <div class="chart-right grid-2-col">
+              <div v-for="item in sortedRasioData" :key="item.tahun" class="stat-card-framed year-card">
+                <div class="card-header-year">
+                  <span class="year-badge">{{ item.tahun }}</span>
+                </div>
+                <h3 class="stat-title">Rasio Kewirausahaan</h3>
+                <div class="card-inner-grid">
+                  <div class="inner-col">
+                    <span class="col-label">Rasio</span>
+                    <span class="col-value">{{ item.rasio_format || `${item.rasio}%` }}</span>
+                  </div>
+                  <div class="inner-col highlight-col">
+                    <span class="col-label">Pertumbuhan</span>
+                    <div v-if="item.growth_percentage !== undefined && item.growth_percentage !== 0" 
+                         class="elevation-badge" 
+                         :class="item.growth_percentage >= 0 ? 'up' : 'down'">
+                      <span class="arrow">{{ item.growth_percentage >= 0 ? '▲' : '▼' }}</span>
+                      <span class="percent">{{ Math.abs(item.growth_percentage) }}%</span>
+                    </div>
+                    <span v-else class="col-value percent-text">-</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -208,16 +298,17 @@ export default {
         { id: 'sektor', label: 'Sektor Usaha' },
         { id: 'kelurahan', label: 'Kelurahan' },
         { id: 'kecamatan', label: 'Kecamatan' },
-        { id: 'tenaga-kerja', label: 'Penyerapan Tenaga kerja' }
+        { id: 'tenaga-kerja', label: 'Penyerapan Tenaga kerja' },
+        { id: 'rasio-kewirausahaan', label: 'Rasio Kewirausahaan' }
       ],
 
-      // Raw API Data
       sektorRaw: [],
       wilayahRaw: [],
       tenagaKerjaRaw: {
         total_keseluruhan: 0,
         grafik_kecamatan: []
       },
+      rasioRaw: [],
 
       selectedKecamatan: '',
       loading: false,
@@ -232,6 +323,23 @@ export default {
   computed: {
     selectedKecamatanData() {
       return this.wilayahRaw.find(item => item.kecamatan === this.selectedKecamatan) || null
+    },
+
+    currentBarData() {
+      if (this.activeTab === 'kelurahan') {
+        if (!this.selectedKecamatanData) return []
+        return this.selectedKecamatanData.kelurahanList.map(item => ({
+          label: item.nama,
+          value: item.total
+        }))
+      }
+      return []
+    },
+
+    chartInnerWidth() {
+      const itemCount = this.currentBarData.length
+      if (itemCount <= 6) return '100%'
+      return `${itemCount * 48}px`
     },
 
     doughnutData() {
@@ -261,14 +369,23 @@ export default {
     },
 
     doughnutTotal() {
-      // Mengambil total langsung dari API agar akurat 100% dengan database
       if (this.activeTab === 'tenaga-kerja' && this.tenagaKerjaRaw?.total_keseluruhan) {
         return Number(this.tenagaKerjaRaw.total_keseluruhan)
       }
       return this.doughnutData.reduce((acc, curr) => acc + curr.value, 0)
     },
 
-    // Kalkulasi Irisan Donut SVG
+    doughnutCardData() {
+      const total = this.doughnutTotal
+      return this.doughnutData.map(item => {
+        const pct = total > 0 ? ((item.value / total) * 100).toFixed(2) : '0'
+        return {
+          ...item,
+          percent: pct
+        }
+      })
+    },
+
     donutSlices() {
       const data = this.doughnutData
       const total = this.doughnutTotal
@@ -276,9 +393,9 @@ export default {
 
       const cx = 150
       const cy = 150
-      const R = 130
-      const r = 60
-      const rText = 98
+      const R = 125
+      const r = 58
+      const rText = 94
 
       let currentAngle = -Math.PI / 2
 
@@ -324,38 +441,132 @@ export default {
       })
     },
 
-    currentBarData() {
+    kelurahanRightCards() {
       if (this.activeTab === 'kelurahan') {
         if (!this.selectedKecamatanData) return []
-        return this.selectedKecamatanData.kelurahanList.map(item => ({
-          label: item.nama,
-          value: item.total
-        }))
+        const totalKec = this.selectedKecamatanData.total || 1
+        
+        return this.selectedKecamatanData.kelurahanList
+          .slice()
+          .sort((a, b) => b.total - a.total)
+          .map(k => ({
+            title: `Kel. ${k.nama}`,
+            value: k.total,
+            percent: ((k.total / totalKec) * 100).toFixed(2)
+          }))
       }
       return []
     },
 
-    currentRightCards() {
-      if (this.activeTab === 'kelurahan') {
-        if (!this.selectedKecamatanData) return []
-        
-        // Menampilkan 5 kelurahan dengan UMKM tertinggi agar list tidak terlalu panjang ke bawah
-        return this.selectedKecamatanData.kelurahanList
-          .slice()
-          .sort((a, b) => b.total - a.total)
-          .slice(0, 5)
-          .map(k => ({
-            title: `Kel. ${k.nama}`,
-            value: k.total
-          }))
+    rasioDataList() {
+      if (!this.rasioRaw) return []
+      return Array.isArray(this.rasioRaw) ? this.rasioRaw : [this.rasioRaw]
+    },
+
+    sortedRasioData() {
+      return [...this.rasioDataList].sort((a, b) => (b.tahun || 0) - (a.tahun || 0))
+    },
+
+    rasioYAxis() {
+      const list = [...this.rasioDataList]
+      if (!list.length) return { min: 0, max: 10, ticks: ['10%', '8%', '6%', '4%', '2%', '0%'] }
+
+      const vals = list.map(item => Number(item.rasio) || 0)
+      let minData = Math.min(...vals)
+      let maxData = Math.max(...vals)
+
+      if (minData === maxData) {
+        minData = Math.max(0, minData - 0.1)
+        maxData = maxData + 0.1
       }
-      return []
+
+      const diff = maxData - minData
+      const margin = Math.max(diff * 0.3, 0.04)
+      
+      const minVal = Number((minData - margin).toFixed(2))
+      const maxVal = Number((maxData + margin).toFixed(2))
+
+      const steps = 5
+      const stepVal = (maxVal - minVal) / steps
+      const ticks = []
+
+      for (let i = 0; i <= steps; i++) {
+        const val = maxVal - (stepVal * i)
+        ticks.push(`${val.toFixed(2)}%`)
+      }
+
+      return { min: minVal, max: maxVal, ticks }
+    },
+
+    rasioGraphPoints() {
+      const list = [...this.rasioDataList].sort((a, b) => (a.tahun || 0) - (b.tahun || 0))
+      if (!list.length) return []
+
+      const svgWidth = 400
+      const svgHeight = 200
+      const paddingX = 40
+      const paddingTop = 25
+      const paddingBottom = 25
+      const usableHeight = svgHeight - paddingTop - paddingBottom
+
+      const { min: minVal, max: maxVal } = this.rasioYAxis
+
+      if (list.length === 1) {
+        const item = list[0]
+        const val = Number(item.rasio) || 0
+        return [
+          {
+            x: 200,
+            y: svgHeight / 2,
+            xPercent: 50,
+            tahun: item.tahun || 2026,
+            rasio: val,
+            rasio_format: item.rasio_format || `${val}%`
+          }
+        ]
+      }
+
+      const usableWidth = svgWidth - (paddingX * 2)
+
+      return list.map((item, index) => {
+        const val = Number(item.rasio) || 0
+        const step = usableWidth / (list.length - 1)
+        const x = paddingX + (index * step)
+        
+        const range = (maxVal - minVal) || 1
+        const normalized = (val - minVal) / range
+        const y = (svgHeight - paddingBottom) - (normalized * usableHeight)
+
+        const xPercent = (x / svgWidth) * 100
+
+        return {
+          x,
+          y,
+          xPercent,
+          tahun: item.tahun,
+          rasio: val,
+          rasio_format: item.rasio_format || `${val}%`
+        }
+      })
+    },
+
+    rasioPolylinePoints() {
+      return this.rasioGraphPoints.map(pt => `${pt.x},${pt.y}`).join(' ')
     }
   },
   mounted() {
     this.fetchDataForTab('sektor')
   },
   methods: {
+    scrollToGrafik() {
+      if (this.$refs.grafikSection) {
+        this.$refs.grafikSection.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }
+    },
+
     async switchTab(tabId) {
       this.activeTab = tabId
       await this.fetchDataForTab(tabId, true)
@@ -401,11 +612,14 @@ export default {
         await this.fetchApi('https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/tenaga-kerja', (data) => {
           this.tenagaKerjaRaw = data || { total_keseluruhan: 0, grafik_kecamatan: [] }
         })
+      } else if (tabId === 'rasio-kewirausahaan' && (forceFetch || !this.rasioRaw.length)) {
+        await this.fetchApi('https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/rasio-kewirausahaan', (data) => {
+          this.rasioRaw = data || []
+        })
       }
     },
 
     async fetchApi(url, onSuccess) {
-      console.log(`[API HIT] Mengirim request ke: ${url}`)
       this.loading = true
       this.error = null
 
@@ -447,7 +661,6 @@ export default {
 </script>
 
 <style scoped>
-/* Bagian style tidak ada yang diubah secara fundamental, kamu bisa menggunakan style yang sama seperti kodingan aslimu sebelumnya */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
 .page-container {
@@ -463,19 +676,19 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 25px 60px;
+  padding: 24px 60px;
   background-color: transparent;
 }
 
 .logo {
-  height: 55px;
+  height: 52px;
   cursor: pointer;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 32px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -483,11 +696,8 @@ export default {
 
 .nav-item {
   color: #1a1a1a;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -496,16 +706,15 @@ export default {
   opacity: 0.7;
 }
 
-.icon-chevron {
-  width: 16px;
-  height: 16px;
-}
-
 .login-btn {
-  margin-left: 15px;
-  padding: 6px 18px;
-  border: 2px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+  padding: 8px 20px;
+  border: 1.8px solid #1a1a1a;
   border-radius: 8px;
+  font-weight: 700;
 }
 
 .icon-login {
@@ -514,7 +723,7 @@ export default {
 }
 
 .content-wrapper {
-  max-width: 1200px;
+  max-width: 1180px;
   width: 100%;
   margin: 0 auto;
   padding: 10px 40px 60px 40px;
@@ -522,22 +731,22 @@ export default {
 }
 
 .breadcrumb {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #555555;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .main-heading {
-  font-size: 2.8rem;
+  font-size: 2.6rem;
   font-weight: 800;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .sub-heading {
   font-weight: 700;
   color: #1a1a1a;
-  font-size: 2.2rem;
 }
 
 .highlight-blue { color: #536dfe; }
@@ -545,26 +754,27 @@ export default {
 .highlight-orange { color: #ff6f00; }
 
 .section-heading {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  margin-top: 15px;
-  margin-bottom: 25px;
+  margin-top: 24px;
+  margin-bottom: 24px;
   color: #222222;
+  scroll-margin-top: 20px; /* Jarak atas saat di-scroll */
 }
 
 .data-card {
-  background-color: #f0f0eb;
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  background-color: #f2f2ed;
+  border-radius: 20px;
+  padding: 36px 40px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 }
 
 .tabs-header {
   display: flex;
-  gap: 35px;
-  border-bottom: 2px solid #e0e0db;
+  gap: 32px;
+  border-bottom: 2px solid #e2e2dc;
   padding-bottom: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .tab-item {
@@ -612,15 +822,17 @@ export default {
 
 .chart-content-grid {
   display: grid;
-  grid-template-columns: 2.2fr 1fr;
-  gap: 30px;
+  grid-template-columns: 1.1fr 1.3fr;
+  gap: 32px;
   align-items: flex-start;
 }
 
 .chart-left {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
 .state-info {
@@ -643,9 +855,9 @@ export default {
 }
 
 .donut-wrapper {
-  width: 320px;
-  height: 320px;
-  margin-bottom: 20px;
+  width: 290px;
+  height: 290px;
+  margin-bottom: 24px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -680,14 +892,14 @@ export default {
 .legend-label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #555555;
+  color: #444444;
 }
 
-.bar-chart-left {
+.bar-chart-left, .line-chart-left {
   width: 100%;
 }
 
-.bar-chart-card {
+.bar-chart-card, .line-chart-card {
   background: #ffffff;
   border-radius: 12px;
   padding: 25px 20px 15px 15px;
@@ -699,25 +911,42 @@ export default {
 .chart-grid-wrapper {
   display: flex;
   gap: 10px;
-  height: 260px;
+  height: 320px;
 }
 
 .y-axis {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: #777;
-  padding-bottom: 35px;
+  padding-bottom: 75px;
   text-align: right;
-  min-width: 35px;
+  min-width: 40px;
 }
 
-.chart-area {
+.chart-area-scrollable {
   position: relative;
   flex: 1;
   height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 5px;
+}
+
+.chart-area-scrollable::-webkit-scrollbar {
+  height: 5px;
+}
+.chart-area-scrollable::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.chart-area-inner {
+  position: relative;
+  height: 100%;
+  transition: min-width 0.3s ease;
 }
 
 .grid-lines {
@@ -725,7 +954,7 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  bottom: 35px;
+  bottom: 75px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -733,7 +962,7 @@ export default {
 }
 
 .grid-line {
-  border-bottom: 1px solid #e2e2e2;
+  border-bottom: 1px dashed #e2e2e2;
   width: 100%;
 }
 
@@ -754,10 +983,11 @@ export default {
   align-items: center;
   height: 100%;
   flex: 1;
+  min-width: 42px;
 }
 
 .bar-track {
-  height: calc(100% - 35px);
+  height: calc(100% - 75px);
   width: 100%;
   display: flex;
   align-items: flex-end;
@@ -765,8 +995,8 @@ export default {
 }
 
 .bar-fill {
-  width: 70%;
-  max-width: 38px;
+  width: 65%;
+  max-width: 32px;
   background-color: #9f8eff;
   border-radius: 4px 4px 0 0;
   position: relative;
@@ -775,29 +1005,37 @@ export default {
   transition: height 0.3s ease;
 }
 
-.bar-val-text {
+.bar-val-badge {
   position: absolute;
-  top: 6px;
-  font-size: 0.7rem;
-  font-weight: 700;
+  top: -22px;
+  font-size: 0.68rem;
+  font-weight: 800;
   color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.bar-x-label-wrapper {
+  height: 75px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 8px;
 }
 
 .bar-x-label {
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #555;
-  line-height: 1.1;
-  word-break: break-word;
-  padding-top: 4px;
+  color: #444;
+  white-space: nowrap;
+  transform: rotate(-35deg);
+  transform-origin: top left;
+  display: inline-block;
+  line-height: 1.2;
 }
 
-.bar-legend {
+.bar-legend, .line-legend {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -811,62 +1049,162 @@ export default {
   background-color: #9f8eff;
 }
 
+.legend-line-dot {
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: #9f8eff;
+  display: inline-block;
+}
+
 .legend-text {
   font-size: 0.8rem;
   font-weight: 600;
   color: #555;
 }
 
-.chart-right {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
+.line-area {
+  position: relative;
+  flex: 1;
+  height: 100%;
 }
 
-.stat-card {
-  display: flex;
-  flex-direction: column;
+.line-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 35px);
+  overflow: visible;
 }
 
-.stat-year {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #ff6f00;
-  margin-bottom: 2px;
+.x-axis-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35px;
+}
+
+.x-label-item {
+  position: absolute;
+  transform: translateX(-50%);
+  bottom: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.footnote-text {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.45;
+  margin-top: 18px;
+  margin-bottom: 0;
+}
+
+.chart-right.grid-2-col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.stat-card-framed {
+  background-color: #ffffff;
+  border: 1px solid #e1e1db;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card-framed:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 .stat-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.card-inner-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #f8f8f5;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #eaeae3;
+}
+
+.inner-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.inner-col.highlight-col {
+  border-left: 1px dashed #d5d5cd;
+  padding-left: 10px;
+}
+
+.col-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #777777;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.col-value {
   font-size: 1.05rem;
   font-weight: 800;
   color: #1a1a1a;
-  margin: 0 0 4px 0;
+  line-height: 1.2;
 }
 
-.stat-val-group {
-  display: flex;
-  align-items: baseline;
-  gap: 15px;
+.col-value.percent-text {
+  color: #2e7d32;
 }
 
-.stat-value {
-  font-size: 1.6rem;
+.year-card {
+  position: relative;
+}
+
+.card-header-year {
+  margin-bottom: 6px;
+}
+
+.year-badge {
+  display: inline-block;
+  background-color: #fff3e0;
+  color: #ff6f00;
+  font-size: 0.75rem;
   font-weight: 800;
-  color: #1a1a1a;
-  margin: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #ffe0b2;
 }
 
-.stat-subval {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #444;
-}
-
-.trend-badge {
+.elevation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.85rem;
   font-weight: 700;
-  margin-top: 4px;
 }
 
-.trend-badge.up { color: #2e7d32; }
-.trend-badge.down { color: #d32f2f; }
+.elevation-badge.up { color: #2e7d32; }
+.elevation-badge.down { color: #d32f2f; }
+.elevation-badge .arrow { font-size: 0.7rem; }
 </style>

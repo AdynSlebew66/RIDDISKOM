@@ -9,7 +9,7 @@
         </router-link>
 
         <router-link to="/admin/data" class="nav-link" active-class="active">
-          Data
+          Data UMKM
         </router-link>
       </div>
       
