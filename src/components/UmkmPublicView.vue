@@ -131,7 +131,7 @@
             <!-- Right Stat Cards Doughnut (Satu sumber data dengan Doughnut) -->
             <div class="chart-right">
               <div v-for="item in doughnutData" :key="item.label" class="stat-card">
-                <span v-if="activeTab === 'sektor'" class="stat-year">2026</span>
+                <span v-if="activeTab === 'sektor'" class="stat-year"></span>
                 <h3 class="stat-title">{{ item.label }}</h3>
                 <p class="stat-value">{{ item.value.toLocaleString('id-ID') }}</p>
               </div>
