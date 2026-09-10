@@ -8,21 +8,34 @@
         <header class="navbar">
           <!-- Logo -->
           <div class="brand">
-            <img src="../assets/logoe.png" alt="Logo DISKOPUMKER" class="logo" />
+            <img src="../assets/logo.png" alt="Logo DISKOPUMKER" class="logo" />
           </div>
+
+          <!-- Hamburger Toggle (Mobile Only) -->
+          <button class="menu-toggle" @click="toggleMenu" aria-label="Toggle Menu">
+            <svg v-if="!isMenuOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
           
-          <!-- Menu Navigasi (Panah Chevron Sudah Dihapus) -->
-          <ul class="nav-links">
-            <li class="nav-item" @click="scrollToSection('hero')">
+          <!-- Menu Navigasi -->
+          <ul class="nav-links" :class="{ 'nav-active': isMenuOpen }">
+            <li class="nav-item" @click="handleNavClick('hero')">
               Beranda
             </li>
-            <li class="nav-item">
+            <li class="nav-item" @click="closeMenu">
               Profile
             </li>
-            <li class="nav-item" @click="scrollToSection('informasi')">
+            <li class="nav-item" @click="handleNavClick('informasi')">
               Informasi
             </li>
-            <li class="nav-item" @click="scrollToSection('layanan')">
+            <li class="nav-item" @click="handleNavClick('layanan')">
               Layanan
             </li>
             
@@ -57,7 +70,7 @@
     <!-- 2. INFORMASI TERKINI & PROFIL KEPALA DINAS -->
     <section ref="informasiSection" class="section-container info-section">
       <div class="info-grid">
-        <!-- Sisi Kiri: Informasi Terkini (Grid 2 Kolom) -->
+        <!-- Sisi Kiri: Informasi Terkini (Grid 2 Kolom di PC, 1 Kolom di Mobile) -->
         <div class="info-left">
           <h3 class="section-title">Informasi Terkini</h3>
           <div class="news-grid">
@@ -97,7 +110,7 @@
     <section ref="layananSection" class="section-container services-section">
       <h3 class="section-title">Informasi Dan Layanan DISKOPUMKER</h3>
       <div class="services-grid">
-        <!-- Card 1: HI (Red) -->
+        <!-- Card 1: HI -->
         <div class="service-card card-red" @click="goToService('/hi')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -105,7 +118,7 @@
           <span class="service-name">Hubungan Industri (HI)</span>
         </div>
 
-        <!-- Card 2: Koperasi (Light) -->
+        <!-- Card 2: Koperasi -->
         <div class="service-card card-light" @click="goToService('/koperasi')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><path d="M8 14v3"></path><path d="M12 14v3"></path><path d="M16 14v3"></path></svg>
@@ -113,7 +126,7 @@
           <span class="service-name">Koperasi</span>
         </div>
 
-        <!-- Card 3: Sekretariat (Red) -->
+        <!-- Card 3: Sekretariat -->
         <div class="service-card card-red" @click="goToService('/sekretariat')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
@@ -121,7 +134,7 @@
           <span class="service-name">Sekretariat</span>
         </div>
 
-        <!-- Card 4: BLK (Light) -->
+        <!-- Card 4: BLK -->
         <div class="service-card card-light" @click="goToService('/blk')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
@@ -129,7 +142,7 @@
           <span class="service-name">Balai Latih Kerja (BLK)</span>
         </div>
 
-        <!-- Card 5: UMKM (Red) -->
+        <!-- Card 5: UMKM -->
         <div class="service-card card-red" @click="goToService('/umkm')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -137,7 +150,7 @@
           <span class="service-name">Usaha Mikro, Kecil, dan Menengah (UMKM)</span>
         </div>
 
-        <!-- Card 6: UMPEG (Light) -->
+        <!-- Card 6: UMPEG -->
         <div class="service-card card-light" @click="goToService('/umpeg')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
@@ -183,9 +196,9 @@
           <img src="../assets/logo2.png" alt="Logo Footer" class="footer-logo" />
         </div>
         <div class="footer-center">
-          <p>🌐 diskopumker.banjarmasinkota.go.id</p>
-          <p>📷 diskopumkerbanjarmasin</p>
-          <p>📞 085287564751</p>
+          <p>diskopumker.banjarmasinkota.go.id</p>
+          <p>diskopumkerbanjarmasin</p>
+          <p>085287564751</p>
         </div>
         <div class="footer-right">
           <p>All Rights Reserved. Dinas Koperasi Usaha Mikro dan Tenaga Kerja Kota Banjarmasin</p>
@@ -199,8 +212,24 @@
 <script>
 export default {
   name: 'PublicDashboard',
+  data() {
+    return {
+      isMenuOpen: false
+    }
+  },
   methods: {
+    toggleMenu() {
+      this.isMenuOpen = !this.isMenuOpen
+    },
+    closeMenu() {
+      this.isMenuOpen = false
+    },
+    handleNavClick(section) {
+      this.scrollToSection(section)
+      this.closeMenu()
+    },
     goToLogin() {
+      this.closeMenu()
       this.$router.push('/login')
     },
     goToService(path) {
@@ -230,7 +259,7 @@ export default {
 /* Viewport Full Page Scroll */
 .pc-viewport {
   position: relative;
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
@@ -267,12 +296,23 @@ export default {
   padding: 30px 50px;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
+  z-index: 50;
 }
 
 .logo {
   height: 60px;
   width: auto;
   cursor: pointer;
+}
+
+.menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 5px;
 }
 
 .nav-links {
@@ -326,7 +366,7 @@ export default {
   align-items: center;
   text-align: center;
   color: #ffffff;
-  padding-bottom: 20px;
+  padding: 0 20px 20px;
 }
 
 .main-title {
@@ -656,6 +696,124 @@ export default {
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ===================================================
+   MEDIA QUERIES (MOBILE RESPONSIVE ADAPTATION)
+   =================================================== */
+
+/* Tablet (Max 992px) */
+@media (max-width: 992px) {
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kadis-card {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+/* Mobile Devices (Max 768px) */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 20px;
+  }
+
+  .logo {
+    height: 45px;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: rgba(26, 26, 26, 0.98);
+    backdrop-filter: blur(8px);
+    padding: 25px 20px;
+    gap: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .nav-links.nav-active {
+    display: flex;
+  }
+
+  .login-btn {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-wrapper {
+    height: 75vh;
+    min-height: 450px;
+  }
+
+  .main-title {
+    font-size: 1.6rem;
+  }
+
+  .sub-title {
+    font-size: 1rem;
+  }
+
+  .section-container {
+    padding: 30px 20px;
+  }
+
+  .news-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .location-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .map-box {
+    height: 250px;
+  }
+
+  .map-overlay-info {
+    max-width: 100%;
+  }
+
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+    padding: 0 20px;
+  }
+}
+
+/* Extra Small Devices (Max 480px) */
+@media (max-width: 480px) {
+  .main-title {
+    font-size: 1.35rem;
+  }
+
+  .sub-title {
+    font-size: 0.85rem;
+  }
+
+  .kadis-photo-wrapper {
+    height: 220px;
   }
 }
 </style>
