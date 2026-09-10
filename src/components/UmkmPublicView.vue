@@ -806,6 +806,9 @@ export default {
   border-radius: 20px;
   padding: 36px 40px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .tabs-header {
@@ -864,6 +867,11 @@ export default {
   grid-template-columns: 1.1fr 1.3fr;
   gap: 32px;
   align-items: flex-start;
+  width: 100%;
+}
+
+.chart-content-grid > * {
+  min-width: 0; /* Mencegah item Grid melebar melebihi kontainer */
 }
 
 .chart-left {
@@ -872,6 +880,7 @@ export default {
   justify-content: center;
   align-items: center;
   width: 100%;
+  min-width: 0;
 }
 
 .state-info {
@@ -936,6 +945,7 @@ export default {
 
 .bar-chart-left, .line-chart-left {
   width: 100%;
+  min-width: 0;
 }
 
 .bar-chart-card, .line-chart-card {
@@ -944,13 +954,17 @@ export default {
   padding: 25px 20px 15px 15px;
   box-shadow: inset 0 0 0 1px #e5e5e0;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .chart-grid-wrapper {
   display: flex;
   gap: 10px;
   height: 320px;
+  width: 100%;
+  min-width: 0;
 }
 
 .y-axis {
@@ -962,12 +976,14 @@ export default {
   color: #777;
   padding-bottom: 75px;
   text-align: right;
-  min-width: 40px;
+  min-width: 36px;
+  flex-shrink: 0;
 }
 
 .chart-area-scrollable {
   position: relative;
   flex: 1;
+  min-width: 0; /* Membatasi scroll horizontal hanya di dalam kontainer ini */
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1148,6 +1164,7 @@ export default {
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   width: 100%;
+  min-width: 0;
 }
 
 .stat-card-framed {
