@@ -5,7 +5,8 @@ import UmkmView from '../components/UmkmView.vue'
 import UmkmPublicView from '../components/UmkmPublicView.vue'
 import DataUmkmView from '../components/DataUmkmView.vue'
 import RasioUmkmView from '../components/RasioUmkmView.vue'
-import LayananUmkmView from '../components/LayananUmkmView.vue' // 1. Import komponen Layanan UMKM
+import LayananUmkmView from '../components/LayananUmkmView.vue'
+import GaleriView from '../components/GaleriView.vue' // 1. Import komponen Galeri
 
 const routes = [
   {
@@ -26,7 +27,12 @@ const routes = [
   {
     path: '/layanan',
     name: 'LayananUmkm',
-    component: LayananUmkmView // 2. Route landing page Layanan UMKM
+    component: LayananUmkmView
+  },
+  {
+    path: '/galeri',
+    name: 'Galeri',
+    component: GaleriView // 2. Route menu Galeri
   },
   {
     path: '/admin/umkm',

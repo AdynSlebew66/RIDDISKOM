@@ -3,7 +3,7 @@
     <!-- 1. HERO SECTION -->
     <div class="hero-wrapper">
       <div class="overlay">
-        
+
         <!-- Header / Navbar -->
         <header class="navbar">
           <!-- Logo -->
@@ -23,7 +23,7 @@
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
-          
+
           <!-- Menu Navigasi -->
           <ul class="nav-links" :class="{ 'nav-active': isMenuOpen }">
             <li class="nav-item" @click="handleNavClick('hero')">
@@ -38,7 +38,7 @@
             <li class="nav-item" @click="handleNavClick('layanan')">
               Layanan
             </li>
-            
+
             <!-- Tombol Login -->
             <li class="nav-item login-btn" @click="goToLogin">
               Login
@@ -70,15 +70,18 @@
     <!-- 2. INFORMASI TERKINI & PROFIL KEPALA DINAS -->
     <section ref="informasiSection" class="section-container info-section">
       <div class="info-grid">
-        <!-- Sisi Kiri: Informasi Terkini (Grid 2 Kolom di PC, 1 Kolom di Mobile) -->
+        <!-- Sisi Kiri: Informasi Terkini (Kosong) -->
         <div class="info-left">
           <h3 class="section-title">Informasi Terkini</h3>
           <div class="news-grid">
-            <div v-for="n in 10" :key="n" class="news-card">
+            <div v-if="newsList.length === 0" class="empty-news">
+              <p>Belum ada informasi terbaru saat ini.</p>
+            </div>
+            <div v-else v-for="(item, index) in newsList" :key="index" class="news-card">
               <div class="news-thumb-placeholder"></div>
               <div class="news-text">
-                <h4>Job Fair 2026</h4>
-                <p>Ajang mencari pekerjaan</p>
+                <h4>{{ item.title }}</h4>
+                <p>{{ item.desc }}</p>
               </div>
             </div>
           </div>
@@ -88,9 +91,7 @@
         <div class="info-right">
           <div class="kadis-card">
             <div class="kadis-photo-wrapper">
-              <div class="kadis-photo-placeholder">
-                <span>Foto Kadis</span>
-              </div>
+              <img :src="kadisPhoto" alt="Foto Kadis" class="kadis-img" />
             </div>
             <div class="kadis-info">
               <h4>Dr. Machli Riyadi, S.H., M.H.</h4>
@@ -166,19 +167,22 @@
       <div class="location-grid">
         <!-- Map Area -->
         <div class="map-box">
-          <div class="map-placeholder">
-            <div class="map-overlay-info">
-              <strong>Dinas Koperasi Usaha Mikro dan Tenaga Kerja Kota Banjarmasin</strong>
-              <p>Jl. Pangeran Samudra, Sungai Lulut, Kec. Banjarmasin Tim., Kota Banjarmasin, Kalimantan Selatan 70238</p>
-            </div>
-          </div>
+          <iframe
+            src="https://maps.google.com/maps?q=Jl.+Pramuka+Komp.+Semanda+Banjarmasin&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            width="100%"
+            height="100%"
+            style="border:0;"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
         </div>
 
         <!-- Info Alamat & Form Kritik Saran -->
         <div class="feedback-box">
           <div class="address-block">
             <h4>Alamat DISKOPUMKER</h4>
-            <p>Jl. Komp. Sejahtera, Sungai Lulut, Kec. Banjarmasin Tim., Kota Banjarmasin, Kalimantan Selatan 70238</p>
+            <p>Jl. Pramuka Komp. Semanda, Kec. Banjarmasin Timur, Kota Banjarmasin, Kalimantan Selatan</p>
           </div>
 
           <div class="saran-block">
@@ -210,11 +214,15 @@
 </template>
 
 <script>
+import kadisImg from '../assets/fotokadis.png'
+
 export default {
   name: 'PublicDashboard',
   data() {
     return {
-      isMenuOpen: false
+      isMenuOpen: false,
+      kadisPhoto: kadisImg,
+      newsList: []
     }
   },
   methods: {
@@ -417,13 +425,36 @@ export default {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 30px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.info-left {
+  display: flex;
+  flex-direction: column;
 }
 
 .news-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.empty-news {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  color: #888888;
+  font-size: 0.9rem;
+  border: 1px dashed #dcdde1;
+}
+
+.empty-news p {
+  margin: 0;
 }
 
 .news-card {
@@ -466,12 +497,14 @@ export default {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .kadis-photo-wrapper {
   width: 100%;
-  height: 280px;
-  background-color: #c0392b;
+  height: 320px;
+  background-color: #f0f0f0;
   border-radius: 10px;
   overflow: hidden;
   margin-bottom: 15px;
@@ -480,9 +513,11 @@ export default {
   align-items: center;
 }
 
-.kadis-photo-placeholder {
-  color: #ffffff;
-  font-weight: 700;
+.kadis-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
 }
 
 .kadis-info h4 {
@@ -572,43 +607,17 @@ export default {
 }
 
 .map-box {
-  background-color: #e2e8f0;
   border-radius: 12px;
   height: 320px;
   position: relative;
   overflow: hidden;
-  background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
-  background-size: 16px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.map-placeholder {
+.map-box iframe {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: flex-end;
-  padding: 15px;
-  box-sizing: border-box;
-}
-
-.map-overlay-info {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 12px 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  max-width: 80%;
-}
-
-.map-overlay-info strong {
-  display: block;
-  font-size: 0.85rem;
-  color: #1a1a1a;
-  margin-bottom: 4px;
-}
-
-.map-overlay-info p {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #666666;
+  border: 0;
 }
 
 .feedback-box {
@@ -699,11 +708,7 @@ export default {
   }
 }
 
-/* ===================================================
-   MEDIA QUERIES (MOBILE RESPONSIVE ADAPTATION)
-   =================================================== */
-
-/* Tablet (Max 992px) */
+/* Responsive Adaptation */
 @media (max-width: 992px) {
   .services-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -713,13 +718,16 @@ export default {
     grid-template-columns: 1fr;
   }
 
+  .empty-news {
+    min-height: 180px;
+  }
+
   .kadis-card {
     max-width: 400px;
     margin: 0 auto;
   }
 }
 
-/* Mobile Devices (Max 768px) */
 @media (max-width: 768px) {
   .navbar {
     padding: 20px;
@@ -774,10 +782,6 @@ export default {
     padding: 30px 20px;
   }
 
-  .news-grid {
-    grid-template-columns: 1fr;
-  }
-
   .services-grid {
     grid-template-columns: 1fr;
   }
@@ -790,10 +794,6 @@ export default {
     height: 250px;
   }
 
-  .map-overlay-info {
-    max-width: 100%;
-  }
-
   .footer-container {
     flex-direction: column;
     text-align: center;
@@ -802,7 +802,6 @@ export default {
   }
 }
 
-/* Extra Small Devices (Max 480px) */
 @media (max-width: 480px) {
   .main-title {
     font-size: 1.35rem;
@@ -813,7 +812,7 @@ export default {
   }
 
   .kadis-photo-wrapper {
-    height: 220px;
+    height: 260px;
   }
 }
 </style>
