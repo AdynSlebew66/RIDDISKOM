@@ -22,7 +22,7 @@
       <ul class="nav-links" :class="{ 'nav-active': isMenuOpen }">
         <li class="nav-item" @click="navTo('/')">Beranda</li>
         <li class="nav-item" @click="handleScrollGrafik">Grafik</li>
-        <li class="nav-item" @click="navTo('/layanan')">Layanan</li>
+        <li class="nav-item" @click="navTo('/layanan')">Layanan UMKM</li>
         <li class="nav-item" @click="navTo('/galeri')">Galeri</li>
         <li class="nav-item login-btn" @click="navTo('/login')">
           <span>Login</span>
