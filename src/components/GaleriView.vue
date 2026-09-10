@@ -3,7 +3,7 @@
     <!-- Navbar -->
     <header class="navbar">
       <div class="nav-brand" @click="$router.push('/')">
-        <img src="../assets/logo.png" alt="Logo DISKOPUMKER" class="logo" />
+        <img src="../assets/logo2.png" alt="Logo DISKOPUMKER" class="logo" />
       </div>
       <ul class="nav-menu">
         <li><router-link to="/">Beranda</router-link></li>
