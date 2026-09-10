@@ -2,16 +2,29 @@
   <div class="page-container">
     <!-- Header / Navbar Public -->
     <header class="navbar">
-      <div class="brand" @click="$router.push('/')">
+      <div class="brand" @click="navTo('/')">
         <img src="../assets/logo2.png" alt="Logo DISKOPUMKER" class="logo" />
       </div>
+
+      <!-- Hamburger Toggle (Mobile Only) -->
+      <button class="menu-toggle" @click="toggleMenu" aria-label="Toggle Menu">
+        <svg v-if="!isMenuOpen" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
       
-      <ul class="nav-links">
-        <li class="nav-item" @click="$router.push('/')">Beranda</li>
-        <li class="nav-item" @click="scrollToGrafik">Grafik</li>
-        <li class="nav-item" @click="$router.push('/layanan')">Layanan</li>
-        <li class="nav-item" @click="$router.push('/galeri')">Galeri</li>
-        <li class="nav-item login-btn" @click="$router.push('/login')">
+      <ul class="nav-links" :class="{ 'nav-active': isMenuOpen }">
+        <li class="nav-item" @click="navTo('/')">Beranda</li>
+        <li class="nav-item" @click="handleScrollGrafik">Grafik</li>
+        <li class="nav-item" @click="navTo('/layanan')">Layanan</li>
+        <li class="nav-item" @click="navTo('/galeri')">Galeri</li>
+        <li class="nav-item login-btn" @click="navTo('/login')">
           <span>Login</span>
           <svg xmlns="http://www.w3.org/2000/svg" class="icon-login" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
@@ -293,6 +306,7 @@ export default {
   name: 'UmkmPublicView',
   data() {
     return {
+      isMenuOpen: false,
       activeTab: 'sektor',
       tabs: [
         { id: 'sektor', label: 'Sektor Usaha' },
@@ -558,6 +572,20 @@ export default {
     this.fetchDataForTab('sektor')
   },
   methods: {
+    toggleMenu() {
+      this.isMenuOpen = !this.isMenuOpen
+    },
+    closeMenu() {
+      this.isMenuOpen = false
+    },
+    navTo(path) {
+      this.closeMenu()
+      this.$router.push(path)
+    },
+    handleScrollGrafik() {
+      this.closeMenu()
+      this.scrollToGrafik()
+    },
     scrollToGrafik() {
       if (this.$refs.grafikSection) {
         this.$refs.grafikSection.scrollIntoView({ 
@@ -678,11 +706,22 @@ export default {
   align-items: center;
   padding: 24px 60px;
   background-color: transparent;
+  position: relative;
+  z-index: 50;
 }
 
 .logo {
   height: 52px;
   cursor: pointer;
+}
+
+.menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #1a1a1a;
+  cursor: pointer;
+  padding: 5px;
 }
 
 .nav-links {
@@ -759,7 +798,7 @@ export default {
   margin-top: 24px;
   margin-bottom: 24px;
   color: #222222;
-  scroll-margin-top: 20px; /* Jarak atas saat di-scroll */
+  scroll-margin-top: 20px;
 }
 
 .data-card {
@@ -1207,4 +1246,123 @@ export default {
 .elevation-badge.up { color: #2e7d32; }
 .elevation-badge.down { color: #d32f2f; }
 .elevation-badge .arrow { font-size: 0.7rem; }
+
+/* ===================================================
+   MEDIA QUERIES (MOBILE RESPONSIVE ADAPTATION)
+   =================================================== */
+
+/* Tablet (Max 992px) */
+@media (max-width: 992px) {
+  .navbar {
+    padding: 20px 30px;
+  }
+
+  .content-wrapper {
+    padding: 10px 20px 40px 20px;
+  }
+
+  .chart-content-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* Mobile Devices (Max 768px) */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 16px 20px;
+  }
+
+  .logo {
+    height: 40px;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    padding: 20px;
+    gap: 16px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid #e2e2dc;
+  }
+
+  .nav-links.nav-active {
+    display: flex;
+  }
+
+  .login-btn {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .main-heading {
+    font-size: 1.8rem;
+  }
+
+  .data-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .tabs-header {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+    gap: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs-header::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-item {
+    flex-shrink: 0;
+    font-size: 0.88rem;
+  }
+
+  .tab-item.active::after {
+    bottom: -10px;
+  }
+
+  .chart-right.grid-2-col {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Extra Small Devices (Max 480px) */
+@media (max-width: 480px) {
+  .main-heading {
+    font-size: 1.4rem;
+  }
+
+  .section-heading {
+    font-size: 1rem;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  .donut-wrapper {
+    width: 240px;
+    height: 240px;
+  }
+
+  .chart-right.grid-2-col {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
