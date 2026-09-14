@@ -5,8 +5,10 @@ import UmkmView from '../components/UmkmView.vue'
 import UmkmPublicView from '../components/UmkmPublicView.vue'
 import DataUmkmView from '../components/DataUmkmView.vue'
 import RasioUmkmView from '../components/RasioUmkmView.vue'
+import KegiatanView from '../components/KegiatanView.vue'
 import LayananUmkmView from '../components/LayananUmkmView.vue'
 import GaleriView from '../components/GaleriView.vue' // 1. Import komponen Galeri
+import JadwalView from '../components/JadwalView.vue'
 
 const routes = [
   {
@@ -35,6 +37,11 @@ const routes = [
     component: GaleriView // 2. Route menu Galeri
   },
   {
+    path: '/jadwal',
+    name: 'Jadwal',
+    component: JadwalView
+  },
+  {
     path: '/admin/umkm',
     alias: '/umkm-dashboard',
     name: 'UmkmDashboard',
@@ -49,6 +56,11 @@ const routes = [
     path: '/admin/rasio',
     name: 'AdminRasio',
     component: RasioUmkmView
+  },
+  {
+    path: '/admin/kegiatan',
+    name: 'AdminKegiatan',
+    component: KegiatanView
   }
 ]
 

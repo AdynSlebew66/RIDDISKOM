@@ -20,7 +20,7 @@
           Kegiatan
         </router-link>
       </div>
-      
+
       <!-- Right Nav / Profile -->
       <div class="nav-right">
         <div class="profile-container">
@@ -45,28 +45,24 @@
 
     <!-- Main Content -->
     <main class="admin-content">
+      <div class="page-title">
+        <h2>Data Kegiatan Admin UMKM</h2>
+      </div>
+
       <!-- Search & Add Button Bar -->
       <div class="action-bar">
         <div class="search-box">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input 
-            type="text" 
-            v-model="searchQuery" 
+          <input
+            type="text"
+            v-model="searchQuery"
             @input="handleSearch"
-            placeholder="Cari berdasarkan Tahun..."
+            placeholder="Cari Judul Kegiatan..."
           />
         </div>
 
-        <!-- Filter Urutan -->
-        <div class="sort-box">
-          <select v-model="sortOrder" @change="onSortChange" class="sort-select">
-            <option value="desc">Tahun Terbaru &rarr; Terlama</option>
-            <option value="asc">Tahun Terlama &rarr; Terbaru</option>
-          </select>
-        </div>
-
         <button class="btn-add" @click="openAddModal">
-          + Tambah Data
+          + Tambah
         </button>
       </div>
 
@@ -75,56 +71,57 @@
         {{ errorMessage }}
       </div>
 
+      <!-- Success Alert -->
+      <div v-if="successMessage" class="success-alert">
+        {{ successMessage }}
+      </div>
+
       <!-- Table Card Wrapper -->
       <div class="data-card">
         <div class="card-header-navy">
-          <h3>Data Penduduk & Rasio Kewirausahaan</h3>
+          <h3>Data Kegiatan</h3>
         </div>
 
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
-                <th class="text-center" style="width: 30px;">No</th>
-                <th class="text-center">Tahun</th>
-                <th class="text-right">Total UMKM</th>
-                <th class="text-right">Jumlah Penduduk</th>
-                <th class="text-center">Rasio Kewirausahaan</th>
-                <th class="text-center" style="width: 110px;">Aksi</th>
+                <th class="text-center" style="width: 60px;">No</th>
+                <th>Judul Kegiatan</th>
+                <th>Tanggal Mulai</th>
+                <th>Tanggal Selesai</th>
+                <th class="text-center" style="width: 130px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <!-- Loading State -->
               <tr v-if="loading">
-                <td colspan="6" class="text-center py-5">
+                <td colspan="5" class="text-center py-5">
                   <div class="spinner"></div>
-                  <p class="loading-text">Memuat data rasio kewirausahaan...</p>
+                  <p class="loading-text">Memuat data kegiatan...</p>
                 </td>
               </tr>
 
               <!-- Empty State -->
-              <tr v-else-if="displayedRasioList.length === 0">
-                <td colspan="6" class="text-center py-5 empty-text">
-                  Data penduduk & rasio tidak ditemukan.
+              <tr v-else-if="displayedKegiatanList.length === 0">
+                <td colspan="5" class="text-center py-5 empty-text">
+                  Data kegiatan tidak ditemukan.
                 </td>
               </tr>
 
               <!-- Data Rows -->
-              <tr v-else v-for="(item, index) in displayedRasioList" :key="item.id || index">
+              <tr v-else v-for="(item, index) in displayedKegiatanList" :key="item.id || index">
                 <td class="text-center font-bold">{{ calculateRowIndex(index) }}</td>
-                <td class="text-center font-bold">{{ item.tahun }}</td>
-                <td class="text-right font-mono">{{ formatNumber(item.total_umkm) }}</td>
-                <td class="text-right font-mono">{{ formatNumber(item.jumlah_penduduk) }}</td>
-                <td class="text-center">
-                  <span class="badge badge-ratio">{{ formatRasio(item.rasio) }}</span>
-                </td>
+                <td class="font-bold">{{ item.judul_kegiatan || '-' }}</td>
+                <td>{{ formatDate(item.tanggal_mulai) }}</td>
+                <td>{{ formatDate(item.tanggal_selesai) }}</td>
                 <td class="text-center">
                   <div class="action-buttons">
                     <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                     </button>
                     <button class="btn-icon btn-edit" title="Edit" @click="handleEdit(item)">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
                     <button class="btn-icon btn-delete" title="Hapus" @click="handleDelete(item)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -139,20 +136,24 @@
         <!-- Footer Pagination -->
         <div class="card-footer-pagination">
           <div class="per-page-selector">
-            <span class="total-info">Total: {{ pagination.total }} Data</span>
+            <select v-model.number="perPage" @change="onPerPageChange" class="per-page-select">
+              <option :value="10">10 Baris</option>
+              <option :value="25">25 Baris</option>
+              <option :value="50">50 Baris</option>
+            </select>
           </div>
 
           <div v-if="pagination.last_page > 1" class="pagination-controls">
-            <button 
-              class="btn-page" 
+            <button
+              class="btn-page"
               :disabled="pagination.current_page === 1"
               @click="changePage(pagination.current_page - 1)"
             >
-              &laquo; Prev
+              &larr; Previous
             </button>
 
-            <button 
-              v-for="page in displayedPages" 
+            <button
+              v-for="page in displayedPages"
               :key="page"
               class="btn-page"
               :class="{ active: page === pagination.current_page }"
@@ -162,27 +163,30 @@
               {{ page }}
             </button>
 
-            <button 
-              class="btn-page" 
+            <button
+              class="btn-page"
               :disabled="pagination.current_page === pagination.last_page"
               @click="changePage(pagination.current_page + 1)"
             >
-              Next &raquo;
+              Next &rarr;
             </button>
+          </div>
+          <div v-else class="pagination-controls">
+            <span class="total-info">Total: {{ pagination.total }} Data</span>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- Modal Detail Pop-up -->
+    <!-- Modal Detail -->
     <transition name="modal-fade">
       <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-container">
+        <div class="modal-container modal-lg">
           <div class="modal-header">
-            <h3>Detail Rasio Kewirausahaan</h3>
+            <h3>Detail Kegiatan Dokumentasi</h3>
             <button class="btn-close" @click="closeModal">&times;</button>
           </div>
-          
+
           <div class="modal-body">
             <div v-if="loadingDetail" class="text-center py-5">
               <div class="spinner"></div>
@@ -194,33 +198,35 @@
             </div>
 
             <div v-else-if="selectedDetail" class="detail-grid">
-              <div class="detail-group">
-                <label>Tahun</label>
-                <p class="font-bold text-xl">{{ selectedDetail.tahun }}</p>
+              <div class="detail-group col-span-2">
+                <label>Judul Kegiatan</label>
+                <p class="font-bold">{{ selectedDetail.judul_kegiatan || '-' }}</p>
               </div>
               <div class="detail-group">
-                <label>Rasio Kewirausahaan</label>
-                <p><span class="badge badge-ratio-lg">{{ formatRasio(selectedDetail.rasio) }}</span></p>
+                <label>Tanggal Mulai</label>
+                <p>{{ formatDate(selectedDetail.tanggal_mulai) }}</p>
               </div>
               <div class="detail-group">
-                <label>Total UMKM</label>
-                <p class="font-mono font-bold">{{ formatNumber(selectedDetail.total_umkm) }} Unit</p>
+                <label>Tanggal Selesai</label>
+                <p>{{ formatDate(selectedDetail.tanggal_selesai) }}</p>
               </div>
-              <div class="detail-group">
-                <label>Jumlah Penduduk</label>
-                <p class="font-mono font-bold">{{ formatNumber(selectedDetail.jumlah_penduduk) }} Jiwa</p>
-              </div>
-              <div class="detail-group">
-                <label>Dibuat Pada</label>
-                <p>{{ formatDate(selectedDetail.created_at) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Terakhir Diperbarui</label>
-                <p>{{ formatDate(selectedDetail.updated_at) }}</p>
+              <div class="detail-group col-span-2">
+                <label>Foto Dokumentasi ({{ detailFotos.length }} foto)</label>
+                <div v-if="detailFotos.length === 0" class="empty-text">Belum ada foto dokumentasi.</div>
+                <div v-else class="foto-grid">
+                  <div v-for="(foto, idx) in detailFotos" :key="foto.id || idx" class="foto-item">
+                    <img
+                      :src="foto.foto_direct_url || foto.foto_url"
+                      :alt="selectedDetail.judul_kegiatan"
+                      loading="lazy"
+                      @error="onImgError"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-footer">
             <button class="btn-tutup" @click="closeModal">Tutup</button>
           </div>
@@ -231,72 +237,70 @@
     <!-- Modal Form (Tambah & Edit) -->
     <transition name="modal-fade">
       <div v-if="showFormModal" class="modal-overlay" @click.self="closeFormModal">
-        <div class="modal-container modal-sm">
+        <div class="modal-container modal-lg">
           <div class="modal-header">
-            <h3>{{ isEditMode ? 'Edit Data Rasio' : 'Tambah Data Rasio' }}</h3>
+            <h3>{{ isEditMode ? 'Edit Data Kegiatan' : 'Tambah Data Kegiatan' }}</h3>
             <button class="btn-close" @click="closeFormModal">&times;</button>
           </div>
-          
+
           <form @submit.prevent="submitForm">
             <div class="modal-body">
               <div v-if="formError" class="error-alert">
                 {{ formError }}
               </div>
 
-              <!-- Form Stack -->
               <div class="form-stack">
-                <!-- 1. Tahun -->
                 <div class="form-group">
-                  <label>Tahun <span class="required">*</span></label>
-                  <input 
-                    type="number" 
-                    min="2000" 
-                    max="2099" 
-                    v-model.number="formData.tahun" 
-                    @input="onTahunChange"
-                    required 
-                    placeholder="Contoh: 2026"
-                  />
-                </div>
-
-                <!-- 2. Total UMKM (SEKARANG BISA DI-EDIT) -->
-                <div class="form-group">
-                  <label>Total UMKM <span class="required">*</span></label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    v-model.number="formData.total_umkm" 
-                    @input="autoCalculateRasio"
+                  <label>Judul Kegiatan <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    v-model="formData.judul_kegiatan"
+                    maxlength="255"
                     required
-                    placeholder="0"
+                    placeholder="Contoh: Sosialisasi UMKM"
                   />
                 </div>
 
-                <!-- 3. Jumlah Penduduk -->
-                <div class="form-group">
-                  <label>Jumlah Penduduk <span class="required">*</span></label>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    v-model.number="formData.jumlah_penduduk" 
-                    @input="autoCalculateRasio"
-                    required 
-                    placeholder="0"
-                  />
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label>Tanggal Mulai <span class="required">*</span></label>
+                    <input type="date" v-model="formData.tanggal_mulai" required />
+                  </div>
+                  <div class="form-group">
+                    <label>Tanggal Selesai <span class="required">*</span></label>
+                    <input type="date" v-model="formData.tanggal_selesai" required />
+                  </div>
                 </div>
 
-                <!-- 4. Rasio (%) (READONLY - OTOMATIS BERDASARKAN DUA INPUT DI ATAS) -->
                 <div class="form-group">
-                  <label>Rasio Kewirausahaan (%) <span class="required">*</span></label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    v-model.number="formData.rasio" 
-                    readonly 
-                    class="input-readonly"
-                    placeholder="0"
-                  />
-                  <small class="help-text">*Rasio otomatis dihitung dari (Total UMKM / Jumlah Penduduk) * 100</small>
+                  <label>Foto Dokumentasi (URL) <span class="required">*</span></label>
+                  <small class="help-text">Minimal 1 foto. Tempel link foto (mis. link Google Drive share). Setiap baris = 1 foto.</small>
+
+                  <div
+                    v-for="(url, idx) in formData.foto_urls"
+                    :key="idx"
+                    class="foto-url-row"
+                  >
+                    <input
+                      type="url"
+                      v-model="formData.foto_urls[idx]"
+                      required
+                      placeholder="https://..."
+                    />
+                    <button
+                      type="button"
+                      class="btn-remove-foto"
+                      title="Hapus baris foto"
+                      :disabled="formData.foto_urls.length <= 1"
+                      @click="removeFotoUrl(idx)"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <button type="button" class="btn-add-foto" @click="addFotoUrl">
+                    + Tambah Foto
+                  </button>
                 </div>
               </div>
             </div>
@@ -313,7 +317,7 @@
       </div>
     </transition>
 
-    <!-- Modal Konfirmasi Hapus Data -->
+    <!-- Modal Konfirmasi Hapus -->
     <transition name="modal-fade">
       <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
         <div class="modal-container modal-sm">
@@ -325,9 +329,9 @@
             <div class="delete-icon-wrapper">
               <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </div>
-            <h4 class="delete-title">Hapus Data Rasio?</h4>
+            <h4 class="delete-title">Hapus Data Kegiatan?</h4>
             <p class="delete-desc">
-              Apakah kamu yakin ingin menghapus data rasio tahun <strong>"{{ itemToDelete?.tahun }}"</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah kamu yakin ingin menghapus kegiatan <strong>"{{ itemToDelete?.judul_kegiatan }}"</strong>? Tindakan ini tidak dapat dibatalkan.
             </p>
           </div>
           <div class="modal-footer footer-center">
@@ -344,25 +348,23 @@
 </template>
 
 <script>
+const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/kegiatan'
+
 export default {
-  name: 'RasioKewirausahaanView',
+  name: 'KegiatanView',
   data() {
     return {
       showDropdown: false,
       loading: false,
       errorMessage: '',
+      successMessage: '',
+      successTimeout: null,
       searchQuery: '',
       searchTimeout: null,
       perPage: 10,
-      sortOrder: 'desc',
-      
-      displayedRasioList: [],
-      pagination: {
-        current_page: 1,
-        last_page: 1,
-        total: 0
-      },
 
+      allKegiatanList: [],
+      currentPage: 1,
       showModal: false,
       loadingDetail: false,
       selectedDetail: null,
@@ -379,14 +381,33 @@ export default {
 
       formData: {
         id: null,
-        tahun: new Date().getFullYear(),
-        total_umkm: 0,
-        jumlah_penduduk: 0,
-        rasio: 0
+        judul_kegiatan: '',
+        tanggal_mulai: '',
+        tanggal_selesai: '',
+        foto_urls: ['']
       }
     }
   },
   computed: {
+    // Filter lokal berdasarkan pencarian judul
+    filteredKegiatanList() {
+      const q = (this.searchQuery || '').trim().toLowerCase()
+      if (!q) return this.allKegiatanList
+      return this.allKegiatanList.filter((item) =>
+        String(item.judul_kegiatan || '').toLowerCase().includes(q)
+      )
+    },
+    // Potongan data sesuai halaman & jumlah baris (client-side)
+    displayedKegiatanList() {
+      const start = (this.currentPage - 1) * this.perPage
+      return this.filteredKegiatanList.slice(start, start + this.perPage)
+    },
+    pagination() {
+      const total = this.filteredKegiatanList.length
+      const last_page = Math.max(1, Math.ceil(total / this.perPage))
+      const current_page = Math.min(this.currentPage, last_page)
+      return { current_page, last_page, total }
+    },
     displayedPages() {
       const current = this.pagination.current_page
       const last = this.pagination.last_page
@@ -397,20 +418,29 @@ export default {
       } else {
         pages.push(1)
         if (current > 3) pages.push('...')
-        
+
         const start = Math.max(2, current - 1)
         const end = Math.min(last - 1, current + 1)
-        
+
         for (let i = start; i <= end; i++) pages.push(i)
-        
+
         if (current < last - 2) pages.push('...')
         pages.push(last)
       }
       return pages
+    },
+    detailFotos() {
+      if (!this.selectedDetail) return []
+      if (Array.isArray(this.selectedDetail.galeris)) return this.selectedDetail.galeris
+      if (Array.isArray(this.selectedDetail.fotos)) return this.selectedDetail.fotos
+      if (Array.isArray(this.selectedDetail.foto_urls)) {
+        return this.selectedDetail.foto_urls.map((url) => ({ foto_url: url, foto_direct_url: url }))
+      }
+      return []
     }
   },
   mounted() {
-    this.fetchRasioData(1)
+    this.fetchKegiatanData(1)
   },
   methods: {
     getAuthToken() {
@@ -428,168 +458,183 @@ export default {
       }
       return token || ''
     },
+    buildHeaders(isJson = false) {
+      const headers = {
+        Accept: 'application/json',
+        'ngrok-skip-browser-warning': '69420'
+      }
+      const token = this.getAuthToken()
+      if (token) headers.Authorization = `Bearer ${token}`
+      if (isJson) headers['Content-Type'] = 'application/json'
+      return headers
+    },
 
-    async fetchRasioData(page = 1) {
+    // Ambil SATU halaman paginator Laravel:
+    // { message, data: { current_page, data: [...], last_page, total, ... } }
+    // atau { message, data: [...] } untuk respons array polos.
+    // HANYA memakai ?page= (parameter resmi paginator). Tanpa search/per_page
+    // karena tidak ada di dokumentasi API dan memicu error 500 di server.
+    async fetchKegiatanPage(page = 1) {
+      const url = page > 1 ? `${API_BASE}?page=${page}` : API_BASE
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: this.buildHeaders()
+      })
+
+      if (response.status === 401) {
+        this.$router.push('/login')
+        return null
+      }
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '')
+        throw new Error(`Gagal mengambil data. Status: ${response.status}${body ? ` - ${body.slice(0, 200)}` : ''}`)
+      }
+
+      const result = await response.json()
+      const pageData = result.data || {}
+
+      if (pageData && Array.isArray(pageData.data)) {
+        return {
+          list: pageData.data,
+          current_page: Number(pageData.current_page) || page,
+          last_page: Number(pageData.last_page) || 1
+        }
+      }
+      if (Array.isArray(result.data)) {
+        return { list: result.data, current_page: 1, last_page: 1 }
+      }
+      return { list: [], current_page: 1, last_page: 1 }
+    },
+
+    async fetchKegiatanData(page = 1) {
       this.loading = true
       this.errorMessage = ''
       try {
-        const token = this.getAuthToken()
-        const queryParams = new URLSearchParams({
-          page: page,
-          per_page: this.perPage,
-          'ngrok-skip-browser-warning': '69420'
-        })
+        const first = await this.fetchKegiatanPage(1)
+        if (!first) return
 
-        if (this.searchQuery.trim()) {
-          queryParams.append('search', this.searchQuery.trim())
+        let all = [...first.list]
+        // Ikuti paginator server sampai halaman terakhir agar
+        // pencarian & pagination client-side mencakup seluruh data.
+        for (let p = 2; p <= first.last_page; p++) {
+          const next = await this.fetchKegiatanPage(p)
+          if (!next) break
+          all = all.concat(next.list)
         }
 
-        const headers = {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
+        this.allKegiatanList = all
+        this.currentPage = page || 1
+        if (this.currentPage > this.pagination.last_page) {
+          this.currentPage = this.pagination.last_page
         }
-
-        if (token) headers['Authorization'] = `Bearer ${token}`
-
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk?${queryParams.toString()}`
-        const response = await fetch(url, { method: 'GET', headers })
-
-        if (response.status === 401) {
-          this.$router.push('/login')
-          return
-        }
-
-        if (!response.ok) throw new Error(`Gagal mengambil data. Status: ${response.status}`)
-
-        const result = await response.json()
-        const pageData = result.data || {}
-
-        if (pageData && Array.isArray(pageData.data)) {
-          this.displayedRasioList = this.sortListLocally(pageData.data)
-          this.pagination = {
-            current_page: Number(pageData.current_page) || page,
-            last_page: Number(pageData.last_page) || 1,
-            total: Number(pageData.total) || 0
-          }
-        } else if (Array.isArray(result.data)) {
-          this.displayedRasioList = this.sortListLocally(result.data)
-          this.pagination = {
-            current_page: 1,
-            last_page: 1,
-            total: result.data.length
-          }
-        }
-
       } catch (error) {
         this.errorMessage = `Error: ${error.message || 'Gagal terhubung ke API.'}`
-        this.displayedRasioList = []
+        this.allKegiatanList = []
+        this.currentPage = 1
       } finally {
         this.loading = false
       }
     },
 
-    async handleDetail(item) {
-      this.showModal = true
-      this.loadingDetail = true
-      this.modalError = ''
-      this.selectedDetail = null
-
-      try {
-        const token = this.getAuthToken()
-        const headers = {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }
-        if (token) headers['Authorization'] = `Bearer ${token}`
-
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk/${item.id}?ngrok-skip-browser-warning=69420`
-        const response = await fetch(url, { method: 'GET', headers })
-
-        if (!response.ok) throw new Error('Gagal menarik data detail dari server.')
-
-        const result = await response.json()
-        const apiData = result.data || {}
-        
-        const totalUmkm = Number(item.total_umkm) || 0
-        const jumlahPenduduk = Number(apiData.jumlah_penduduk) || 0
-        const rasioCalc = jumlahPenduduk > 0 ? (totalUmkm / jumlahPenduduk) * 100 : 0
-
-        this.selectedDetail = {
-          id: apiData.id,
-          tahun: apiData.tahun || item.tahun,
-          jumlah_penduduk: jumlahPenduduk,
-          total_umkm: totalUmkm,
-          rasio: parseFloat(rasioCalc.toFixed(2)),
-          created_at: apiData.created_at,
-          updated_at: apiData.updated_at
-        }
-
-      } catch (error) {
-        console.error('[DEBUG] Fetch Detail Error:', error)
-        this.selectedDetail = item
-      } finally {
-        this.loadingDetail = false
-      }
+    onPerPageChange() {
+      this.currentPage = 1
     },
 
-    syncTotalUmkm() {
-      const found = this.displayedRasioList.find(item => Number(item.tahun) === Number(this.formData.tahun))
-      if (found && found.total_umkm !== undefined) {
-        this.formData.total_umkm = Number(found.total_umkm)
-      } else if (this.displayedRasioList.length > 0) {
-        this.formData.total_umkm = Number(this.displayedRasioList[0].total_umkm) || 0
-      } else {
-        this.formData.total_umkm = 0
-      }
-      this.autoCalculateRasio()
+    changePage(page) {
+      if (page < 1 || page > this.pagination.last_page || page === this.pagination.current_page) return
+      this.currentPage = page
     },
 
-    onTahunChange() {
-      if (!this.isEditMode) {
-        this.syncTotalUmkm()
-      } else {
-        this.autoCalculateRasio()
-      }
+    calculateRowIndex(index) {
+      return (this.pagination.current_page - 1) * this.perPage + index + 1
     },
 
-    autoCalculateRasio() {
-      if (this.formData.jumlah_penduduk > 0 && this.formData.total_umkm >= 0) {
-        const calc = (this.formData.total_umkm / this.formData.jumlah_penduduk) * 100
-        this.formData.rasio = parseFloat(calc.toFixed(2))
-      } else {
-        this.formData.rasio = 0
-      }
+    handleSearch() {
+      clearTimeout(this.searchTimeout)
+      this.searchTimeout = setTimeout(() => {
+        this.currentPage = 1
+      }, 400)
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return '-'
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return dateString
+      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    },
+
+    // input date ("2026-04-21") <-> API DATE ("YYYY-MM-DD").
+    // Kolom MySQL bertipe DATE, jadi jam dihapus & hanya tanggal yang dikirim.
+    toDatetimeLocalValue(value) {
+      if (!value) return ''
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value)
+      const d = new Date(value)
+      if (isNaN(d.getTime())) return ''
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    },
+    toApiDatetime(localValue) {
+      if (!localValue) return ''
+      const s = String(localValue).slice(0, 10)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+      const d = new Date(localValue)
+      if (isNaN(d.getTime())) return localValue
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    },
+
+    onImgError(event) {
+      event.target.style.display = 'none'
+    },
+
+    showSuccess(msg) {
+      this.successMessage = msg
+      clearTimeout(this.successTimeout)
+      this.successTimeout = setTimeout(() => {
+        this.successMessage = ''
+      }, 3500)
+    },
+
+    // ---------- Form foto_urls dinamis ----------
+    addFotoUrl() {
+      this.formData.foto_urls.push('')
+    },
+    removeFotoUrl(idx) {
+      if (this.formData.foto_urls.length <= 1) return
+      this.formData.foto_urls.splice(idx, 1)
     },
 
     openAddModal() {
       this.isEditMode = false
       this.formError = ''
       this.resetFormData()
-      this.syncTotalUmkm()
       this.showFormModal = true
     },
 
     handleEdit(item) {
       this.isEditMode = true
       this.formError = ''
+      const existingFotos = Array.isArray(item.galeris)
+        ? item.galeris.map((g) => g.foto_url || g.foto_direct_url || '').filter(Boolean)
+        : []
       this.formData = {
         id: item.id,
-        tahun: item.tahun || new Date().getFullYear(),
-        total_umkm: item.total_umkm || 0,
-        jumlah_penduduk: item.jumlah_penduduk || 0,
-        rasio: item.rasio || 0
+        judul_kegiatan: item.judul_kegiatan || '',
+        tanggal_mulai: this.toDatetimeLocalValue(item.tanggal_mulai),
+        tanggal_selesai: this.toDatetimeLocalValue(item.tanggal_selesai),
+        foto_urls: existingFotos.length > 0 ? existingFotos : ['']
       }
-      this.autoCalculateRasio()
       this.showFormModal = true
     },
 
     resetFormData() {
       this.formData = {
         id: null,
-        tahun: new Date().getFullYear(),
-        total_umkm: 0,
-        jumlah_penduduk: 0,
-        rasio: 0
+        judul_kegiatan: '',
+        tanggal_mulai: '',
+        tanggal_selesai: '',
+        foto_urls: ['']
       }
     },
 
@@ -601,56 +646,120 @@ export default {
       }, 300)
     },
 
+    validateForm() {
+      const judul = (this.formData.judul_kegiatan || '').trim()
+      if (!judul) return 'Judul kegiatan wajib diisi.'
+      if (judul.length > 255) return 'Judul kegiatan maksimal 255 karakter.'
+      if (!this.formData.tanggal_mulai) return 'Tanggal mulai wajib diisi.'
+      if (!this.formData.tanggal_selesai) return 'Tanggal selesai wajib diisi.'
+      const mulai = new Date(this.formData.tanggal_mulai)
+      const selesai = new Date(this.formData.tanggal_selesai)
+      if (isNaN(mulai.getTime()) || isNaN(selesai.getTime())) return 'Format tanggal tidak valid.'
+      if (selesai < mulai) return 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.'
+      const urls = (this.formData.foto_urls || []).map((u) => (u || '').trim()).filter(Boolean)
+      if (urls.length < 1) return 'Minimal 1 foto dokumentasi wajib diisi.'
+      for (const u of urls) {
+        try {
+          new URL(u)
+        } catch (e) {
+          return `URL foto tidak valid: ${u}`
+        }
+      }
+      return ''
+    },
+
     async submitForm() {
+      const validationError = this.validateForm()
+      if (validationError) {
+        this.formError = validationError
+        return
+      }
       this.submittingForm = true
       this.formError = ''
 
       try {
-        const token = this.getAuthToken()
-        const headers = {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }
-        if (token) headers['Authorization'] = `Bearer ${token}`
-
         const isEdit = this.isEditMode && this.formData.id
-        const url = isEdit 
-          ? `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk/${this.formData.id}`
-          : `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk`
-
+        const url = isEdit ? `${API_BASE}/${this.formData.id}` : API_BASE
         const method = isEdit ? 'PUT' : 'POST'
 
         const payload = {
-          tahun: String(this.formData.tahun),
-          total_umkm: Number(this.formData.total_umkm),
-          jumlah_penduduk: Number(this.formData.jumlah_penduduk)
+          judul_kegiatan: this.formData.judul_kegiatan.trim(),
+          tanggal_mulai: this.toApiDatetime(this.formData.tanggal_mulai),
+          tanggal_selesai: this.toApiDatetime(this.formData.tanggal_selesai),
+          foto_urls: this.formData.foto_urls.map((u) => (u || '').trim()).filter(Boolean)
         }
 
-        console.log('[DEBUG] Sending Payload to API:', payload)
-
         const response = await fetch(url, {
-          method: method,
-          headers: headers,
+          method,
+          headers: this.buildHeaders(true),
           body: JSON.stringify(payload)
         })
 
         const resJson = await response.json().catch(() => ({}))
 
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
         if (!response.ok) {
-          throw new Error(resJson.message || 'Gagal menyimpan data. Pastikan input sudah benar.')
+          const serverMsg = resJson.message
+            || (resJson.errors ? Object.values(resJson.errors).flat().join(' ') : '')
+            || 'Gagal menyimpan data. Pastikan semua field wajib diisi.'
+          throw new Error(serverMsg)
         }
 
         this.closeFormModal()
-        this.fetchRasioData(this.pagination.current_page)
+        this.showSuccess(isEdit ? 'Data kegiatan berhasil diperbarui.' : 'Data kegiatan berhasil ditambahkan.')
+        this.fetchKegiatanData(this.pagination.current_page)
       } catch (err) {
-        console.error('[DEBUG] Submit Form Error:', err)
         this.formError = err.message || 'Terjadi kesalahan saat memproses data.'
       } finally {
         this.submittingForm = false
       }
     },
 
+    // ---------- Detail ----------
+    async handleDetail(item) {
+      this.showModal = true
+      this.loadingDetail = true
+      this.modalError = ''
+      this.selectedDetail = null
+
+      try {
+        const response = await fetch(`${API_BASE}/${item.id}`, {
+          method: 'GET',
+          headers: this.buildHeaders()
+        })
+
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
+        if (!response.ok) throw new Error('Gagal menarik data detail dari server.')
+
+        const result = await response.json()
+        this.selectedDetail = result.data || item
+      } catch (error) {
+        // Fallback: tampilkan data baris tabel agar tombol info tetap berguna
+        // walau endpoint detail sedang bermasalah.
+        this.selectedDetail = item
+        this.modalError = ''
+      } finally {
+        this.loadingDetail = false
+      }
+    },
+
+    closeModal() {
+      this.showModal = false
+      setTimeout(() => {
+        this.selectedDetail = null
+        this.modalError = ''
+      }, 300)
+    },
+
+    // ---------- Delete ----------
     handleDelete(item) {
       this.itemToDelete = item
       this.showDeleteModal = true
@@ -668,93 +777,27 @@ export default {
       if (!this.itemToDelete) return
       this.deleting = true
       try {
-        const token = this.getAuthToken()
-        const headers = {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }
-        if (token) headers['Authorization'] = `Bearer ${token}`
+        const response = await fetch(`${API_BASE}/${this.itemToDelete.id}`, {
+          method: 'DELETE',
+          headers: this.buildHeaders()
+        })
 
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/penduduk/${this.itemToDelete.id}`
-        const response = await fetch(url, { method: 'DELETE', headers })
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
 
         if (!response.ok) throw new Error('Gagal menghapus data dari server.')
 
-        this.deleting = false
         this.showDeleteModal = false
         this.itemToDelete = null
-
-        this.fetchRasioData(this.pagination.current_page)
+        this.showSuccess('Data kegiatan berhasil dihapus.')
+        this.fetchKegiatanData(this.pagination.current_page)
       } catch (error) {
-        console.error('[DEBUG] Delete Error:', error)
         alert(`Error: ${error.message}`)
+      } finally {
         this.deleting = false
       }
-    },
-
-    sortListLocally(list) {
-      if (!Array.isArray(list)) return []
-      return [...list].sort((a, b) => {
-        const yearA = Number(a.tahun) || 0
-        const yearB = Number(b.tahun) || 0
-        return this.sortOrder === 'desc' ? yearB - yearA : yearA - yearB
-      })
-    },
-
-    onSortChange() {
-      this.displayedRasioList = this.sortListLocally(this.displayedRasioList)
-    },
-
-    changePage(page) {
-      if (page < 1 || page > this.pagination.last_page || page === this.pagination.current_page) return
-      this.fetchRasioData(page)
-    },
-
-    calculateRowIndex(index) {
-      return (this.pagination.current_page - 1) * this.perPage + index + 1
-    },
-
-    handleSearch() {
-      clearTimeout(this.searchTimeout)
-      this.searchTimeout = setTimeout(() => {
-        this.fetchRasioData(1)
-      }, 400)
-    },
-
-    formatNumber(val) {
-      if (val === null || val === undefined || isNaN(val)) return '0'
-      return Number(val).toLocaleString('id-ID')
-    },
-
-    formatRasio(val) {
-      if (val === null || val === undefined || isNaN(val)) return '0%'
-      return `${Number(val).toFixed(2)}%`
-    },
-
-    formatDate(dateStr) {
-      if (!dateStr) return '-'
-      const date = new Date(dateStr)
-      if (isNaN(date.getTime())) return dateStr
-
-      const day = String(date.getDate()).padStart(2, '0')
-      const months = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-      ]
-      const month = months[date.getMonth()]
-      const year = date.getFullYear()
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-
-      return `${day} ${month} ${year} pukul ${hours}.${minutes}`
-    },
-
-    closeModal() {
-      this.showModal = false
-      setTimeout(() => {
-        this.selectedDetail = null
-        this.modalError = ''
-      }, 300)
     },
 
     toggleDropdown() {
@@ -785,14 +828,14 @@ export default {
 
 .admin-navbar {
   background-color: #1e385c;
-  color: #1e385c;
+  color: #ffffff;
   padding: 14px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.nav-left { display: flex; gap: 25px; }
+.nav-left { display: flex; gap: 25px; align-items: center; }
 .nav-link {
   color: #ffffff; text-decoration: none; font-weight: 600; font-size: 0.95rem;
   display: flex; align-items: center; gap: 8px; padding-bottom: 6px; transition: all 0.2s;
@@ -822,29 +865,30 @@ export default {
 .dropdown-item:hover { background-color: #ef4444; color: #ffffff; }
 
 .admin-content { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
+.page-title h2 { margin: 0 0 18px 0; font-size: 1.25rem; font-weight: 700; color: #1a1a1a; }
+
 .error-alert {
   background-color: #fef2f2; border: 1px solid #fca5a5; color: #991b1b;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 500;
+}
+.success-alert {
+  background-color: #f0fdf4; border: 1px solid #86efac; color: #166534;
   padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 500;
 }
 
 .action-bar {
   display: flex; gap: 16px; align-items: center; margin-bottom: 20px;
-  background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 4px;
 }
-.search-box { position: relative; flex: 1; display: flex; align-items: center; }
+.search-box { position: relative; flex: 1; display: flex; align-items: center; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
 .search-icon { position: absolute; left: 16px; color: #94a3b8; }
 .search-box input {
-  width: 100%; padding: 12px 16px 12px 48px; border: none; font-family: 'Poppins', sans-serif;
-  font-size: 0.9rem; outline: none; color: #334155;
-}
-.sort-box { display: flex; align-items: center; }
-.sort-select {
-  padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #f8fafc;
-  font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; color: #334155; outline: none; cursor: pointer;
+  width: 100%; padding: 12px 16px 12px 48px; border: none; background: transparent; font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem; outline: none; color: #334155; border-radius: 8px;
 }
 .btn-add {
   background-color: #1e385c; color: #ffffff; border: none; padding: 12px 32px;
   border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
+  white-space: nowrap;
 }
 .btn-add:hover { background-color: #162a45; }
 
@@ -852,45 +896,39 @@ export default {
 .card-header-navy { background-color: #1e385c; color: #ffffff; padding: 16px 24px; }
 .card-header-navy h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
 .table-container { overflow-x: auto; }
-.data-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .data-table th { background-color: #ffffff; color: #1e293b; font-weight: 700; padding: 16px 18px; border-bottom: 2px solid #f1f5f9; text-align: left; }
 .data-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
 .data-table tbody tr:hover { background-color: #f8fafc; }
 
-.badge-ratio {
-  background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; display: inline-block;
-}
-.badge-ratio-lg {
-  background-color: #dbeafe; color: #1e40af; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 1.1rem; display: inline-block;
-}
-
 .action-buttons { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
 .btn-icon:hover { transform: scale(1.2); }
-.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-info { color: #1e293b; }
 .btn-edit { color: #1e385c; }
 .btn-delete { color: #dc2626; }
 
 .card-footer-pagination {
   padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap; gap: 12px;
+}
+.per-page-select {
+  padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #ffffff;
+  font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; color: #334155; outline: none; cursor: pointer;
 }
 .total-info { font-size: 0.85rem; color: #64748b; font-weight: 600; }
 
-.pagination-controls { display: flex; gap: 6px; align-items: center; }
+.pagination-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .btn-page {
   background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 6px 12px;
   border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
 }
 .btn-page:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; }
-.btn-page.active { background-color: #1e385c; color: #ffffff; border-color: #1e385c; font-weight: 600; }
+.btn-page.active { background-color: #1e293b; color: #ffffff; border-color: #1e293b; font-weight: 600; }
 .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .text-center { text-align: center; }
-.text-right { text-align: right; }
 .font-bold { font-weight: 700; }
-.font-mono { font-family: monospace; font-size: 0.95rem; }
-.font-xl { font-size: 1.25rem; }
 .py-5 { padding-top: 40px; padding-bottom: 40px; }
 .py-4 { padding-top: 24px; padding-bottom: 24px; }
 .mt-3 { margin-top: 12px; }
@@ -908,15 +946,18 @@ export default {
 
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: rgba(15, 23, 42, 0.4); 
+  background-color: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex; justify-content: center; align-items: center; z-index: 9999;
+  padding: 20px;
 }
 .modal-container {
-  background-color: #ffffff; width: 90%; max-width: 580px; border-radius: 12px;
+  background-color: #ffffff; width: 90%; max-width: 680px; border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); overflow: hidden;
+  max-height: 90vh; display: flex; flex-direction: column;
 }
+.modal-lg { max-width: 720px; }
 .modal-sm { max-width: 440px; }
 
 .modal-header {
@@ -931,27 +972,38 @@ export default {
 
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .detail-group { background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+.col-span-2 { grid-column: span 2; }
 .detail-group label { display: block; font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; }
 .detail-group p { margin: 0; font-size: 0.9rem; color: #1e293b; word-break: break-word; }
 
+.foto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 10px; }
+.foto-item { height: 120px; border-radius: 8px; overflow: hidden; background-color: #e2e8f0; border: 1px solid #e2e8f0; }
+.foto-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .form-stack { display: flex; flex-direction: column; gap: 16px; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
 .required { color: #dc2626; }
+.help-text { font-size: 0.75rem; color: #64748b; font-style: italic; }
 .form-group input {
   width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
   font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: #1e293b; outline: none; transition: border-color 0.2s; box-sizing: border-box;
 }
 .form-group input:focus { border-color: #1e385c; }
 
-.input-readonly {
-  background-color: #f1f5f9 !important;
-  color: #64748b !important;
-  cursor: not-allowed;
-  border-color: #e2e8f0 !important;
+.foto-url-row { display: flex; gap: 8px; align-items: center; }
+.btn-remove-foto {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: 6px; border: 1px solid #fca5a5;
+  background-color: #fef2f2; color: #dc2626; font-size: 1.2rem; cursor: pointer; line-height: 1;
 }
-
-.help-text { font-size: 0.75rem; color: #64748b; font-style: italic; }
+.btn-remove-foto:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-add-foto {
+  align-self: flex-start; margin-top: 4px; padding: 8px 16px; border-radius: 6px;
+  border: 1px dashed #94a3b8; background-color: #f8fafc; color: #1e385c;
+  font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+}
+.btn-add-foto:hover { background-color: #eef2f7; }
 
 .delete-icon-wrapper {
   width: 64px; height: 64px; background-color: #fef2f2; border-radius: 50%;
@@ -988,4 +1040,11 @@ export default {
 
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+@media (max-width: 640px) {
+  .admin-content { padding: 20px; }
+  .action-bar { flex-direction: column; align-items: stretch; }
+  .detail-grid, .form-grid-2 { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+}
 </style>

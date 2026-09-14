@@ -15,6 +15,10 @@
         <router-link to="/admin/rasio" class="nav-link" active-class="active">
           Rasio Kewirausahaan
         </router-link>
+
+        <router-link to="/admin/kegiatan" class="nav-link" active-class="active">
+          Kegiatan
+        </router-link>
       </div>
       
       <!-- Right Nav / Profile -->

@@ -5,20 +5,25 @@
       <div class="nav-brand" @click="$router.push('/')">
         <img src="../assets/logo2.png" alt="Logo DISKOPUMKER" class="logo" />
       </div>
-      <ul class="nav-menu">
-        <li><router-link to="/">Beranda</router-link></li>
-        <li><router-link to="/umkm">Grafik</router-link></li>
-        <li><router-link to="/layanan">Layanan UMKM</router-link></li>
-        <li><router-link to="/galeri" class="active">Galeri</router-link></li>
-      </ul>
-      <button class="btn-login" @click="$router.push('/login')">
-        Login
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-          <polyline points="10 17 15 12 10 7"></polyline>
-          <line x1="15" y1="12" x2="3" y2="12"></line>
-        </svg>
-      </button>
+
+      <!-- Menu & Login Digabung ke Kanan -->
+      <div class="nav-right">
+        <ul class="nav-menu">
+          <li><router-link to="/">Beranda</router-link></li>
+          <li><router-link to="/umkm">Grafik</router-link></li>
+          <li><router-link to="/layanan">Layanan UMKM</router-link></li>
+          <li><router-link to="/jadwal">Jadwal</router-link></li>
+          <li><router-link to="/galeri" class="active">Galeri</router-link></li>
+        </ul>
+        <button class="btn-login" @click="$router.push('/login')">
+          Login
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+        </button>
+      </div>
     </header>
 
     <!-- Main Content -->
@@ -51,7 +56,7 @@
       <!-- Loop Utama: Daftar Kegiatan -->
       <div v-else class="activities-wrapper">
         <div 
-          v-for="kegiatan in daftarKegiatan" 
+          v-for="kegiatan in paginatedKegiatan" 
           :key="kegiatan.id" 
           class="kegiatan-card"
         >
@@ -68,7 +73,7 @@
             </div>
           </div>
 
-          <!-- Loop Kedua (Nested v-for): Grid Foto dari galeris -->
+          <!-- Loop Kedua (Nested v-for): Grid Foto -->
           <div class="galeri-grid">
             <div 
               v-for="foto in kegiatan.galeris" 
@@ -83,6 +88,37 @@
             </div>
           </div>
         </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="totalPages > 1" class="pagination-container">
+          <button 
+            class="pagination-btn" 
+            :disabled="currentPage === 1"
+            @click="prevPage"
+          >
+            &laquo; Prev
+          </button>
+
+          <div class="pagination-numbers">
+            <button 
+              v-for="page in totalPages" 
+              :key="page"
+              class="page-number"
+              :class="{ active: currentPage === page }"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button 
+            class="pagination-btn" 
+            :disabled="currentPage === totalPages"
+            @click="nextPage"
+          >
+            Next &raquo;
+          </button>
+        </div>
       </div>
     </main>
   </div>
@@ -95,7 +131,19 @@ export default {
     return {
       daftarKegiatan: [],
       loading: true,
-      error: null
+      error: null,
+      currentPage: 1,
+      itemsPerPage: 3
+    }
+  },
+  computed: {
+    totalPages() {
+      return Math.ceil(this.daftarKegiatan.length / this.itemsPerPage) || 1
+    },
+    paginatedKegiatan() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.daftarKegiatan.slice(start, end)
     }
   },
   mounted() {
@@ -131,6 +179,24 @@ export default {
       if (!dateString) return ''
       const options = { day: 'numeric', month: 'long', year: 'numeric' }
       return new Date(dateString).toLocaleDateString('id-ID', options)
+    },
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     }
   }
 }
@@ -146,7 +212,7 @@ export default {
   color: #1a1a1a;
 }
 
-/* Navbar */
+/* Navbar Layout Baru */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -160,9 +226,15 @@ export default {
   cursor: pointer;
 }
 
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
 .nav-menu {
   display: flex;
-  gap: 32px;
+  gap: 28px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -321,9 +393,56 @@ export default {
   display: block;
 }
 
+/* Pagination Styling */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+.pagination-btn,
+.page-number {
+  padding: 8px 14px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled),
+.page-number:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-number.active {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
 @media (max-width: 768px) {
   .navbar {
     padding: 15px 20px;
+  }
+  .nav-right {
+    gap: 16px;
   }
   .nav-menu {
     display: none;

@@ -23,6 +23,7 @@
         <li class="nav-item" @click="navTo('/')">Beranda</li>
         <li class="nav-item" @click="handleScrollGrafik">Grafik</li>
         <li class="nav-item" @click="navTo('/layanan')">Layanan UMKM</li>
+        <li class="nav-item" @click="navTo('/jadwal')">Jadwal</li>
         <li class="nav-item" @click="navTo('/galeri')">Galeri</li>
         <li class="nav-item login-btn" @click="navTo('/login')">
           <span>Login</span>
