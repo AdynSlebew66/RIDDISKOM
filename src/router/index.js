@@ -9,6 +9,7 @@ import KegiatanView from '../components/KegiatanView.vue'
 import LayananUmkmView from '../components/LayananUmkmView.vue'
 import GaleriView from '../components/GaleriView.vue' // 1. Import komponen Galeri
 import JadwalView from '../components/JadwalView.vue'
+import JadwalAdminView from '../components/JadwalAdminView.vue'
 
 const routes = [
   {
@@ -61,6 +62,11 @@ const routes = [
     path: '/admin/kegiatan',
     name: 'AdminKegiatan',
     component: KegiatanView
+  },
+  {
+    path: '/admin/jadwal',
+    name: 'AdminJadwal',
+    component: JadwalAdminView
   }
 ]
 

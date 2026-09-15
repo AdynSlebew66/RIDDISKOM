@@ -24,7 +24,7 @@
           Jadwal
         </router-link>
       </div>
-      
+
       <!-- Right Nav / Profile -->
       <div class="nav-right">
         <div class="profile-container">
@@ -49,24 +49,20 @@
 
     <!-- Main Content -->
     <main class="admin-content">
+      <div class="page-title">
+        <h2>Data Jadwal Admin UMKM</h2>
+      </div>
+
       <!-- Search & Add Button Bar -->
       <div class="action-bar">
         <div class="search-box">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input 
-            type="text" 
-            v-model="searchQuery" 
+          <input
+            type="text"
+            v-model="searchQuery"
             @input="handleSearch"
-            placeholder="Cari Nama Perusahaan, Proyek, atau Kecamatan..."
+            placeholder="Cari Nama Kegiatan..."
           />
-        </div>
-
-        <!-- Filter Urutan -->
-        <div class="sort-box">
-          <select v-model="sortOrder" @change="onSortChange" class="sort-select">
-            <option value="desc">Terbaru &rarr; Terlama</option>
-            <option value="asc">Terlama &rarr; Terbaru</option>
-          </select>
         </div>
 
         <button class="btn-add" @click="openAddModal">
@@ -79,10 +75,15 @@
         {{ errorMessage }}
       </div>
 
+      <!-- Success Alert -->
+      <div v-if="successMessage" class="success-alert">
+        {{ successMessage }}
+      </div>
+
       <!-- Table Card Wrapper -->
       <div class="data-card">
         <div class="card-header-navy">
-          <h3>Data UMKM</h3>
+          <h3>Data Jadwal Kegiatan</h3>
         </div>
 
         <div class="table-container">
@@ -90,40 +91,36 @@
             <thead>
               <tr>
                 <th class="text-center" style="width: 60px;">No</th>
-                <th>Nama Perusahaan</th>
-                <th>Nama Proyek</th>
-                <th>Kab/Kota Usaha</th>
-                <th>Kecamatan</th>
-                <th>Kelurahan</th>
-                <th>Judul KBLI</th>
-                <th class="text-center" style="width: 110px;">Aksi</th>
+                <th>Nama Kegiatan</th>
+                <th>Tanggal</th>
+                <th class="text-center">Jam</th>
+                <th class="text-center">Jumlah Peserta</th>
+                <th class="text-center" style="width: 130px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <!-- Loading State -->
               <tr v-if="loading">
-                <td colspan="8" class="text-center py-5">
+                <td colspan="6" class="text-center py-5">
                   <div class="spinner"></div>
-                  <p class="loading-text">Memuat data UMKM...</p>
+                  <p class="loading-text">Memuat data jadwal...</p>
                 </td>
               </tr>
 
               <!-- Empty State -->
-              <tr v-else-if="displayedUmkmList.length === 0">
-                <td colspan="8" class="text-center py-5 empty-text">
-                  Data UMKM tidak ditemukan.
+              <tr v-else-if="displayedJadwalList.length === 0">
+                <td colspan="6" class="text-center py-5 empty-text">
+                  Data jadwal tidak ditemukan.
                 </td>
               </tr>
 
               <!-- Data Rows -->
-              <tr v-else v-for="(item, index) in displayedUmkmList" :key="item.id || index">
+              <tr v-else v-for="(item, index) in displayedJadwalList" :key="item.id || index">
                 <td class="text-center font-bold">{{ calculateRowIndex(index) }}</td>
-                <td class="font-bold text-uppercase">{{ formatText(item?.nama_perusahaan) }}</td>
-                <td>{{ formatText(item?.nama_proyek) }}</td>
-                <td>{{ formatText(item?.kab_kota_usaha || item?.kab_kota?.nama) }}</td>
-                <td>{{ formatText(item?.kecamatan_usaha || item?.kecamatan?.nama) }}</td>
-                <td>{{ formatText(item?.kelurahan_usaha || item?.kelurahan?.nama) }}</td>
-                <td>{{ formatText(item?.judul_kbli || item?.kbli_data?.judul) }}</td>
+                <td class="font-bold">{{ item.nama_kegiatan || '-' }}</td>
+                <td>{{ formatTanggal(item.tanggal) }}</td>
+                <td class="text-center">{{ formatJam(item.jam) }}</td>
+                <td class="text-center">{{ formatPeserta(item.jumlah_peserta) }}</td>
                 <td class="text-center">
                   <div class="action-buttons">
                     <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
@@ -145,20 +142,24 @@
         <!-- Footer Pagination -->
         <div class="card-footer-pagination">
           <div class="per-page-selector">
-            <span class="total-info">Total: {{ pagination.total }} Data</span>
+            <select v-model.number="perPage" @change="onPerPageChange" class="per-page-select">
+              <option :value="10">10 Baris</option>
+              <option :value="25">25 Baris</option>
+              <option :value="50">50 Baris</option>
+            </select>
           </div>
 
           <div v-if="pagination.last_page > 1" class="pagination-controls">
-            <button 
-              class="btn-page" 
+            <button
+              class="btn-page"
               :disabled="pagination.current_page === 1"
               @click="changePage(pagination.current_page - 1)"
             >
-              &laquo; Prev
+              &larr; Previous
             </button>
 
-            <button 
-              v-for="page in displayedPages" 
+            <button
+              v-for="page in displayedPages"
               :key="page"
               class="btn-page"
               :class="{ active: page === pagination.current_page }"
@@ -168,27 +169,30 @@
               {{ page }}
             </button>
 
-            <button 
-              class="btn-page" 
+            <button
+              class="btn-page"
               :disabled="pagination.current_page === pagination.last_page"
               @click="changePage(pagination.current_page + 1)"
             >
-              Next &raquo;
+              Next &rarr;
             </button>
+          </div>
+          <div v-else class="pagination-controls">
+            <span class="total-info">Total: {{ pagination.total }} Data</span>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- Modal Detail Pop-up -->
+    <!-- Modal Detail -->
     <transition name="modal-fade">
       <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
         <div class="modal-container">
           <div class="modal-header">
-            <h3>Informasi Detail UMKM</h3>
+            <h3>Detail Jadwal Kegiatan</h3>
             <button class="btn-close" @click="closeModal">&times;</button>
           </div>
-          
+
           <div class="modal-body">
             <div v-if="loadingDetail" class="text-center py-5">
               <div class="spinner"></div>
@@ -200,60 +204,40 @@
             </div>
 
             <div v-else-if="selectedDetail" class="detail-grid">
-              <div class="detail-group">
-                <label>Nama Perusahaan</label>
-                <p class="font-bold text-uppercase">{{ formatText(selectedDetail.nama_perusahaan) }}</p>
+              <div class="detail-group col-span-2">
+                <label>Nama Kegiatan</label>
+                <p class="font-bold">{{ selectedDetail.nama_kegiatan || '-' }}</p>
               </div>
               <div class="detail-group">
-                <label>Nama Proyek</label>
-                <p>{{ formatText(selectedDetail.nama_proyek) }}</p>
+                <label>Tanggal</label>
+                <p>{{ formatTanggal(selectedDetail.tanggal) }}</p>
               </div>
               <div class="detail-group">
-                <label>Jenis Perusahaan</label>
-                <p>{{ formatText(selectedDetail.jenis_perusahaan) }}</p>
+                <label>Jam</label>
+                <p>{{ formatJam(selectedDetail.jam) }}</p>
               </div>
               <div class="detail-group">
-                <label>Risiko Proyek</label>
-                <p><span class="badge badge-risk">{{ formatText(selectedDetail.risiko_proyek) }}</span></p>
+                <label>Jumlah Peserta</label>
+                <p>{{ formatPeserta(selectedDetail.jumlah_peserta) }}</p>
               </div>
               <div class="detail-group">
-                <label>Skala Usaha</label>
-                <p>{{ formatText(selectedDetail.skala_usaha) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Sektor Pembina</label>
-                <p>{{ formatText(selectedDetail.sektor_pembina) }}</p>
+                <label>Bulan</label>
+                <p>{{ selectedDetail.bulan || '-' }}</p>
               </div>
               <div class="detail-group col-span-2">
-                <label>Alamat Usaha</label>
-                <p>{{ formatText(selectedDetail.alamat_usaha) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Kecamatan</label>
-                <p>{{ formatText(selectedDetail.kecamatan_usaha || selectedDetail.kecamatan?.nama) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Kelurahan</label>
-                <p>{{ formatText(selectedDetail.kelurahan_usaha || selectedDetail.kelurahan?.nama) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Kab / Kota Usaha</label>
-                <p>{{ formatText(selectedDetail.kab_kota_usaha || selectedDetail.kab_kota?.nama) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Jumlah Tenaga Kerja (TKI)</label>
-                <p>{{ selectedDetail.jumlah_tki || 0 }} Orang</p>
+                <label>Link Pendaftaran</label>
+                <p>
+                  <a v-if="selectedDetail.link_pendaftaran" :href="selectedDetail.link_pendaftaran" target="_blank" rel="noopener" class="link-daftar">{{ selectedDetail.link_pendaftaran }}</a>
+                  <span v-else>-</span>
+                </p>
               </div>
               <div class="detail-group col-span-2">
-                <label>Data KBLI</label>
-                <div class="kbli-box">
-                  <strong>Kode:</strong> {{ formatText(selectedDetail.kbli || selectedDetail.kbli_data?.kode) }} <br/>
-                  <strong>Judul:</strong> {{ formatText(selectedDetail.judul_kbli || selectedDetail.kbli_data?.judul) }}
-                </div>
+                <label>Keterangan</label>
+                <p>{{ selectedDetail.keterangan || '-' }}</p>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-footer">
             <button class="btn-tutup" @click="closeModal">Tutup</button>
           </div>
@@ -266,124 +250,62 @@
       <div v-if="showFormModal" class="modal-overlay" @click.self="closeFormModal">
         <div class="modal-container">
           <div class="modal-header">
-            <h3>{{ isEditMode ? 'Edit Data UMKM' : 'Tambah Data UMKM Baru' }}</h3>
+            <h3>{{ isEditMode ? 'Edit Data Jadwal' : 'Tambah Data Jadwal' }}</h3>
             <button class="btn-close" @click="closeFormModal">&times;</button>
           </div>
-          
+
           <form @submit.prevent="submitForm">
             <div class="modal-body">
               <div v-if="formError" class="error-alert">
                 {{ formError }}
               </div>
 
-              <!-- Form Grid -->
-              <div class="form-grid">
-                <!-- 1. Nama Perusahaan -->
+              <div class="form-stack">
                 <div class="form-group">
-                  <label>Nama Perusahaan <span class="required">*</span></label>
-                  <input type="text" v-model="formData.nama_perusahaan" />
-                </div>
-
-                <!-- 2. Nama Proyek -->
-                <div class="form-group">
-                  <label>Nama Proyek</label>
-                  <input type="text" v-model="formData.nama_proyek" />
-                </div>
-
-                <!-- 3. Jenis Perusahaan -->
-                <div class="form-group">
-                  <label>Jenis Perusahaan</label>
-                  <input type="text" v-model="formData.jenis_perusahaan" />
-                </div>
-
-                <!-- 4. Risiko Proyek -->
-                <div class="form-group">
-                  <label>Risiko Proyek</label>
-                  <select v-model="formData.risiko_proyek" class="form-select">
-                    <option value="">-- Pilih Risiko --</option>
-                    <option value="Rendah">Rendah</option>
-                    <option value="Menengah Rendah">Menengah Rendah</option>
-                    <option value="Menengah Tinggi">Menengah Tinggi</option>
-                    <option value="Tinggi">Tinggi</option>
-                  </select>
-                </div>
-
-                <!-- 5. Skala Usaha -->
-                <div class="form-group">
-                  <label>Skala Usaha</label>
-                  <select v-model="formData.skala_usaha" class="form-select">
-                    <option value="">-- Pilih Skala --</option>
-                    <option value="Usaha Mikro">Usaha Mikro</option>
-                    <option value="Usaha Kecil">Usaha Kecil</option>
-                    <option value="Usaha Menengah">Usaha Menengah</option>
-                    <option value="Usaha Besar">Usaha Besar</option>
-                  </select>
-                </div>
-
-                <!-- 6. Sektor Pembina -->
-                <div class="form-group">
-                  <label>Sektor Pembina</label>
-                  <input type="text" v-model="formData.sektor_pembina" />
-                </div>
-
-                <!-- 7. Alamat Usaha -->
-                <div class="form-group col-span-2">
-                  <label>Alamat Usaha</label>
-                  <textarea v-model="formData.alamat_usaha" rows="2"></textarea>
-                </div>
-
-                <!-- 8. Kecamatan -->
-                <div class="form-group">
-                  <label>Kecamatan <span class="required">*</span></label>
-                  <select v-model="formData.kecamatan_usaha" class="form-select" @change="onKecamatanChange" required>
-                    <option value="">-- Pilih Kecamatan --</option>
-                    <option v-for="(kelurahans, kec) in dataBanjarmasin" :key="kec" :value="kec">
-                      {{ kec }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- 9. Kelurahan -->
-                <div class="form-group">
-                  <label>Kelurahan <span class="required">*</span></label>
-                  <select 
-                    v-model="formData.kelurahan_usaha" 
-                    class="form-select" 
-                    :disabled="!formData.kecamatan_usaha"
+                  <label>Nama Kegiatan <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    v-model="formData.nama_kegiatan"
                     required
-                  >
-                    <option value="">-- Pilih Kelurahan --</option>
-                    <option v-for="kel in listKelurahan" :key="kel" :value="kel">
-                      {{ kel }}
-                    </option>
-                  </select>
+                    placeholder="Contoh: Sosialisasi Perizinan"
+                  />
                 </div>
 
-                <!-- 10. Kab / Kota Usaha -->
-                <div class="form-group">
-                  <label>Kab / Kota Usaha</label>
-                  <input type="text" v-model="formData.kab_kota_usaha" class="form-readonly" readonly />
-                </div>
-
-                <!-- 11. Jumlah Tenaga Kerja (TKI) -->
-                <div class="form-group">
-                  <label>Jumlah Tenaga Kerja (TKI)</label>
-                  <input type="number" min="0" v-model.number="formData.jumlah_tki" placeholder="0" />
-                </div>
-
-                <!-- 12. Data KBLI -->
-                <div class="form-group col-span-2 kbli-input-box">
-                  <label class="kbli-section-label">Data KBLI</label>
-                  <div class="form-grid inner-grid">
-                    <div class="form-group">
-                      <label>Kode KBLI</label>
-                      <input type="text" v-model="formData.kbli"/>
-                    </div>
-                    <div class="form-group">
-                      <label>Judul KBLI</label>
-                      <input type="text" v-model="formData.judul_kbli" />
-                    </div>
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label>Tanggal <span class="required">*</span></label>
+                    <input type="date" v-model="formData.tanggal" min="2000-01-01" max="2100-12-31" required />
                   </div>
+                  <div class="form-group">
+                    <label>Jam</label>
+                    <input type="time" v-model="formData.jam" />
+                    <small class="help-text">Kosongkan jika belum ada jam.</small>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Jumlah Peserta</label>
+                  <input
+                    type="number"
+                    min="0"
+                    v-model.number="formData.jumlah_peserta"
+                    placeholder="0"
+                  />
+                  <small class="help-text">Isi 0 jika belum ada data peserta (tampil "-").</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Link Pendaftaran</label>
+                  <input
+                    type="url"
+                    v-model="formData.link_pendaftaran"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Keterangan</label>
+                  <textarea v-model="formData.keterangan" rows="3" placeholder="Contoh: Dilaksanakan 3x"></textarea>
                 </div>
               </div>
             </div>
@@ -400,7 +322,7 @@
       </div>
     </transition>
 
-    <!-- Modal Konfirmasi Hapus Data -->
+    <!-- Modal Konfirmasi Hapus -->
     <transition name="modal-fade">
       <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
         <div class="modal-container modal-sm">
@@ -412,9 +334,9 @@
             <div class="delete-icon-wrapper">
               <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </div>
-            <h4 class="delete-title">Hapus Data UMKM?</h4>
+            <h4 class="delete-title">Hapus Data Jadwal?</h4>
             <p class="delete-desc">
-              Apakah kamu yakin ingin menghapus data <strong>"{{ itemToDelete?.nama_perusahaan }}"</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah kamu yakin ingin menghapus jadwal <strong>"{{ itemToDelete?.nama_kegiatan }}"</strong>? Tindakan ini tidak dapat dibatalkan.
             </p>
           </div>
           <div class="modal-footer footer-center">
@@ -431,24 +353,23 @@
 </template>
 
 <script>
+const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/jadwal'
+
 export default {
-  name: 'DataUmkmView',
+  name: 'JadwalAdminView',
   data() {
     return {
       showDropdown: false,
       loading: false,
       errorMessage: '',
+      successMessage: '',
+      successTimeout: null,
       searchQuery: '',
       searchTimeout: null,
       perPage: 10,
-      sortOrder: 'desc',
-      
-      displayedUmkmList: [],
-      pagination: {
-        current_page: 1,
-        last_page: 1,
-        total: 0
-      },
+
+      allJadwalList: [],
+      currentPage: 1,
 
       showModal: false,
       loadingDetail: false,
@@ -464,44 +385,37 @@ export default {
       itemToDelete: null,
       deleting: false,
 
-      dataBanjarmasin: {
-        "Banjarmasin Barat": [
-          "Basirih", "Belitung Selatan", "Belitung Utara", "Kuin Cerucuk", "Kuin Selatan", "Pelambuan", "Telaga Biru", "Teluk Tiram"
-        ],
-        "Banjarmasin Selatan": [
-          "Basirih Selatan", "Kelayan Barat", "Kelayan Dalam", "Kelayan Selatan", "Kelayan Tengah", "Kelayan Timur", "Mantuil", "Murung Raya", "Pekauman", "Pemurus Baru", "Pemurus Dalam", "Tanjung Pagar"
-        ],
-        "Banjarmasin Tengah": [
-          "Antasan Besar", "Gadang", "Kelayan Luar", "Kertak Baru Ilir", "Kertak Baru Ulu", "Mawar", "Melayu", "Pasar Lama", "Pekapuran Laut", "Seberang Masjid", "Teluk Dalam"
-        ],
-        "Banjarmasin Timur": [
-          "Benua Anyar", "Karang Mekar", "Kebun Bunga", "Kuripan", "Pekapuran Raya", "Pemurus Luar", "Pengambangan", "Sungai Bilu"
-        ],
-        "Banjarmasin Utara": [
-          "Alalak Selatan", "Alalak Tengah", "Alalak Utara", "Antasan Kecil Timur", "Kuin Utara", "Pangeran", "Sungai Miai", "Sungai Andai", "Surgi Mufti"
-        ]
-      },
-
       formData: {
         id: null,
-        nama_perusahaan: '',
-        nama_proyek: '',
-        jenis_perusahaan: '',
-        risiko_proyek: '',
-        skala_usaha: '',
-        sektor_pembina: '',
-        alamat_usaha: '',
-        kecamatan_usaha: '',
-        kelurahan_usaha: '',
-        kab_kota_usaha: 'Kota Banjarmasin',
-        jumlah_tki: 0,
-        kbli: '',
-        judul_kbli: '',
-        is_publik: true
+        nama_kegiatan: '',
+        tanggal: '',
+        jam: '',
+        jumlah_peserta: 0,
+        link_pendaftaran: '',
+        keterangan: ''
       }
     }
   },
   computed: {
+    // Filter lokal berdasarkan pencarian nama kegiatan
+    filteredJadwalList() {
+      const q = (this.searchQuery || '').trim().toLowerCase()
+      if (!q) return this.allJadwalList
+      return this.allJadwalList.filter((item) =>
+        String(item.nama_kegiatan || '').toLowerCase().includes(q)
+      )
+    },
+    // Potongan data sesuai halaman & jumlah baris (client-side)
+    displayedJadwalList() {
+      const start = (this.currentPage - 1) * this.perPage
+      return this.filteredJadwalList.slice(start, start + this.perPage)
+    },
+    pagination() {
+      const total = this.filteredJadwalList.length
+      const last_page = Math.max(1, Math.ceil(total / this.perPage))
+      const current_page = Math.min(this.currentPage, last_page)
+      return { current_page, last_page, total }
+    },
     displayedPages() {
       const current = this.pagination.current_page
       const last = this.pagination.last_page
@@ -512,25 +426,20 @@ export default {
       } else {
         pages.push(1)
         if (current > 3) pages.push('...')
-        
+
         const start = Math.max(2, current - 1)
         const end = Math.min(last - 1, current + 1)
-        
+
         for (let i = start; i <= end; i++) pages.push(i)
-        
+
         if (current < last - 2) pages.push('...')
         pages.push(last)
       }
       return pages
-    },
-
-    listKelurahan() {
-      if (!this.formData.kecamatan_usaha) return []
-      return this.dataBanjarmasin[this.formData.kecamatan_usaha] || []
     }
   },
   mounted() {
-    this.fetchUmkmData(1)
+    this.fetchJadwalData(1)
   },
   methods: {
     getAuthToken() {
@@ -548,68 +457,156 @@ export default {
       }
       return token || ''
     },
+    buildHeaders(isJson = false) {
+      const headers = {
+        Accept: 'application/json',
+        'ngrok-skip-browser-warning': '69420'
+      }
+      const token = this.getAuthToken()
+      if (token) headers.Authorization = `Bearer ${token}`
+      if (isJson) headers['Content-Type'] = 'application/json'
+      return headers
+    },
 
-    async fetchUmkmData(page = 1) {
+    // Ambil SATU halaman paginator Laravel:
+    // { message, data: { current_page, data: [...], last_page, total, ... } }
+    // atau { message, data: [...] } untuk respons array polos.
+    // Memakai ?page= & ?per_page= (parameter resmi sesuai dokumentasi).
+    // TANPA parameter search agar tidak memicu error 500 di server.
+    async fetchJadwalPage(page = 1, perPage = 100) {
+      const params = new URLSearchParams({ page, per_page: perPage })
+      const response = await fetch(`${API_BASE}?${params.toString()}`, {
+        method: 'GET',
+        headers: this.buildHeaders()
+      })
+
+      if (response.status === 401) {
+        this.$router.push('/login')
+        return null
+      }
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '')
+        throw new Error(`Gagal mengambil data. Status: ${response.status}${body ? ` - ${body.slice(0, 200)}` : ''}`)
+      }
+
+      const result = await response.json()
+      const pageData = result.data || {}
+
+      if (pageData && Array.isArray(pageData.data)) {
+        return {
+          list: pageData.data,
+          current_page: Number(pageData.current_page) || page,
+          last_page: Number(pageData.last_page) || 1
+        }
+      }
+      if (Array.isArray(result.data)) {
+        return { list: result.data, current_page: 1, last_page: 1 }
+      }
+      return { list: [], current_page: 1, last_page: 1 }
+    },
+
+    async fetchJadwalData(page = 1) {
       this.loading = true
       this.errorMessage = ''
       try {
-        const token = this.getAuthToken()
-        const queryParams = new URLSearchParams({
-          page: page,
-          per_page: this.perPage,
-          'ngrok-skip-browser-warning': '69420'
-        })
+        const first = await this.fetchJadwalPage(1)
+        if (!first) return
 
-        if (this.searchQuery.trim()) {
-          queryParams.append('search', this.searchQuery.trim())
+        let all = [...first.list]
+        // Ikuti paginator server sampai halaman terakhir agar
+        // pencarian & pagination client-side mencakup seluruh data.
+        for (let p = 2; p <= first.last_page; p++) {
+          const next = await this.fetchJadwalPage(p)
+          if (!next) break
+          all = all.concat(next.list)
         }
 
-        const headers = {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
+        this.allJadwalList = all
+        this.currentPage = page || 1
+        if (this.currentPage > this.pagination.last_page) {
+          this.currentPage = this.pagination.last_page
         }
-
-        if (token) headers['Authorization'] = `Bearer ${token}`
-
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm?${queryParams.toString()}`
-        const response = await fetch(url, { method: 'GET', headers })
-
-        if (response.status === 401) {
-          this.$router.push('/login')
-          return
-        }
-
-        if (!response.ok) throw new Error(`Gagal mengambil data. Status: ${response.status}`)
-
-        const result = await response.json()
-        const pageData = result.data || {}
-
-        if (pageData && Array.isArray(pageData.data)) {
-          this.displayedUmkmList = this.sortListLocally(pageData.data)
-          this.pagination = {
-            current_page: Number(pageData.current_page) || page,
-            last_page: Number(pageData.last_page) || 1,
-            total: Number(pageData.total) || 0
-          }
-        } else if (Array.isArray(result.data)) {
-          this.displayedUmkmList = this.sortListLocally(result.data)
-          this.pagination = {
-            current_page: 1,
-            last_page: 1,
-            total: result.data.length
-          }
-        }
-
       } catch (error) {
         this.errorMessage = `Error: ${error.message || 'Gagal terhubung ke API.'}`
-        this.displayedUmkmList = []
+        this.allJadwalList = []
+        this.currentPage = 1
       } finally {
         this.loading = false
       }
     },
 
-    onKecamatanChange() {
-      this.formData.kelurahan_usaha = ''
+    onPerPageChange() {
+      this.currentPage = 1
+    },
+
+    changePage(page) {
+      if (page < 1 || page > this.pagination.last_page || page === this.pagination.current_page) return
+      this.currentPage = page
+    },
+
+    calculateRowIndex(index) {
+      return (this.pagination.current_page - 1) * this.perPage + index + 1
+    },
+
+    handleSearch() {
+      clearTimeout(this.searchTimeout)
+      this.searchTimeout = setTimeout(() => {
+        this.currentPage = 1
+      }, 400)
+    },
+
+    formatTanggal(dateString) {
+      if (!dateString) return '-'
+      const d = new Date(dateString)
+      if (isNaN(d.getTime())) return dateString
+      return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    },
+    // MANIPULASI JAM: 00:00:00 / "-" / kosong -> "-"
+    formatJam(jam) {
+      if (!jam || jam === '-') return '-'
+      const s = String(jam).trim()
+      if (s === '-' || s.startsWith('00:00')) return '-'
+      const match = s.match(/^(\d{2}):(\d{2})/)
+      if (match) return `${match[1]}:${match[2]}`
+      return s
+    },
+    // MANIPULASI PESERTA: 0 / kosong -> "-"
+    formatPeserta(jumlah) {
+      if (jumlah === null || jumlah === undefined || Number(jumlah) === 0) return '-'
+      return Number(jumlah).toLocaleString('id-ID')
+    },
+    // Input time ("HH:MM") -> API ("HH:MM", format H:i); kosong -> null
+    toApiJam(timeValue) {
+      if (!timeValue) return null
+      const s = String(timeValue).trim()
+      const match = s.match(/^(\d{2}):(\d{2})/)
+      return match ? `${match[1]}:${match[2]}` : s
+    },
+    // API ("HH:MM:SS" / "-") -> input time ("HH:MM"); "00:00:00" -> kosong
+    toTimeInputValue(jam) {
+      if (!jam || jam === '-') return ''
+      const s = String(jam).trim()
+      if (s === '-' || s.startsWith('00:00')) return ''
+      const match = s.match(/^(\d{2}):(\d{2})/)
+      return match ? `${match[1]}:${match[2]}` : ''
+    },
+    // API DATE ("YYYY-MM-DD...") -> input date ("YYYY-MM-DD")
+    toDateInputValue(value) {
+      if (!value) return ''
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value)
+      const d = new Date(value)
+      if (isNaN(d.getTime())) return ''
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    },
+
+    showSuccess(msg) {
+      this.successMessage = msg
+      clearTimeout(this.successTimeout)
+      this.successTimeout = setTimeout(() => {
+        this.successMessage = ''
+      }, 3500)
     },
 
     openAddModal() {
@@ -624,20 +621,12 @@ export default {
       this.formError = ''
       this.formData = {
         id: item.id,
-        nama_perusahaan: item.nama_perusahaan || '',
-        nama_proyek: item.nama_proyek || '',
-        jenis_perusahaan: item.jenis_perusahaan || '',
-        risiko_proyek: item.risiko_proyek || '',
-        skala_usaha: item.skala_usaha || '',
-        sektor_pembina: item.sektor_pembina || '',
-        alamat_usaha: item.alamat_usaha || '',
-        kecamatan_usaha: item.kecamatan_usaha || item.kecamatan?.nama || '',
-        kelurahan_usaha: item.kelurahan_usaha || item.kelurahan?.nama || '',
-        kab_kota_usaha: 'Kota Banjarmasin',
-        jumlah_tki: item.jumlah_tki || 0,
-        kbli: item.kbli || item.kbli_data?.kode || '',
-        judul_kbli: item.judul_kbli || item.kbli_data?.judul || '',
-        is_publik: true
+        nama_kegiatan: item.nama_kegiatan || '',
+        tanggal: this.toDateInputValue(item.tanggal),
+        jam: this.toTimeInputValue(item.jam),
+        jumlah_peserta: Number(item.jumlah_peserta) || 0,
+        link_pendaftaran: item.link_pendaftaran || '',
+        keterangan: item.keterangan || ''
       }
       this.showFormModal = true
     },
@@ -645,20 +634,12 @@ export default {
     resetFormData() {
       this.formData = {
         id: null,
-        nama_perusahaan: '',
-        nama_proyek: '',
-        jenis_perusahaan: '',
-        risiko_proyek: '',
-        skala_usaha: '',
-        sektor_pembina: '',
-        alamat_usaha: '',
-        kecamatan_usaha: '',
-        kelurahan_usaha: '',
-        kab_kota_usaha: 'Kota Banjarmasin',
-        jumlah_tki: 0,
-        kbli: '',
-        judul_kbli: '',
-        is_publik: true
+        nama_kegiatan: '',
+        tanggal: '',
+        jam: '',
+        jumlah_peserta: 0,
+        link_pendaftaran: '',
+        keterangan: ''
       }
     },
 
@@ -670,47 +651,76 @@ export default {
       }, 300)
     },
 
+    validateForm() {
+      const nama = (this.formData.nama_kegiatan || '').trim()
+      if (!nama) return 'Nama kegiatan wajib diisi.'
+      if (!this.formData.tanggal) return 'Tanggal wajib diisi.'
+      // Pastikan format YYYY-MM-DD dengan tahun 4 digit yang wajar.
+      // Mencegah tahun seperti "14124" yang ditolak MySQL (error 1292).
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(this.formData.tanggal)) {
+        return 'Format tanggal tidak valid. Gunakan kalender atau format YYYY-MM-DD.'
+      }
+      const d = new Date(this.formData.tanggal)
+      if (isNaN(d.getTime())) return 'Format tanggal tidak valid.'
+      const year = Number(this.formData.tanggal.slice(0, 4))
+      if (year < 2000 || year > 2100) return 'Tahun pada tanggal harus antara 2000 sampai 2100.'
+      if (this.formData.link_pendaftaran && this.formData.link_pendaftaran.trim()) {
+        try {
+          new URL(this.formData.link_pendaftaran.trim())
+        } catch (e) {
+          return 'Link pendaftaran tidak valid.'
+        }
+      }
+      if (Number(this.formData.jumlah_peserta) < 0) return 'Jumlah peserta tidak boleh negatif.'
+      return ''
+    },
+
     async submitForm() {
+      const validationError = this.validateForm()
+      if (validationError) {
+        this.formError = validationError
+        return
+      }
       this.submittingForm = true
       this.formError = ''
 
       try {
-        const token = this.getAuthToken()
-        const headers = {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }
-        if (token) headers['Authorization'] = `Bearer ${token}`
-
         const isEdit = this.isEditMode && this.formData.id
-        const url = isEdit 
-          ? `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${this.formData.id}`
-          : `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm`
-
+        const url = isEdit ? `${API_BASE}/${this.formData.id}` : API_BASE
         const method = isEdit ? 'PUT' : 'POST'
 
-        const payload = { 
-          ...this.formData,
-          kab_kota_usaha: 'Kota Banjarmasin',
-          is_publik: true
+        const payload = {
+          nama_kegiatan: this.formData.nama_kegiatan.trim(),
+          tanggal: this.formData.tanggal.slice(0, 10),
+          jam: this.toApiJam(this.formData.jam),
+          jumlah_peserta: Number(this.formData.jumlah_peserta) || 0,
+          link_pendaftaran: (this.formData.link_pendaftaran || '').trim() || null,
+          keterangan: (this.formData.keterangan || '').trim() || null
         }
-        delete payload.id
 
         const response = await fetch(url, {
-          method: method,
-          headers: headers,
+          method,
+          headers: this.buildHeaders(true),
           body: JSON.stringify(payload)
         })
 
         const resJson = await response.json().catch(() => ({}))
 
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
         if (!response.ok) {
-          throw new Error(resJson.message || 'Gagal menyimpan data. Pastikan semua field wajib diisi.')
+          const serverMsg = resJson.message
+            || (resJson.errors ? Object.values(resJson.errors).flat().join(' ') : '')
+            || 'Gagal menyimpan data. Pastikan semua field wajib diisi.'
+          throw new Error(serverMsg)
         }
 
         this.closeFormModal()
-        this.fetchUmkmData(this.pagination.current_page)
+        this.showSuccess(isEdit ? 'Data jadwal berhasil diperbarui.' : 'Data jadwal berhasil ditambahkan.')
+        this.fetchJadwalData(this.pagination.current_page)
       } catch (err) {
         this.formError = err.message || 'Terjadi kesalahan saat memproses data.'
       } finally {
@@ -718,40 +728,7 @@ export default {
       }
     },
 
-    sortListLocally(list) {
-      if (!Array.isArray(list)) return []
-      return [...list].sort((a, b) => {
-        const idA = Number(a.id) || 0
-        const idB = Number(b.id) || 0
-        return this.sortOrder === 'desc' ? idB - idA : idA - idB
-      })
-    },
-
-    onSortChange() {
-      this.displayedUmkmList = this.sortListLocally(this.displayedUmkmList)
-    },
-
-    changePage(page) {
-      if (page < 1 || page > this.pagination.last_page || page === this.pagination.current_page) return
-      this.fetchUmkmData(page)
-    },
-
-    calculateRowIndex(index) {
-      return (this.pagination.current_page - 1) * this.perPage + index + 1
-    },
-
-    handleSearch() {
-      clearTimeout(this.searchTimeout)
-      this.searchTimeout = setTimeout(() => {
-        this.fetchUmkmData(1)
-      }, 400)
-    },
-
-    formatText(val) {
-      if (!val || val === 'null' || val === 'string' || val === '-' || val === 'undefined') return '-'
-      return val
-    },
-
+    // ---------- Detail ----------
     async handleDetail(item) {
       this.showModal = true
       this.loadingDetail = true
@@ -759,23 +736,25 @@ export default {
       this.selectedDetail = null
 
       try {
-        const token = this.getAuthToken()
-        const headers = {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }
-        if (token) headers['Authorization'] = `Bearer ${token}`
+        const response = await fetch(`${API_BASE}/${item.id}`, {
+          method: 'GET',
+          headers: this.buildHeaders()
+        })
 
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${item.id}?ngrok-skip-browser-warning=69420`
-        const response = await fetch(url, { method: 'GET', headers })
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
 
         if (!response.ok) throw new Error('Gagal menarik data detail dari server.')
 
         const result = await response.json()
-        this.selectedDetail = result.data
-
+        this.selectedDetail = result.data || item
       } catch (error) {
-        this.modalError = error.message || 'Terjadi kesalahan sistem.'
+        // Fallback: tampilkan data baris tabel agar tombol info tetap berguna
+        // walau endpoint detail sedang bermasalah.
+        this.selectedDetail = item
+        this.modalError = ''
       } finally {
         this.loadingDetail = false
       }
@@ -789,6 +768,7 @@ export default {
       }, 300)
     },
 
+    // ---------- Delete ----------
     handleDelete(item) {
       this.itemToDelete = item
       this.showDeleteModal = true
@@ -806,20 +786,22 @@ export default {
       if (!this.itemToDelete) return
       this.deleting = true
       try {
-        const token = this.getAuthToken()
-        const headers = {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }
-        if (token) headers['Authorization'] = `Bearer ${token}`
+        const response = await fetch(`${API_BASE}/${this.itemToDelete.id}`, {
+          method: 'DELETE',
+          headers: this.buildHeaders()
+        })
 
-        const url = `https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${this.itemToDelete.id}`
-        const response = await fetch(url, { method: 'DELETE', headers })
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
 
         if (!response.ok) throw new Error('Gagal menghapus data dari server.')
 
-        this.closeDeleteModal()
-        this.fetchUmkmData(this.pagination.current_page)
+        this.showDeleteModal = false
+        this.itemToDelete = null
+        this.showSuccess('Data jadwal berhasil dihapus.')
+        this.fetchJadwalData(this.pagination.current_page)
       } catch (error) {
         alert(`Error: ${error.message}`)
       } finally {
@@ -862,7 +844,7 @@ export default {
   align-items: center;
 }
 
-.nav-left { display: flex; gap: 25px; }
+.nav-left { display: flex; gap: 25px; align-items: center; }
 .nav-link {
   color: #ffffff; text-decoration: none; font-weight: 600; font-size: 0.95rem;
   display: flex; align-items: center; gap: 8px; padding-bottom: 6px; transition: all 0.2s;
@@ -892,29 +874,30 @@ export default {
 .dropdown-item:hover { background-color: #ef4444; color: #ffffff; }
 
 .admin-content { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
+.page-title h2 { margin: 0 0 18px 0; font-size: 1.25rem; font-weight: 700; color: #1a1a1a; }
+
 .error-alert {
   background-color: #fef2f2; border: 1px solid #fca5a5; color: #991b1b;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 500;
+}
+.success-alert {
+  background-color: #f0fdf4; border: 1px solid #86efac; color: #166534;
   padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 500;
 }
 
 .action-bar {
   display: flex; gap: 16px; align-items: center; margin-bottom: 20px;
-  background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 4px;
 }
-.search-box { position: relative; flex: 1; display: flex; align-items: center; }
+.search-box { position: relative; flex: 1; display: flex; align-items: center; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
 .search-icon { position: absolute; left: 16px; color: #94a3b8; }
 .search-box input {
-  width: 100%; padding: 12px 16px 12px 48px; border: none; font-family: 'Poppins', sans-serif;
-  font-size: 0.9rem; outline: none; color: #334155;
-}
-.sort-box { display: flex; align-items: center; }
-.sort-select {
-  padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #f8fafc;
-  font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; color: #334155; outline: none; cursor: pointer;
+  width: 100%; padding: 12px 16px 12px 48px; border: none; background: transparent; font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem; outline: none; color: #334155; border-radius: 8px;
 }
 .btn-add {
   background-color: #1e385c; color: #ffffff; border: none; padding: 12px 32px;
   border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
+  white-space: nowrap;
 }
 .btn-add:hover { background-color: #162a45; }
 
@@ -930,28 +913,31 @@ export default {
 .action-buttons { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
 .btn-icon:hover { transform: scale(1.2); }
-.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-info { color: #1e293b; }
 .btn-edit { color: #1e385c; }
 .btn-delete { color: #dc2626; }
 
 .card-footer-pagination {
   padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap; gap: 12px;
+}
+.per-page-select {
+  padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #ffffff;
+  font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; color: #334155; outline: none; cursor: pointer;
 }
 .total-info { font-size: 0.85rem; color: #64748b; font-weight: 600; }
 
-.pagination-controls { display: flex; gap: 6px; align-items: center; }
+.pagination-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .btn-page {
   background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 6px 12px;
   border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
 }
 .btn-page:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; }
-.btn-page.active { background-color: #1e385c; color: #ffffff; border-color: #1e385c; font-weight: 600; }
+.btn-page.active { background-color: #1e293b; color: #ffffff; border-color: #1e293b; font-weight: 600; }
 .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .text-center { text-align: center; }
 .font-bold { font-weight: 700; }
-.text-uppercase { text-transform: uppercase; }
 .py-5 { padding-top: 40px; padding-bottom: 40px; }
 .py-4 { padding-top: 24px; padding-bottom: 24px; }
 .mt-3 { margin-top: 12px; }
@@ -969,14 +955,16 @@ export default {
 
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: rgba(15, 23, 42, 0.4); 
+  background-color: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex; justify-content: center; align-items: center; z-index: 9999;
+  padding: 20px;
 }
 .modal-container {
-  background-color: #ffffff; width: 90%; max-width: 680px; border-radius: 12px;
+  background-color: #ffffff; width: 90%; max-width: 580px; border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); overflow: hidden;
+  max-height: 90vh; display: flex; flex-direction: column;
 }
 .modal-sm { max-width: 440px; }
 
@@ -995,26 +983,19 @@ export default {
 .col-span-2 { grid-column: span 2; }
 .detail-group label { display: block; font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; }
 .detail-group p { margin: 0; font-size: 0.9rem; color: #1e293b; word-break: break-word; }
-.badge-risk { background-color: #fef08a; color: #854d0e; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
-.kbli-box { background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 0.85rem; color: #334155; margin-top: 4px; }
+.link-daftar { color: #1d4ed8; word-break: break-all; }
 
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.inner-grid { margin-top: 6px; }
+.form-stack { display: flex; flex-direction: column; gap: 16px; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
 .required { color: #dc2626; }
-.form-group input, .form-group textarea, .form-select {
+.help-text { font-size: 0.75rem; color: #64748b; font-style: italic; }
+.form-group input, .form-group textarea {
   width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
   font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: #1e293b; outline: none; transition: border-color 0.2s; box-sizing: border-box;
 }
-.form-group input:focus, .form-group textarea:focus, .form-select:focus { border-color: #1e385c; }
-.form-select:disabled { background-color: #f1f5f9; cursor: not-allowed; }
-.form-readonly { background-color: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; }
-
-.kbli-input-box {
-  background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px 16px; border-radius: 8px;
-}
-.kbli-section-label { font-size: 0.8rem; font-weight: 700; color: #334155; text-transform: uppercase; }
+.form-group input:focus, .form-group textarea:focus { border-color: #1e385c; }
 
 .delete-icon-wrapper {
   width: 64px; height: 64px; background-color: #fef2f2; border-radius: 50%;
@@ -1051,4 +1032,11 @@ export default {
 
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+@media (max-width: 640px) {
+  .admin-content { padding: 20px; }
+  .action-bar { flex-direction: column; align-items: stretch; }
+  .detail-grid, .form-grid-2 { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+}
 </style>

@@ -19,6 +19,10 @@
         <router-link to="/admin/kegiatan" class="nav-link" active-class="active">
           Kegiatan
         </router-link>
+
+        <router-link to="/admin/jadwal" class="nav-link" active-class="active">
+          Jadwal
+        </router-link>
       </div>
 
       <!-- Right Nav / Profile -->

@@ -111,23 +111,7 @@
     <section ref="layananSection" class="section-container services-section">
       <h3 class="section-title">Informasi Dan Layanan DISKOPUMKER</h3>
       <div class="services-grid">
-        <!-- Card 1: HI -->
-        <div class="service-card card-red" @click="goToService('/hi')">
-          <div class="service-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          </div>
-          <span class="service-name">Hubungan Industri (HI)</span>
-        </div>
-
-        <!-- Card 2: Koperasi -->
-        <div class="service-card card-light" @click="goToService('/koperasi')">
-          <div class="service-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><path d="M8 14v3"></path><path d="M12 14v3"></path><path d="M16 14v3"></path></svg>
-          </div>
-          <span class="service-name">Koperasi</span>
-        </div>
-
-        <!-- Card 3: Sekretariat -->
+        
         <div class="service-card card-red" @click="goToService('/sekretariat')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
@@ -135,28 +119,43 @@
           <span class="service-name">Sekretariat</span>
         </div>
 
-        <!-- Card 4: BLK -->
-        <div class="service-card card-light" @click="goToService('/blk')">
+        
+        <div class="service-card card-light" @click="goToService('/koperasi')">
           <div class="service-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><path d="M8 14v3"></path><path d="M12 14v3"></path><path d="M16 14v3"></path></svg>
           </div>
-          <span class="service-name">Balai Latih Kerja (BLK)</span>
+          <span class="service-name">Bidang Koperasi</span>
         </div>
 
-        <!-- Card 5: UMKM -->
+       
         <div class="service-card card-red" @click="goToService('/umkm')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
           </div>
-          <span class="service-name">Usaha Mikro, Kecil, dan Menengah (UMKM)</span>
+          <span class="service-name">Bidang Usaha Mikro</span>
         </div>
 
-        <!-- Card 6: UMPEG -->
-        <div class="service-card card-light" @click="goToService('/umpeg')">
+       
+        <div class="service-card card-light" @click="goToService('/blk')">
+          <div class="service-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <span class="service-name">Bidang Pembinaan, Pelatihan Dan Penempatan Tenaga Kerja</span>
+        </div>
+
+       
+        <div class="service-card card-red" @click="goToService('/hubungan')">
           <div class="service-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
           </div>
-          <span class="service-name">Umum dan Kepegawaian (UMPEG)</span>
+          <span class="service-name">Bidang Pembinaan Hubungan Dan Jaminan Sosial</span>
+        </div>
+
+        <div class="service-card card-light" @click="goToService('/blt')">
+          <div class="service-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+          </div>
+          <span class="service-name">UPTD Balai Latihan Kerja</span>
         </div>
       </div>
     </section>
