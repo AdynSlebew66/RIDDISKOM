@@ -67,6 +67,17 @@ const routes = [
     path: '/admin/jadwal',
     name: 'AdminJadwal',
     component: JadwalAdminView
+  },
+  // Alias lama / halaman setelah login — arahkan ke dashboard admin UMKM
+  // Sebelumnya '/dashboard' tidak terdaftar sehingga halaman blank putih.
+  {
+    path: '/dashboard',
+    redirect: '/admin/umkm'
+  },
+  // Fallback agar route tidak dikenal tidak blank putih, kembali ke beranda
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
   }
 ]
 

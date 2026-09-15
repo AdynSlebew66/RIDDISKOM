@@ -123,14 +123,19 @@ export default {
         localStorage.setItem('user', JSON.stringify(data.user))
 
         // Cek role user dari data backend atau dari email
-        const userRole = (data.user?.role || data.user?.type || '').toLowerCase()
+        // Backend bisa mengembalikan: role / type / level / is_admin, dll.
+        // Dibuat toleran agar admin tetap masuk dashboard, bukan ke route kosong.
+        const rawRole = data.user?.role ?? data.user?.type ?? data.user?.level ?? data.user?.role_name ?? ''
+        const userRole = String(rawRole).toLowerCase()
         const userEmail = this.email.toLowerCase()
 
-        // Redirect ke Dashboard Admin UMKM (UmkmView.vue) jika user bertipe/memiliki email UMKM
-        if (userRole.includes('umkm') || userEmail.includes('umkm')) {
+        // Semua user yang sudah login diarahkan ke Dashboard Admin UMKM.
+        // Khusus non-UMKM (misal superadmin) pun tetap ke sana karena
+        // route '/dashboard' lama tidak ada dan menyebabkan blank putih.
+        if (userRole.includes('umkm') || userEmail.includes('umkm') || userRole === '' || userRole.includes('admin')) {
           this.$router.push('/admin/umkm')
         } else {
-          this.$router.push('/dashboard')
+          this.$router.push('/admin/umkm')
         }
       } catch (err) {
         this.errorMessage = err.message || 'Terjadi kesalahan koneksi ke server.'
