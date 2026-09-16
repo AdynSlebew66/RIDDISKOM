@@ -167,14 +167,22 @@
         <!-- Map Area -->
         <div class="map-box">
           <iframe
-            src="https://maps.google.com/maps?q=Jl.+Pramuka+Komp.+Semanda+Banjarmasin&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            src="https://maps.google.com/maps?q=Dinas%20Koperasi%20Usaha%20Mikro%20Dan%20Tenaga%20Kerja%20Kota%20Banjarmasin%2C%20Jl.%20Pramuka%20Banjarmasin&t=&z=17&ie=UTF8&iwloc=&output=embed"
             width="100%"
             height="100%"
             style="border:0;"
             allowfullscreen=""
             loading="lazy"
+            title="Lokasi DISKOPUMKER Kota Banjarmasin"
             referrerpolicy="no-referrer-when-downgrade">
           </iframe>
+          <a
+            href="https://maps.app.goo.gl/TdmgmQwcqjgdUAWh7"
+            target="_blank"
+            rel="noopener"
+            class="map-link-btn">
+            Buka di Google Maps
+          </a>
         </div>
 
         <!-- Info Alamat & Form Kritik Saran -->
@@ -617,6 +625,26 @@ export default {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.map-link-btn {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background-color: #c0392b;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.map-link-btn:hover {
+  background-color: #a93226;
+  transform: translateY(-1px);
 }
 
 .feedback-box {

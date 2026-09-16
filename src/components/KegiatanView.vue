@@ -17,7 +17,7 @@
         </router-link>
 
         <router-link to="/admin/kegiatan" class="nav-link" active-class="active">
-          Kegiatan
+          Galeri
         </router-link>
 
         <router-link to="/admin/jadwal" class="nav-link" active-class="active">
@@ -50,7 +50,7 @@
     <!-- Main Content -->
     <main class="admin-content">
       <div class="page-title">
-        <h2>Data Kegiatan Admin UMKM</h2>
+        <h2>Data Galeri Admin UMKM</h2>
       </div>
 
       <!-- Search & Add Button Bar -->

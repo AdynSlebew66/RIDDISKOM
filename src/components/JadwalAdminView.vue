@@ -17,7 +17,7 @@
         </router-link>
 
         <router-link to="/admin/kegiatan" class="nav-link" active-class="active">
-          Kegiatan
+          Galeri
         </router-link>
 
         <router-link to="/admin/jadwal" class="nav-link" active-class="active">
@@ -960,23 +960,36 @@ export default {
   -webkit-backdrop-filter: blur(6px);
   display: flex; justify-content: center; align-items: center; z-index: 9999;
   padding: 20px;
+  overflow-y: auto;
 }
 .modal-container {
   background-color: #ffffff; width: 90%; max-width: 580px; border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); overflow: hidden;
-  max-height: 90vh; display: flex; flex-direction: column;
+  max-height: calc(100vh - 40px); display: flex; flex-direction: column;
+  margin: auto;
+}
+/* Form di dalam modal harus ikut flex agar footer tidak terdorong keluar */
+.modal-container > form {
+  display: flex; flex-direction: column;
+  flex: 1 1 auto; min-height: 0; overflow: hidden;
 }
 .modal-sm { max-width: 440px; }
 
 .modal-header {
   background-color: #1e385c; color: #ffffff; padding: 16px 24px;
   display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
 }
 .header-delete { background-color: #991b1b; }
 .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
 .btn-close { background: none; border: none; color: #ffffff; font-size: 1.5rem; cursor: pointer; opacity: 0.8; }
 .btn-close:hover { opacity: 1; }
-.modal-body { padding: 24px; max-height: 75vh; overflow-y: auto; overflow-x: hidden; }
+.modal-body {
+  padding: 24px;
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  max-height: calc(100vh - 220px);
+}
 
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .detail-group { background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
@@ -1008,6 +1021,7 @@ export default {
 .modal-footer {
   padding: 16px 24px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;
   display: flex; justify-content: flex-end; gap: 12px;
+  flex-shrink: 0;
 }
 .btn-tutup, .btn-cancel {
   background-color: #64748b; color: #ffffff; border: none; padding: 10px 24px;

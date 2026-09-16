@@ -17,7 +17,7 @@
         </router-link>
 
         <router-link to="/admin/kegiatan" class="nav-link" active-class="active">
-          Kegiatan
+          Galeri
         </router-link>
 
         <router-link to="/admin/jadwal" class="nav-link" active-class="active">
