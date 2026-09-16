@@ -3,29 +3,9 @@
     <!-- Top Navbar Admin -->
     <header class="admin-navbar">
       <div class="nav-left">
-        <router-link to="/admin/umkm" class="nav-link" active-class="active">
+        <router-link to="/admin/pegawai" class="nav-link" active-class="active">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
           Dashboard
-        </router-link>
-
-        <router-link to="/admin/data" class="nav-link" active-class="active">
-          Data UMKM
-        </router-link>
-
-        <router-link to="/admin/rasio" class="nav-link" active-class="active">
-          Rasio Kewirausahaan
-        </router-link>
-
-        <router-link to="/admin/kegiatan" class="nav-link" active-class="active">
-          Galeri
-        </router-link>
-
-        <router-link to="/admin/jadwal" class="nav-link" active-class="active">
-          Jadwal
-        </router-link>
-
-        <router-link to="/admin/pegawai" class="nav-link" active-class="active">
-          Pegawai
         </router-link>
       </div>
 
@@ -34,7 +14,7 @@
         <div class="profile-container">
           <div class="user-profile" @click.stop="toggleDropdown">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span>AdminUMKM</span>
+            <span>AdminSekretariat</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'rotate-icon': showDropdown }"><path d="M6 9l6 6 6-6"/></svg>
           </div>
 
@@ -54,7 +34,7 @@
     <!-- Main Content -->
     <main class="admin-content">
       <div class="page-title">
-        <h2>Data Galeri Admin UMKM</h2>
+        <h2>Data Pegawai ASN Sekretariat</h2>
       </div>
 
       <!-- Search & Add Button Bar -->
@@ -65,13 +45,42 @@
             type="text"
             v-model="searchQuery"
             @input="handleSearch"
-            placeholder="Cari Judul Kegiatan..."
+            placeholder="Cari Nama / NIP / Jabatan..."
           />
         </div>
 
         <button class="btn-add" @click="openAddModal">
           + Tambah
         </button>
+
+        <button
+          v-if="orderDirty"
+          class="btn-save-order"
+          :disabled="savingOrder"
+          @click="saveOrder"
+          title="Simpan urutan baru ke server"
+        >
+          <span v-if="savingOrder" class="spinner-sm spinner-dark"></span>
+          <span>{{ savingOrder ? 'Menyimpan...' : 'Simpan Urutan' }}</span>
+        </button>
+        <button
+          v-if="orderDirty"
+          class="btn-reset-order"
+          :disabled="savingOrder"
+          @click="resetOrder"
+          title="Kembalikan urutan semula"
+        >
+          Reset
+        </button>
+      </div>
+
+      <div v-if="orderDirty" class="order-hint">
+        Urutan berubah — klik <strong>Simpan Urutan</strong> untuk menyimpan ke server.
+        <span v-if="searchQuery.trim()">(Kosongkan pencarian agar tombol geser aktif.)</span>
+        <span v-else>Tips: tampilkan 50 baris agar geser antar halaman terlihat.</span>
+      </div>
+      <div v-else-if="(searchQuery || '').trim()" class="order-hint order-hint-lock">
+        Hapus pencarian untuk mengatur urutan.
       </div>
 
       <!-- Error Alert -->
@@ -87,42 +96,95 @@
       <!-- Table Card Wrapper -->
       <div class="data-card">
         <div class="card-header-navy">
-          <h3>Data Kegiatan</h3>
+          <h3>Data Pegawai</h3>
         </div>
 
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
-                <th class="text-center" style="width: 60px;">No</th>
-                <th>Judul Kegiatan</th>
-                <th>Tanggal Mulai</th>
-                <th>Tanggal Selesai</th>
+                <th class="text-center" style="width: 55px;">No</th>
+                <th class="text-center" style="width: 70px;">Foto</th>
+                <th>Nama Pegawai</th>
+                <th>NIP</th>
+                <th>Jabatan</th>
+                <th>Unit Kerja</th>
+                <th class="text-center" style="width: 120px;">Urutan</th>
+                <th class="text-center">Status</th>
                 <th class="text-center" style="width: 130px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <!-- Loading State -->
               <tr v-if="loading">
-                <td colspan="5" class="text-center py-5">
+                <td colspan="9" class="text-center py-5">
                   <div class="spinner"></div>
-                  <p class="loading-text">Memuat data kegiatan...</p>
+                  <p class="loading-text">Memuat data pegawai...</p>
                 </td>
               </tr>
 
               <!-- Empty State -->
-              <tr v-else-if="displayedKegiatanList.length === 0">
-                <td colspan="5" class="text-center py-5 empty-text">
-                  Data kegiatan tidak ditemukan.
+              <tr v-else-if="displayedPegawaiList.length === 0">
+                <td colspan="9" class="text-center py-5 empty-text">
+                  Data pegawai tidak ditemukan.
                 </td>
               </tr>
 
-              <!-- Data Rows -->
-              <tr v-else v-for="(item, index) in displayedKegiatanList" :key="item.id || index">
+              <!-- Data Rows (drag-drop antar baris untuk ubah urutan) -->
+              <tr
+                v-else
+                v-for="(item, index) in displayedPegawaiList"
+                :key="item.id || index"
+                :draggable="!isReorderLocked"
+                :class="{ 'row-draggable': !isReorderLocked, 'row-dragging': dragItemId === item.id }"
+                @dragstart="onDragStart(item, $event)"
+                @dragover.prevent
+                @drop="onDropOnRow(item, $event)"
+                @dragend="onDragEnd"
+                :title="!isReorderLocked ? 'Seret baris untuk mengubah urutan' : ''"
+              >
                 <td class="text-center font-bold">{{ calculateRowIndex(index) }}</td>
-                <td class="font-bold">{{ item.judul_kegiatan || '-' }}</td>
-                <td>{{ formatDate(item.tanggal_mulai) }}</td>
-                <td>{{ formatDate(item.tanggal_selesai) }}</td>
+                <td class="text-center">
+                  <div class="thumb-wrapper">
+                    <img
+                      v-if="photoVisible(item)"
+                      :src="resolvedPhoto(item)"
+                      :alt="item.nama_pegawai"
+                      class="thumb-img"
+                      loading="lazy"
+                      @error="onPhotoError(item)"
+                    />
+                    <div v-else class="thumb-initials">{{ initialsOf(item.nama_pegawai) }}</div>
+                  </div>
+                </td>
+                <td class="font-bold">{{ item.nama_pegawai || '-' }}</td>
+                <td>{{ item.nip || '-' }}</td>
+                <td>{{ item.jabatan || '-' }}</td>
+                <td>{{ item.unit_kerja || '-' }}</td>
+                <td class="text-center">
+                  <div class="order-cell">
+                    <span class="order-num">{{ item.urutan ?? '-' }}</span>
+                    <div class="order-btns">
+                      <button
+                        class="btn-order"
+                        :title="isReorderLocked ? 'Hapus pencarian untuk mengatur urutan' : 'Geser ke atas'"
+                        :disabled="isReorderLocked || isFirstInList(item)"
+                        @click="moveUp(item)"
+                      >▲</button>
+                      <button
+                        class="btn-order"
+                        :title="isReorderLocked ? 'Hapus pencarian untuk mengatur urutan' : 'Geser ke bawah'"
+                        :disabled="isReorderLocked || isLastInList(item)"
+                        @click="moveDown(item)"
+                      >▼</button>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="status-pill" :class="{ active: (item.status_aktif || '').toLowerCase() === 'aktif' }">
+                    {{ item.status_aktif || '-' }}
+                  </span>
+                </td>
                 <td class="text-center">
                   <div class="action-buttons">
                     <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
@@ -189,9 +251,9 @@
     <!-- Modal Detail -->
     <transition name="modal-fade">
       <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-container modal-lg">
+        <div class="modal-container">
           <div class="modal-header">
-            <h3>Detail Kegiatan Dokumentasi</h3>
+            <h3>Detail Pegawai</h3>
             <button class="btn-close" @click="closeModal">&times;</button>
           </div>
 
@@ -206,31 +268,49 @@
             </div>
 
             <div v-else-if="selectedDetail" class="detail-grid">
-              <div class="detail-group col-span-2">
-                <label>Judul Kegiatan</label>
-                <p class="font-bold">{{ selectedDetail.judul_kegiatan || '-' }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Tanggal Mulai</label>
-                <p>{{ formatDate(selectedDetail.tanggal_mulai) }}</p>
-              </div>
-              <div class="detail-group">
-                <label>Tanggal Selesai</label>
-                <p>{{ formatDate(selectedDetail.tanggal_selesai) }}</p>
-              </div>
-              <div class="detail-group col-span-2">
-                <label>Foto Dokumentasi ({{ detailFotos.length }} foto)</label>
-                <div v-if="detailFotos.length === 0" class="empty-text">Belum ada foto dokumentasi.</div>
-                <div v-else class="foto-grid">
-                  <div v-for="(foto, idx) in detailFotos" :key="foto.id || idx" class="foto-item">
-                    <img
-                      :src="foto.foto_direct_url || foto.foto_url"
-                      :alt="selectedDetail.judul_kegiatan"
-                      loading="lazy"
-                      @error="onImgError"
-                    />
-                  </div>
+              <div class="detail-group col-span-2 text-center">
+                <div class="detail-photo-wrapper">
+                  <img
+                    v-if="photoVisible(selectedDetail)"
+                    :src="resolvedPhoto(selectedDetail)"
+                    :alt="selectedDetail.nama_pegawai"
+                    class="detail-photo"
+                    @error="onPhotoError(selectedDetail)"
+                  />
+                  <div v-else class="detail-initials">{{ initialsOf(selectedDetail.nama_pegawai) }}</div>
                 </div>
+                <p class="font-bold">{{ selectedDetail.nama_pegawai || '-' }}</p>
+              </div>
+              <div class="detail-group">
+                <label>NIP</label>
+                <p>{{ selectedDetail.nip || '-' }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Status</label>
+                <p>{{ selectedDetail.status_aktif || '-' }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Jabatan</label>
+                <p>{{ selectedDetail.jabatan || '-' }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Golongan</label>
+                <p>{{ selectedDetail.golongan || '-' }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Unit Kerja</label>
+                <p>{{ selectedDetail.unit_kerja || '-' }}</p>
+              </div>
+              <div class="detail-group">
+                <label>Urutan</label>
+                <p>{{ selectedDetail.urutan ?? '-' }}</p>
+              </div>
+              <div class="detail-group col-span-2">
+                <label>Foto</label>
+                <p>
+                  <a v-if="photoOf(selectedDetail)" :href="photoOf(selectedDetail)" target="_blank" rel="noopener" class="link-daftar">Buka Foto</a>
+                  <span v-else>-</span>
+                </p>
               </div>
             </div>
           </div>
@@ -245,9 +325,9 @@
     <!-- Modal Form (Tambah & Edit) -->
     <transition name="modal-fade">
       <div v-if="showFormModal" class="modal-overlay" @click.self="closeFormModal">
-        <div class="modal-container modal-lg">
+        <div class="modal-container">
           <div class="modal-header">
-            <h3>{{ isEditMode ? 'Edit Data Kegiatan' : 'Tambah Data Kegiatan' }}</h3>
+            <h3>{{ isEditMode ? 'Edit Data Pegawai' : 'Tambah Data Pegawai' }}</h3>
             <button class="btn-close" @click="closeFormModal">&times;</button>
           </div>
 
@@ -259,56 +339,91 @@
 
               <div class="form-stack">
                 <div class="form-group">
-                  <label>Judul Kegiatan <span class="required">*</span></label>
+                  <label>Nama Pegawai <span class="required">*</span></label>
                   <input
                     type="text"
-                    v-model="formData.judul_kegiatan"
-                    maxlength="255"
+                    v-model="formData.nama_pegawai"
                     required
-                    placeholder="Contoh: Sosialisasi UMKM"
+                    placeholder="Contoh: Dr. Machli Riyadi, S.H., M.H."
                   />
-                </div>
-
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label>Tanggal Mulai <span class="required">*</span></label>
-                    <input type="date" v-model="formData.tanggal_mulai" required />
-                  </div>
-                  <div class="form-group">
-                    <label>Tanggal Selesai <span class="required">*</span></label>
-                    <input type="date" v-model="formData.tanggal_selesai" required />
-                  </div>
+                  <small v-if="fieldErrors.nama_pegawai" class="field-error">{{ fieldErrors.nama_pegawai[0] }}</small>
                 </div>
 
                 <div class="form-group">
-                  <label>Foto Dokumentasi (URL) <span class="required">*</span></label>
-                  <small class="help-text">Minimal 1 foto. Tempel link foto (mis. link Google Drive share). Setiap baris = 1 foto.</small>
+                  <label>Jabatan <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    v-model="formData.jabatan"
+                    required
+                    placeholder="Contoh: Sekretaris"
+                  />
+                  <small v-if="fieldErrors.jabatan" class="field-error">{{ fieldErrors.jabatan[0] }}</small>
+                </div>
 
-                  <div
-                    v-for="(url, idx) in formData.foto_urls"
-                    :key="idx"
-                    class="foto-url-row"
-                  >
-                    <input
-                      type="url"
-                      v-model="formData.foto_urls[idx]"
-                      required
-                      placeholder="https://..."
+                <div class="form-group">
+                  <label>Status <span class="required">*</span></label>
+                  <select v-model="formData.status_aktif" required>
+                    <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                  <small v-if="fieldErrors.status_aktif" class="field-error">{{ fieldErrors.status_aktif[0] }}</small>
+                </div>
+
+                <div class="form-group">
+                  <label>NIP <span class="optional-tag">(opsional)</span></label>
+                  <input
+                    type="text"
+                    v-model="formData.nip"
+                    placeholder="Contoh: 19701124 199101 1 004"
+                  />
+                  <small v-if="fieldErrors.nip" class="field-error">{{ fieldErrors.nip[0] }}</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Golongan <span class="optional-tag">(opsional)</span></label>
+                  <input
+                    type="text"
+                    v-model="formData.golongan"
+                    placeholder="Contoh: Pembina"
+                  />
+                  <small v-if="fieldErrors.golongan" class="field-error">{{ fieldErrors.golongan[0] }}</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Unit Kerja <span class="optional-tag">(opsional)</span></label>
+                  <select v-model="formData.unit_kerja">
+                    <option value="">— Tanpa Unit Kerja —</option>
+                    <option v-for="unit in unitOptions" :key="unit" :value="unit">
+                      {{ unit }}
+                    </option>
+                  </select>
+                  <small class="help-text">Pilih unit kerja dari daftar agar penulisan selalu konsisten.</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Link Foto (Google Drive) <span class="optional-tag">(opsional)</span></label>
+                  <input
+                    type="url"
+                    v-model="formData.foto_url"
+                    placeholder="https://drive.google.com/file/d/.../view"
+                  />
+                  <small v-if="fieldErrors.foto_url" class="field-error">{{ fieldErrors.foto_url[0] }}</small>
+                  <small class="help-text">Tempel link sharing Drive. Pastikan file di-share "Anyone with the link". Kosongkan jika belum ada foto.</small>
+                </div>
+
+                <div v-if="formData.foto_url" class="form-group">
+                  <label>Pratinjau Foto</label>
+                  <div class="thumb-wrapper thumb-lg">
+                    <img
+                      v-if="!formPhotoBroken"
+                      :src="toDirectImageUrl(formData.foto_url)"
+                      alt="Pratinjau foto"
+                      class="thumb-img"
+                      @error="formPhotoBroken = true"
                     />
-                    <button
-                      type="button"
-                      class="btn-remove-foto"
-                      title="Hapus baris foto"
-                      :disabled="formData.foto_urls.length <= 1"
-                      @click="removeFotoUrl(idx)"
-                    >
-                      &times;
-                    </button>
+                    <div v-else class="thumb-initials">{{ initialsOf(formData.nama_pegawai) }}</div>
                   </div>
-
-                  <button type="button" class="btn-add-foto" @click="addFotoUrl">
-                    + Tambah Foto
-                  </button>
                 </div>
               </div>
             </div>
@@ -337,9 +452,9 @@
             <div class="delete-icon-wrapper">
               <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </div>
-            <h4 class="delete-title">Hapus Data Kegiatan?</h4>
+            <h4 class="delete-title">Hapus Data Pegawai?</h4>
             <p class="delete-desc">
-              Apakah kamu yakin ingin menghapus kegiatan <strong>"{{ itemToDelete?.judul_kegiatan }}"</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah kamu yakin ingin menghapus pegawai <strong>"{{ itemToDelete?.nama_pegawai }}"</strong>? Tindakan ini tidak dapat dibatalkan.
             </p>
           </div>
           <div class="modal-footer footer-center">
@@ -356,10 +471,12 @@
 </template>
 
 <script>
-const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/kegiatan'
+const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pegawai'
+// Turunan dari API_BASE agar URL ngrok hanya ditulis 1x (ganti 1 tempat saat rotate).
+const PUBLIC_BASE = API_BASE.replace('/admin/pegawai', '')
 
 export default {
-  name: 'KegiatanView',
+  name: 'PegawaiAdminView',
   data() {
     return {
       showDropdown: false,
@@ -371,8 +488,12 @@ export default {
       searchTimeout: null,
       perPage: 10,
 
-      allKegiatanList: [],
+      allPegawaiList: [],
       currentPage: 1,
+      brokenPhotos: {},
+      savingOrder: false,
+      originalOrderSnapshot: [],
+
       showModal: false,
       loadingDetail: false,
       selectedDetail: null,
@@ -382,42 +503,101 @@ export default {
       isEditMode: false,
       submittingForm: false,
       formError: '',
+      fieldErrors: {},
+      formPhotoBroken: false,
+      dragItemId: null,
 
       showDeleteModal: false,
       itemToDelete: null,
       deleting: false,
 
+      // Sumber kebenaran: GET /api/pegawai/status-options
+      // { value: 'Aktif' | 'Tidak Aktif' | 'Dipindahtugaskan' | 'Pensiun', label }
+      statusOptions: [
+        { value: 'Aktif', label: 'Aktif' },
+        { value: 'Tidak Aktif', label: 'Tidak Aktif' },
+        { value: 'Dipindahtugaskan', label: 'Dipindahtugaskan' },
+        { value: 'Pensiun', label: 'Pensiun' }
+      ],
+
       formData: {
         id: null,
-        judul_kegiatan: '',
-        tanggal_mulai: '',
-        tanggal_selesai: '',
-        foto_urls: ['']
+        nama_pegawai: '',
+        nip: '',
+        jabatan: '',
+        golongan: '',
+        unit_kerja: '',
+        foto_url: '',
+        status_aktif: 'Aktif'
       }
     }
   },
   computed: {
-    // Filter lokal berdasarkan pencarian judul
-    filteredKegiatanList() {
+    // Filter lokal berdasarkan nama / NIP / jabatan / unit kerja
+    filteredPegawaiList() {
       const q = (this.searchQuery || '').trim().toLowerCase()
-      if (!q) return this.allKegiatanList
-      return this.allKegiatanList.filter((item) =>
-        String(item.judul_kegiatan || '').toLowerCase().includes(q)
+      if (!q) return this.allPegawaiList
+      return this.allPegawaiList.filter((item) =>
+        String(item.nama_pegawai || '').toLowerCase().includes(q) ||
+        String(item.nip || '').toLowerCase().includes(q) ||
+        String(item.jabatan || '').toLowerCase().includes(q) ||
+        String(item.unit_kerja || '').toLowerCase().includes(q)
       )
     },
     // Potongan data sesuai halaman & jumlah baris (client-side)
-    displayedKegiatanList() {
+    displayedPegawaiList() {
       const start = (this.currentPage - 1) * this.perPage
-      return this.filteredKegiatanList.slice(start, start + this.perPage)
+      return this.filteredPegawaiList.slice(start, start + this.perPage)
     },
     pagination() {
-      const total = this.filteredKegiatanList.length
+      const total = this.filteredPegawaiList.length
       const last_page = Math.max(1, Math.ceil(total / this.perPage))
       const current_page = Math.min(this.currentPage, last_page)
       return { current_page, last_page, total }
     },
-    displayedPages() {
-      const current = this.pagination.current_page
+    // Opsi dropdown Unit Kerja: diambil dari data yang sudah ada
+    // (diurutkan berdasar urutan terkecil, Kepala Dinas selalu paling atas),
+    // ditambah opsi bawaan agar tetap ada pilihan saat data masih kosong.
+    unitOptions() {
+      const statics = ['Kepala Dinas', 'Sekretariat', 'Bidang Koperasi', 'Bidang Usaha Mikro']
+      const seen = new Map()
+      this.allPegawaiList.forEach((p) => {
+        const name = (p.unit_kerja || '').trim()
+        if (!name) return
+        const u = Number(p.urutan)
+        const order = Number.isFinite(u) ? u : 9999
+        if (!seen.has(name) || order < seen.get(name)) seen.set(name, order)
+      })
+      const merged = [...seen.entries()]
+        .sort((a, b) => a[1] - b[1])
+        .map(([name]) => name)
+      statics.forEach((s) => {
+        if (!merged.includes(s)) merged.push(s)
+      })
+      merged.sort((a, b) => {
+        if (/kepala dinas/i.test(a)) return -1
+        if (/kepala dinas/i.test(b)) return 1
+        return 0
+      })
+      return merged
+    },
+    // Dirty = nilai urutan saat ini beda dari snapshot server.
+    // Computed (bukan flag): geser-balik ke nilai semula otomatis mematikan banner.
+    orderDirty() {
+      if (this.allPegawaiList.length !== this.originalOrderSnapshot.length) {
+        return this.originalOrderSnapshot.length > 0
+      }
+      const orig = new Map(this.originalOrderSnapshot.map((o) => [o.id, o.urutan]))
+      return this.allPegawaiList.some(
+        (p) => (Number(orig.get(p.id)) || 0) !== (Number(p.urutan) || 0)
+      )
+    },
+    // Geser urutan dinonaktifkan saat pencarian aktif / loading / menyimpan,
+    // agar urutan global (allPegawaiList) tidak rusak oleh filter & pagination.
+    isReorderLocked() {
+      return this.loading || this.savingOrder || !!(this.searchQuery || '').trim()
+    },
+    displayedPages() {      const current = this.pagination.current_page
       const last = this.pagination.last_page
       const pages = []
 
@@ -436,19 +616,11 @@ export default {
         pages.push(last)
       }
       return pages
-    },
-    detailFotos() {
-      if (!this.selectedDetail) return []
-      if (Array.isArray(this.selectedDetail.galeris)) return this.selectedDetail.galeris
-      if (Array.isArray(this.selectedDetail.fotos)) return this.selectedDetail.fotos
-      if (Array.isArray(this.selectedDetail.foto_urls)) {
-        return this.selectedDetail.foto_urls.map((url) => ({ foto_url: url, foto_direct_url: url }))
-      }
-      return []
     }
   },
   mounted() {
-    this.fetchKegiatanData(1)
+    this.fetchStatusOptions()
+    this.fetchPegawaiData(1)
   },
   methods: {
     getAuthToken() {
@@ -477,14 +649,9 @@ export default {
       return headers
     },
 
-    // Ambil SATU halaman paginator Laravel:
-    // { message, data: { current_page, data: [...], last_page, total, ... } }
-    // atau { message, data: [...] } untuk respons array polos.
-    // HANYA memakai ?page= (parameter resmi paginator). Tanpa search/per_page
-    // karena tidak ada di dokumentasi API dan memicu error 500 di server.
-    async fetchKegiatanPage(page = 1) {
-      const url = page > 1 ? `${API_BASE}?page=${page}` : API_BASE
-      const response = await fetch(url, {
+    async fetchPegawaiPage(page = 1, perPage = 100) {
+      const params = new URLSearchParams({ page, per_page: perPage })
+      const response = await fetch(`${API_BASE}?${params.toString()}`, {
         method: 'GET',
         headers: this.buildHeaders()
       })
@@ -515,30 +682,31 @@ export default {
       return { list: [], current_page: 1, last_page: 1 }
     },
 
-    async fetchKegiatanData(page = 1) {
+    async fetchPegawaiData(page = 1) {
       this.loading = true
       this.errorMessage = ''
       try {
-        const first = await this.fetchKegiatanPage(1)
+        const first = await this.fetchPegawaiPage(1)
         if (!first) return
 
         let all = [...first.list]
-        // Ikuti paginator server sampai halaman terakhir agar
-        // pencarian & pagination client-side mencakup seluruh data.
         for (let p = 2; p <= first.last_page; p++) {
-          const next = await this.fetchKegiatanPage(p)
+          const next = await this.fetchPegawaiPage(p)
           if (!next) break
           all = all.concat(next.list)
         }
 
-        this.allKegiatanList = all
+        this.allPegawaiList = all
+        this.sortByUrutan()
+        this.snapshotOrder()
+        this.brokenPhotos = {}
         this.currentPage = page || 1
         if (this.currentPage > this.pagination.last_page) {
           this.currentPage = this.pagination.last_page
         }
       } catch (error) {
         this.errorMessage = `Error: ${error.message || 'Gagal terhubung ke API.'}`
-        this.allKegiatanList = []
+        this.allPegawaiList = []
         this.currentPage = 1
       } finally {
         this.loading = false
@@ -547,6 +715,127 @@ export default {
 
     onPerPageChange() {
       this.currentPage = 1
+    },
+
+    // ---------- Reorder (POST /api/admin/pegawai/reorder) ----------
+    // Body: { items: [{ id, urutan }] }
+    sortByUrutan() {
+      this.allPegawaiList.sort(
+        (a, b) => (Number(a.urutan) || 0) - (Number(b.urutan) || 0)
+      )
+    },
+    snapshotOrder() {
+      this.originalOrderSnapshot = this.allPegawaiList.map((p) => ({
+        id: p.id,
+        urutan: Number(p.urutan) || 0
+      }))
+    },
+    globalIndexOf(item) {
+      return this.allPegawaiList.findIndex((p) => p.id === item.id)
+    },
+    isFirstInList(item) {
+      return this.globalIndexOf(item) <= 0
+    },
+    isLastInList(item) {
+      const i = this.globalIndexOf(item)
+      return i === -1 || i >= this.allPegawaiList.length - 1
+    },
+    moveUp(item) {
+      this.moveItem(item, -1)
+    },
+    moveDown(item) {
+      this.moveItem(item, 1)
+    },
+    moveItem(item, dir) {
+      if (this.isReorderLocked) return
+      const i = this.globalIndexOf(item)
+      const j = i + dir
+      if (i === -1 || j < 0 || j >= this.allPegawaiList.length) return
+      // Kontrak backend: tukar 2 nilai urutan saja (10,20,30...).
+      // JANGAN renumber 1..N — jeda kelipatan 10 harus dipertahankan.
+      const arr = this.allPegawaiList
+      const tmp = Number(arr[i].urutan) || 0
+      arr[i].urutan = Number(arr[j].urutan) || 0
+      arr[j].urutan = tmp
+      this.sortByUrutan()
+    },
+    onDragStart(item, event) {
+      if (this.isReorderLocked) {
+        event.preventDefault()
+        return
+      }
+      this.dragItemId = item.id
+      try {
+        event.dataTransfer.effectAllowed = 'move'
+        event.dataTransfer.setData('text/plain', String(item.id))
+      } catch (e) { /* abaikan */ }
+    },
+    onDropOnRow(targetItem, event) {
+      if (this.isReorderLocked) return
+      event.preventDefault()
+      const draggedId = this.dragItemId
+      this.dragItemId = null
+      if (draggedId == null || draggedId === targetItem.id) return
+      const from = this.allPegawaiList.findIndex((p) => p.id === draggedId)
+      const to = this.allPegawaiList.findIndex((p) => p.id === targetItem.id)
+      if (from === -1 || to === -1) return
+      // Kontrak yang sama dengan ▲/▼: tukar 2 nilai urutan saja.
+      const arr = this.allPegawaiList
+      const tmp = Number(arr[from].urutan) || 0
+      arr[from].urutan = Number(arr[to].urutan) || 0
+      arr[to].urutan = tmp
+      this.sortByUrutan()
+    },
+    onDragEnd() {
+      this.dragItemId = null
+    },
+    resetOrder() {
+      if (this.savingOrder || this.loading) return
+      // Sinkron ulang dengan server, bukan undo lokal.
+      this.fetchPegawaiData(this.pagination.current_page)
+    },
+    async saveOrder() {
+      if (this.savingOrder || !this.orderDirty) return
+      this.savingOrder = true
+      this.errorMessage = ''
+      try {
+        // Kirim full list berurutan [{id, urutan}] dengan nilai asli hasil tukar.
+        const items = this.allPegawaiList.map((p) => ({
+          id: p.id,
+          urutan: Number(p.urutan) || 0
+        }))
+        const response = await fetch(`${API_BASE}/reorder`, {
+          method: 'POST',
+          headers: this.buildHeaders(true),
+          body: JSON.stringify({ items })
+        })
+        const resJson = await response.json().catch(() => ({}))
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+        if (!response.ok) {
+          const serverMsg = resJson.message
+            || (resJson.errors ? Object.values(resJson.errors).flat().join(' ') : '')
+            || 'Gagal menyimpan urutan.'
+          throw new Error(serverMsg)
+        }
+        // Respons server = kebenaran: ganti state dengan list fresh terurut.
+        const fresh = Array.isArray(resJson.data)
+          ? resJson.data
+          : (resJson.data && Array.isArray(resJson.data.data) ? resJson.data.data : null)
+        if (fresh && fresh.length > 0) {
+          this.allPegawaiList = fresh
+        } else {
+          await this.fetchPegawaiData(this.pagination.current_page)
+        }
+        this.snapshotOrder()
+        this.showSuccess('Urutan pegawai berhasil disimpan.')
+      } catch (err) {
+        this.errorMessage = err.message || 'Gagal menyimpan urutan.'
+      } finally {
+        this.savingOrder = false
+      }
     },
 
     changePage(page) {
@@ -565,35 +854,43 @@ export default {
       }, 400)
     },
 
-    formatDate(dateString) {
-      if (!dateString) return '-'
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return dateString
-      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    // Link sharing Google Drive (…/file/d/ID/view) bukan direct image.
+    // Ubah ke endpoint thumbnail langsung agar bisa tampil di <img>.
+    toDirectImageUrl(url) {
+      if (!url) return ''
+      const s = String(url).trim()
+      const m = s.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/)
+        || s.match(/drive\.google\.com\/open\?[^#]*[?&]id=([a-zA-Z0-9_-]+)/)
+        || s.match(/drive\.google\.com\/uc\?[^#]*[?&]id=([a-zA-Z0-9_-]+)/)
+      if (m && m[1]) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w500`
+      return s
     },
-
-    // input date ("2026-04-21") <-> API DATE ("YYYY-MM-DD").
-    // Kolom MySQL bertipe DATE, jadi jam dihapus & hanya tanggal yang dikirim.
-    toDatetimeLocalValue(value) {
-      if (!value) return ''
-      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value)
-      const d = new Date(value)
-      if (isNaN(d.getTime())) return ''
-      const pad = (n) => String(n).padStart(2, '0')
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    photoOf(item) {
+      if (!item) return ''
+      return item.foto_direct_url || item.foto_url || ''
     },
-    toApiDatetime(localValue) {
-      if (!localValue) return ''
-      const s = String(localValue).slice(0, 10)
-      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-      const d = new Date(localValue)
-      if (isNaN(d.getTime())) return localValue
-      const pad = (n) => String(n).padStart(2, '0')
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    resolvedPhoto(item) {
+      return this.toDirectImageUrl(this.photoOf(item))
     },
-
-    onImgError(event) {
-      event.target.style.display = 'none'
+    photoKey(item) {
+      return (item && item.id) ?? this.photoOf(item)
+    },
+    isPhotoBroken(item) {
+      return !!this.brokenPhotos[this.photoKey(item)]
+    },
+    photoVisible(item) {
+      return !!this.photoOf(item) && !this.isPhotoBroken(item)
+    },
+    onPhotoError(item) {
+      const key = this.photoKey(item)
+      if (key !== '' && key !== undefined) {
+        this.brokenPhotos = { ...this.brokenPhotos, [key]: true }
+      }
+    },
+    initialsOf(name) {
+      if (!name) return '-'
+      const parts = String(name).split(' ').filter(Boolean).slice(0, 2)
+      return parts.map((w) => w.charAt(0).toUpperCase()).join('') || '-'
     },
 
     showSuccess(msg) {
@@ -604,18 +901,10 @@ export default {
       }, 3500)
     },
 
-    // ---------- Form foto_urls dinamis ----------
-    addFotoUrl() {
-      this.formData.foto_urls.push('')
-    },
-    removeFotoUrl(idx) {
-      if (this.formData.foto_urls.length <= 1) return
-      this.formData.foto_urls.splice(idx, 1)
-    },
-
     openAddModal() {
       this.isEditMode = false
       this.formError = ''
+      this.fieldErrors = {}
       this.resetFormData()
       this.showFormModal = true
     },
@@ -623,15 +912,16 @@ export default {
     handleEdit(item) {
       this.isEditMode = true
       this.formError = ''
-      const existingFotos = Array.isArray(item.galeris)
-        ? item.galeris.map((g) => g.foto_url || g.foto_direct_url || '').filter(Boolean)
-        : []
+      this.formPhotoBroken = false
       this.formData = {
         id: item.id,
-        judul_kegiatan: item.judul_kegiatan || '',
-        tanggal_mulai: this.toDatetimeLocalValue(item.tanggal_mulai),
-        tanggal_selesai: this.toDatetimeLocalValue(item.tanggal_selesai),
-        foto_urls: existingFotos.length > 0 ? existingFotos : ['']
+        nama_pegawai: item.nama_pegawai || '',
+        nip: item.nip || '',
+        jabatan: item.jabatan || '',
+        golongan: item.golongan || '',
+        unit_kerja: item.unit_kerja || '',
+        foto_url: item.foto_url || item.foto_direct_url || '',
+        status_aktif: this.resolveStatus(item.status_aktif || 'Aktif')
       }
       this.showFormModal = true
     },
@@ -639,11 +929,15 @@ export default {
     resetFormData() {
       this.formData = {
         id: null,
-        judul_kegiatan: '',
-        tanggal_mulai: '',
-        tanggal_selesai: '',
-        foto_urls: ['']
+        nama_pegawai: '',
+        nip: '',
+        jabatan: '',
+        golongan: '',
+        unit_kerja: '',
+        foto_url: '',
+        status_aktif: this.statusOptions[0]?.value || 'Aktif'
       }
+      this.formPhotoBroken = false
     },
 
     closeFormModal() {
@@ -651,29 +945,63 @@ export default {
       setTimeout(() => {
         this.resetFormData()
         this.formError = ''
+        this.fieldErrors = {}
       }, 300)
     },
 
     validateForm() {
-      const judul = (this.formData.judul_kegiatan || '').trim()
-      if (!judul) return 'Judul kegiatan wajib diisi.'
-      if (judul.length > 255) return 'Judul kegiatan maksimal 255 karakter.'
-      if (!this.formData.tanggal_mulai) return 'Tanggal mulai wajib diisi.'
-      if (!this.formData.tanggal_selesai) return 'Tanggal selesai wajib diisi.'
-      const mulai = new Date(this.formData.tanggal_mulai)
-      const selesai = new Date(this.formData.tanggal_selesai)
-      if (isNaN(mulai.getTime()) || isNaN(selesai.getTime())) return 'Format tanggal tidak valid.'
-      if (selesai < mulai) return 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.'
-      const urls = (this.formData.foto_urls || []).map((u) => (u || '').trim()).filter(Boolean)
-      if (urls.length < 1) return 'Minimal 1 foto dokumentasi wajib diisi.'
-      for (const u of urls) {
-        try {
-          new URL(u)
-        } catch (e) {
-          return `URL foto tidak valid: ${u}`
+      // Wajib hanya: nama_pegawai, jabatan, status_aktif.
+      // nip, golongan, unit_kerja, foto_url opsional (kirim null).
+      if (!(this.formData.nama_pegawai || '').trim()) return 'Nama pegawai wajib diisi.'
+      if (!(this.formData.jabatan || '').trim()) return 'Jabatan wajib diisi.'
+      if (!this.statusOptions.some((o) => o.value === this.formData.status_aktif)) return 'Status tidak valid. Pilih dari daftar.'
+      if (this.formData.foto_url && this.formData.foto_url.trim()) {
+        const s = this.formData.foto_url.trim()
+        const isDrive = /drive\.google\.com/.test(s) || /docs\.google\.com/.test(s)
+        if (!isDrive) {
+          try {
+            new URL(s)
+          } catch (e) {
+            return 'Link foto tidak valid.'
+          }
         }
       }
       return ''
+    },
+
+    resolveStatus(v) {
+      const s = String(v || '').trim()
+      if (this.statusOptions.some((o) => o.value === s)) return s
+      // Cocokkan case-insensitive agar data lama ("aktif") tetap kepilih
+      const found = this.statusOptions.find(
+        (o) => o.value.toLowerCase() === s.toLowerCase()
+      )
+      return found ? found.value : 'Aktif'
+    },
+
+    async fetchStatusOptions() {
+      try {
+        const response = await fetch(`${PUBLIC_BASE}/pegawai/status-options`, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            'ngrok-skip-browser-warning': '69420'
+          }
+        })
+        if (!response.ok) return
+        const result = await response.json()
+        const list = Array.isArray(result.data) ? result.data : []
+        const cleaned = list
+          .filter((o) => o && o.value)
+          .map((o) => ({ value: String(o.value), label: String(o.label || o.value) }))
+        if (cleaned.length > 0) {
+          this.statusOptions = cleaned
+          // Selaraskan default form bila value lama tidak ada di list baru
+          this.formData.status_aktif = this.resolveStatus(this.formData.status_aktif)
+        }
+      } catch (e) {
+        console.warn('Gagal memuat status-options, pakai daftar bawaan.', e)
+      }
     },
 
     async submitForm() {
@@ -684,17 +1012,28 @@ export default {
       }
       this.submittingForm = true
       this.formError = ''
+      this.fieldErrors = {}
 
       try {
         const isEdit = this.isEditMode && this.formData.id
         const url = isEdit ? `${API_BASE}/${this.formData.id}` : API_BASE
         const method = isEdit ? 'PUT' : 'POST'
 
+        // Auto-urutan: JANGAN kirim `urutan` sama sekali (backend yang atur).
+        // Wajib: nama_pegawai, jabatan, status_aktif.
+        // Opsional (null bila kosong): nip, golongan, unit_kerja, foto_url.
+        const orNull = (v) => {
+          const s = (v || '').trim()
+          return s ? s : null
+        }
         const payload = {
-          judul_kegiatan: this.formData.judul_kegiatan.trim(),
-          tanggal_mulai: this.toApiDatetime(this.formData.tanggal_mulai),
-          tanggal_selesai: this.toApiDatetime(this.formData.tanggal_selesai),
-          foto_urls: this.formData.foto_urls.map((u) => (u || '').trim()).filter(Boolean)
+          nama_pegawai: this.formData.nama_pegawai.trim(),
+          jabatan: this.formData.jabatan.trim(),
+          status_aktif: this.formData.status_aktif,
+          unit_kerja: orNull(this.formData.unit_kerja),
+          nip: orNull(this.formData.nip),
+          golongan: orNull(this.formData.golongan),
+          foto_url: orNull(this.formData.foto_url)
         }
 
         const response = await fetch(url, {
@@ -711,6 +1050,11 @@ export default {
         }
 
         if (!response.ok) {
+          console.error('Gagal menyimpan pegawai.', { url, method, payload, resJson })
+          // 422: tampilkan error per-input + ringkasan di atas form
+          if (response.status === 422 && resJson.errors) {
+            this.fieldErrors = resJson.errors
+          }
           const serverMsg = resJson.message
             || (resJson.errors ? Object.values(resJson.errors).flat().join(' ') : '')
             || 'Gagal menyimpan data. Pastikan semua field wajib diisi.'
@@ -718,8 +1062,8 @@ export default {
         }
 
         this.closeFormModal()
-        this.showSuccess(isEdit ? 'Data kegiatan berhasil diperbarui.' : 'Data kegiatan berhasil ditambahkan.')
-        this.fetchKegiatanData(this.pagination.current_page)
+        this.showSuccess(isEdit ? 'Data pegawai berhasil diperbarui.' : 'Data pegawai berhasil ditambahkan.')
+        this.fetchPegawaiData(this.pagination.current_page)
       } catch (err) {
         this.formError = err.message || 'Terjadi kesalahan saat memproses data.'
       } finally {
@@ -799,8 +1143,8 @@ export default {
 
         this.showDeleteModal = false
         this.itemToDelete = null
-        this.showSuccess('Data kegiatan berhasil dihapus.')
-        this.fetchKegiatanData(this.pagination.current_page)
+        this.showSuccess('Data pegawai berhasil dihapus.')
+        this.fetchPegawaiData(this.pagination.current_page)
       } catch (error) {
         alert(`Error: ${error.message}`)
       } finally {
@@ -819,6 +1163,11 @@ export default {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       this.$router.push('/')
+    }
+  },
+  watch: {
+    'formData.foto_url'() {
+      this.formPhotoBroken = false
     }
   }
 }
@@ -899,15 +1248,64 @@ export default {
   white-space: nowrap;
 }
 .btn-add:hover { background-color: #162a45; }
+.btn-save-order {
+  background-color: #15803d; color: #ffffff; border: none; padding: 12px 24px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
+  white-space: nowrap; display: flex; align-items: center; gap: 8px;
+}
+.btn-save-order:hover:not(:disabled) { background-color: #166534; }
+.btn-save-order:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-reset-order {
+  background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 12px 20px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
+  white-space: nowrap;
+}
+.btn-reset-order:hover:not(:disabled) { background-color: #f1f5f9; }
+.order-hint {
+  background-color: #fefce8; border: 1px solid #fde68a; color: #92400e;
+  padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem;
+}
+.order-hint-lock {
+  background-color: #f8fafc; border-color: #e2e8f0; color: #64748b;
+}
+.order-cell { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.order-num { font-weight: 700; min-width: 28px; }
+.order-btns { display: flex; flex-direction: column; gap: 2px; }
+.btn-order {
+  background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #1e385c;
+  width: 26px; height: 22px; line-height: 1; border-radius: 5px; cursor: pointer;
+  font-size: 0.7rem; padding: 0; transition: background-color 0.15s;
+}
+.btn-order:hover:not(:disabled) { background-color: #e2e8f0; }
+.btn-order:disabled { opacity: 0.35; cursor: not-allowed; }
+.spinner-dark { border-color: #15803d; border-top-color: transparent; }
 
 .data-card { background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); }
 .card-header-navy { background-color: #1e385c; color: #ffffff; padding: 16px 24px; }
 .card-header-navy h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
 .table-container { overflow-x: auto; }
-.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.data-table th { background-color: #ffffff; color: #1e293b; font-weight: 700; padding: 16px 18px; border-bottom: 2px solid #f1f5f9; text-align: left; }
-.data-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 1000px; }
+.data-table th { background-color: #ffffff; color: #1e293b; font-weight: 700; padding: 16px 18px; border-bottom: 2px solid #f1f5f9; text-align: left; white-space: nowrap; }
+.data-table td { padding: 12px 18px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
 .data-table tbody tr:hover { background-color: #f8fafc; }
+
+.thumb-wrapper {
+  width: 40px; height: 40px; border-radius: 50%; overflow: hidden; margin: 0 auto;
+  background-color: #e8f5e9; flex-shrink: 0;
+}
+.thumb-lg { width: 84px; height: 84px; margin: 0; }
+.thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb-initials {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 800; color: #2e7d32;
+}
+.thumb-lg .thumb-initials { font-size: 1.5rem; }
+
+.status-pill {
+  display: inline-block; font-size: 0.75rem; font-weight: 700; color: #666666;
+  background-color: #f1f1ec; border: 1px solid #e1e1db; padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+}
+.status-pill.active { color: #2e7d32; background-color: #e8f5e9; border-color: #c8e6c9; }
 
 .action-buttons { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
@@ -959,59 +1357,70 @@ export default {
   -webkit-backdrop-filter: blur(6px);
   display: flex; justify-content: center; align-items: center; z-index: 9999;
   padding: 20px;
+  overflow-y: auto;
 }
 .modal-container {
-  background-color: #ffffff; width: 90%; max-width: 680px; border-radius: 12px;
+  background-color: #ffffff; width: 90%; max-width: 580px; border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); overflow: hidden;
-  max-height: 90vh; display: flex; flex-direction: column;
+  max-height: calc(100vh - 40px); display: flex; flex-direction: column;
+  margin: auto;
 }
-.modal-lg { max-width: 720px; }
+/* Form di dalam modal harus ikut flex agar footer tidak terdorong keluar */
+.modal-container > form {
+  display: flex; flex-direction: column;
+  flex: 1 1 auto; min-height: 0; overflow: hidden;
+}
 .modal-sm { max-width: 440px; }
 
 .modal-header {
   background-color: #1e385c; color: #ffffff; padding: 16px 24px;
   display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
 }
 .header-delete { background-color: #991b1b; }
 .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
 .btn-close { background: none; border: none; color: #ffffff; font-size: 1.5rem; cursor: pointer; opacity: 0.8; }
 .btn-close:hover { opacity: 1; }
-.modal-body { padding: 24px; max-height: 75vh; overflow-y: auto; overflow-x: hidden; }
+.modal-body {
+  padding: 24px;
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  max-height: calc(100vh - 220px);
+}
 
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .detail-group { background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
 .col-span-2 { grid-column: span 2; }
 .detail-group label { display: block; font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; }
 .detail-group p { margin: 0; font-size: 0.9rem; color: #1e293b; word-break: break-word; }
-
-.foto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 10px; }
-.foto-item { height: 120px; border-radius: 8px; overflow: hidden; background-color: #e2e8f0; border: 1px solid #e2e8f0; }
-.foto-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.link-daftar { color: #1d4ed8; word-break: break-all; }
+.detail-photo-wrapper {
+  width: 96px; height: 96px; border-radius: 50%; overflow: hidden; margin: 0 auto 12px auto;
+  background-color: #e8f5e9;
+}
+.detail-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.detail-initials {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; font-weight: 800; color: #2e7d32;
+}
 
 .form-stack { display: flex; flex-direction: column; gap: 16px; }
 .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
 .required { color: #dc2626; }
+.optional-tag { color: #94a3b8; font-weight: 500; }
+.field-error { font-size: 0.75rem; color: #dc2626; font-weight: 600; }
+.row-draggable { cursor: grab; }
+.row-draggable:active { cursor: grabbing; }
+.row-dragging { opacity: 0.45; }
 .help-text { font-size: 0.75rem; color: #64748b; font-style: italic; }
-.form-group input {
+.form-group input, .form-group textarea, .form-group select {
   width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
   font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: #1e293b; outline: none; transition: border-color 0.2s; box-sizing: border-box;
+  background-color: #ffffff;
 }
-.form-group input:focus { border-color: #1e385c; }
-
-.foto-url-row { display: flex; gap: 8px; align-items: center; }
-.btn-remove-foto {
-  flex-shrink: 0; width: 38px; height: 38px; border-radius: 6px; border: 1px solid #fca5a5;
-  background-color: #fef2f2; color: #dc2626; font-size: 1.2rem; cursor: pointer; line-height: 1;
-}
-.btn-remove-foto:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-add-foto {
-  align-self: flex-start; margin-top: 4px; padding: 8px 16px; border-radius: 6px;
-  border: 1px dashed #94a3b8; background-color: #f8fafc; color: #1e385c;
-  font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer;
-}
-.btn-add-foto:hover { background-color: #eef2f7; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #1e385c; }
 
 .delete-icon-wrapper {
   width: 64px; height: 64px; background-color: #fef2f2; border-radius: 50%;
@@ -1024,6 +1433,7 @@ export default {
 .modal-footer {
   padding: 16px 24px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;
   display: flex; justify-content: flex-end; gap: 12px;
+  flex-shrink: 0;
 }
 .btn-tutup, .btn-cancel {
   background-color: #64748b; color: #ffffff; border: none; padding: 10px 24px;

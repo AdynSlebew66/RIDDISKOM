@@ -129,10 +129,11 @@ export default {
         const userRole = String(rawRole).toLowerCase()
         const userEmail = this.email.toLowerCase()
 
-        // Semua user yang sudah login diarahkan ke Dashboard Admin UMKM.
-        // Khusus non-UMKM (misal superadmin) pun tetap ke sana karena
-        // route '/dashboard' lama tidak ada dan menyebabkan blank putih.
-        if (userRole.includes('umkm') || userEmail.includes('umkm') || userRole === '' || userRole.includes('admin')) {
+        // Akun Sekretariat langsung ke dashboard Pegawai,
+        // akun lain tetap ke Dashboard Admin UMKM.
+        if (userRole.includes('sekretariat') || userEmail.includes('sekretariat')) {
+          this.$router.push('/admin/pegawai')
+        } else if (userRole.includes('umkm') || userEmail.includes('umkm') || userRole === '' || userRole.includes('admin')) {
           this.$router.push('/admin/umkm')
         } else {
           this.$router.push('/admin/umkm')

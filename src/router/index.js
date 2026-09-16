@@ -10,8 +10,10 @@ import LayananUmkmView from '../components/LayananUmkmView.vue'
 import GaleriView from '../components/GaleriView.vue' // 1. Import komponen Galeri
 import JadwalView from '../components/JadwalView.vue'
 import JadwalAdminView from '../components/JadwalAdminView.vue'
+import PegawaiAdminView from '../components/PegawaiAdminView.vue'
 import StrukturOrganisasiView from '../components/profil/StrukturOrganisasiView.vue'
 import ProfilPlaceholderView from '../components/profil/ProfilPlaceholderView.vue'
+import SekretariatView from '../components/SekretariatView.vue'
 
 const routes = [
   {
@@ -43,6 +45,11 @@ const routes = [
     path: '/jadwal',
     name: 'Jadwal',
     component: JadwalView
+  },
+  {
+    path: '/sekretariat',
+    name: 'Sekretariat',
+    component: SekretariatView
   },
   {
     path: '/profil/struktur-organisasi',
@@ -79,6 +86,11 @@ const routes = [
     path: '/admin/jadwal',
     name: 'AdminJadwal',
     component: JadwalAdminView
+  },
+  {
+    path: '/admin/pegawai',
+    name: 'AdminPegawai',
+    component: PegawaiAdminView
   },
   // Alias lama / halaman setelah login — arahkan ke dashboard admin UMKM
   // Sebelumnya '/dashboard' tidak terdaftar sehingga halaman blank putih.

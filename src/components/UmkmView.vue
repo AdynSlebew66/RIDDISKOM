@@ -23,6 +23,10 @@
         <router-link to="/admin/jadwal" class="nav-link" active-class="active">
           Jadwal
         </router-link>
+
+        <router-link to="/admin/pegawai" class="nav-link" active-class="active">
+          Pegawai
+        </router-link>
       </div>
       
       <!-- Right Nav / Profile & Logout -->
