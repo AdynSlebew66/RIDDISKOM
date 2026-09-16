@@ -10,6 +10,8 @@ import LayananUmkmView from '../components/LayananUmkmView.vue'
 import GaleriView from '../components/GaleriView.vue' // 1. Import komponen Galeri
 import JadwalView from '../components/JadwalView.vue'
 import JadwalAdminView from '../components/JadwalAdminView.vue'
+import StrukturOrganisasiView from '../components/profil/StrukturOrganisasiView.vue'
+import ProfilPlaceholderView from '../components/profil/ProfilPlaceholderView.vue'
 
 const routes = [
   {
@@ -41,6 +43,16 @@ const routes = [
     path: '/jadwal',
     name: 'Jadwal',
     component: JadwalView
+  },
+  {
+    path: '/profil/struktur-organisasi',
+    name: 'StrukturOrganisasi',
+    component: StrukturOrganisasiView
+  },
+  {
+    path: '/profil/:slug',
+    name: 'ProfilPlaceholder',
+    component: ProfilPlaceholderView
   },
   {
     path: '/admin/umkm',

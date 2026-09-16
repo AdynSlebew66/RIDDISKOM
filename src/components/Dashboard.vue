@@ -29,8 +29,29 @@
             <li class="nav-item" @click="handleNavClick('hero')">
               Beranda
             </li>
-            <li class="nav-item" @click="closeMenu">
-              Profile
+            <li
+              class="nav-item has-dropdown"
+              @mouseenter="openProfileMenu"
+              @mouseleave="closeProfileMenu"
+            >
+              <span class="dropdown-toggle" @click.stop="toggleProfileMenu">
+                Profile
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" :class="{ open: isProfileOpen }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+              <transition name="dropdown-fade">
+                <ul v-if="isProfileOpen" class="dropdown-menu" @click.stop>
+                  <li
+                    v-for="item in profileMenu"
+                    :key="item.slug"
+                    class="dropdown-item"
+                    @click="goToProfile(item.slug)"
+                  >
+                    {{ item.label }}
+                  </li>
+                </ul>
+              </transition>
             </li>
             <li class="nav-item" @click="handleNavClick('informasi')">
               Informasi
@@ -228,8 +249,17 @@ export default {
   data() {
     return {
       isMenuOpen: false,
+      isProfileOpen: false,
       kadisPhoto: kadisImg,
-      newsList: []
+      newsList: [],
+      profileMenu: [
+        { slug: 'visi-misi', label: 'Visi dan Misi' },
+        { slug: 'struktur-organisasi', label: 'Struktur Organisasi' },
+        { slug: 'motto-pelayanan', label: 'Motto Pelayanan' },
+        { slug: 'tata-nilai-pelayanan', label: 'Tata Nilai Pelayanan' },
+        { slug: 'tata-tertib-pegawai', label: 'Tata Tertib Pegawai' },
+        { slug: 'kode-etik-pegawai', label: 'Kode Etik Pegawai' }
+      ]
     }
   },
   methods: {
@@ -238,6 +268,20 @@ export default {
     },
     closeMenu() {
       this.isMenuOpen = false
+      this.isProfileOpen = false
+    },
+    toggleProfileMenu() {
+      this.isProfileOpen = !this.isProfileOpen
+    },
+    openProfileMenu() {
+      this.isProfileOpen = true
+    },
+    closeProfileMenu() {
+      this.isProfileOpen = false
+    },
+    goToProfile(slug) {
+      this.closeMenu()
+      this.$router.push(`/profil/${slug}`)
     },
     handleNavClick(section) {
       this.scrollToSection(section)
@@ -372,6 +416,70 @@ export default {
   width: 18px;
   height: 18px;
   margin-left: 4px;
+}
+
+/* Dropdown Profile */
+.has-dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.icon-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.icon-chevron.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  min-width: 230px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  padding: 8px;
+  margin: 0;
+  list-style: none;
+  z-index: 100;
+}
+
+.dropdown-item {
+  color: #1a1a1a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #c0392b;
+}
+
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .hero-content {
@@ -790,6 +898,25 @@ export default {
     margin-left: 0;
     width: 100%;
     justify-content: center;
+  }
+
+  .has-dropdown {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dropdown-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dropdown-menu {
+    position: static;
+    width: 100%;
+    box-shadow: none;
+    margin-top: 10px;
+    background-color: rgba(255, 255, 255, 0.97);
   }
 
   .hero-wrapper {
