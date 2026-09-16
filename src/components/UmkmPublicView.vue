@@ -38,12 +38,24 @@
 
     <!-- Content Area -->
     <main class="content-wrapper">
+      <!-- Top Action & Breadcrumb Section -->
+      <div class="top-nav-bar">
+        <button class="btn-back" @click="goBack">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Kembali</span>
+        </button>
+        <p class="breadcrumb">Layanan DISKOPUMKER \ <strong>UMKM</strong></p>
+      </div>
+
       <!-- Breadcrumb & Title -->
       <div class="title-section">
-        <p class="breadcrumb">Layanan DISKOPUMKER \ <strong>UMKM</strong></p>
         <h1 class="main-heading">
           UMKM <span class="sub-heading">Usaha <span class="highlight-blue">Mikro</span>, <span class="highlight-green">Kecil</span>, dan <span class="highlight-orange">Menengah</span></span>
         </h1>
+        <p class="section-desc">Visualisasi data statistik pelaku usaha mikro, kecil, dan menengah berdasarkan sektor, wilayah, dan tenaga kerja.</p>
         <h2 ref="grafikSection" class="section-heading">Grafik Data UMKM</h2>
       </div>
 
@@ -583,6 +595,13 @@ export default {
       this.closeMenu()
       this.$router.push(path)
     },
+    goBack() {
+      if (window.history.length > 1) {
+        this.$router.back()
+      } else {
+        this.$router.push('/')
+      }
+    },
     handleScrollGrafik() {
       this.closeMenu()
       this.scrollToGrafik()
@@ -755,6 +774,12 @@ export default {
   border: 1.8px solid #1a1a1a;
   border-radius: 8px;
   font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.login-btn:hover {
+  background-color: #1a1a1a;
+  color: #ffffff;
 }
 
 .icon-login {
@@ -770,18 +795,64 @@ export default {
   box-sizing: border-box;
 }
 
+/* Top Nav & Back Button (standar halaman publik) */
+.top-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ffffff;
+  border: 1px solid #d5d5cd;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  white-space: nowrap;
+}
+
+.btn-back:hover {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-color: #1a1a1a;
+}
+
 .breadcrumb {
-  font-size: 0.9rem;
-  color: #555555;
-  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: #666666;
+  margin: 0;
   font-weight: 500;
 }
 
+.title-section {
+  margin-bottom: 28px;
+}
+
 .main-heading {
-  font-size: 2.6rem;
+  font-size: 2.5rem;
   font-weight: 800;
-  margin: 0;
+  margin: 0 0 8px 0;
   line-height: 1.25;
+  text-align: left;
+}
+
+.section-desc {
+  font-size: 0.95rem;
+  color: #555555;
+  margin: 0 0 8px 0;
+  max-width: 820px;
+  line-height: 1.6;
+  text-align: left;
 }
 
 .sub-heading {
@@ -794,12 +865,13 @@ export default {
 .highlight-orange { color: #ff6f00; }
 
 .section-heading {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 800;
   margin-top: 24px;
-  margin-bottom: 24px;
-  color: #222222;
+  margin-bottom: 16px;
+  color: #1a1a1a;
   scroll-margin-top: 20px;
+  text-align: left;
 }
 
 .data-card {
@@ -972,12 +1044,12 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #777;
+  color: #666666;
   padding-bottom: 75px;
   text-align: right;
-  min-width: 36px;
+  min-width: 40px;
   flex-shrink: 0;
 }
 
@@ -1064,7 +1136,7 @@ export default {
 .bar-val-badge {
   position: absolute;
   top: -22px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: #1a1a1a;
   white-space: nowrap;
@@ -1081,14 +1153,14 @@ export default {
 }
 
 .bar-x-label {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #444;
+  color: #444444;
   white-space: nowrap;
   transform: rotate(-35deg);
   transform-origin: top left;
   display: inline-block;
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .bar-legend, .line-legend {
@@ -1114,9 +1186,9 @@ export default {
 }
 
 .legend-text {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #555;
+  color: #555555;
 }
 
 .line-area {
@@ -1152,12 +1224,13 @@ export default {
 }
 
 .footnote-text {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: #333;
-  line-height: 1.45;
+  color: #555555;
+  line-height: 1.6;
   margin-top: 18px;
   margin-bottom: 0;
+  text-align: left;
 }
 
 .chart-right.grid-2-col {
@@ -1186,11 +1259,12 @@ export default {
 }
 
 .stat-title {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #222222;
+  color: #1a1a1a;
   margin: 0 0 10px 0;
-  line-height: 1.3;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .card-inner-grid {
@@ -1215,19 +1289,19 @@ export default {
 }
 
 .col-label {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #777777;
-  margin-bottom: 2px;
+  color: #666666;
+  margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
 .col-value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   color: #1a1a1a;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 .col-value.percent-text {
@@ -1325,8 +1399,17 @@ export default {
     box-sizing: border-box;
   }
 
+  .top-nav-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
   .main-heading {
     font-size: 1.8rem;
+  }
+
+  .section-desc {
+    font-size: 0.88rem;
   }
 
   .data-card {

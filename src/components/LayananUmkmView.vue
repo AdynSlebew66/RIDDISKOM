@@ -109,7 +109,8 @@
 
       <!-- Guide / Alur Section Card -->
       <div class="data-card guide-card">
-        <h2 class="section-heading text-center">Alur Pengajuan Layanan</h2>
+        <h2 class="section-heading">Alur Pengajuan Layanan</h2>
+        <p class="sub-heading-text">Ikuti tiga langkah mudah berikut untuk mengajukan layanan:</p>
         <div class="steps-wrapper">
           <div class="step-item">
             <div class="step-number">1</div>
@@ -373,8 +374,8 @@ export default {
 }
 
 .breadcrumb {
-  font-size: 0.9rem;
-  color: #555555;
+  font-size: 0.85rem;
+  color: #666666;
   margin: 0;
   font-weight: 500;
 }
@@ -382,6 +383,12 @@ export default {
 /* Title Section */
 .title-section {
   margin-bottom: 28px;
+  text-align: left;
+}
+
+.page-header {
+  margin-bottom: 28px;
+  text-align: left;
 }
 
 .main-heading {
@@ -389,6 +396,7 @@ export default {
   font-weight: 800;
   margin: 0 0 8px 0;
   line-height: 1.25;
+  text-align: left;
 }
 
 .sub-heading {
@@ -400,11 +408,12 @@ export default {
 .highlight-green { color: #2e7d32; }
 
 .section-desc {
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   color: #555555;
   margin: 0;
   max-width: 820px;
-  line-height: 1.5;
+  line-height: 1.6;
+  text-align: left;
 }
 
 /* Data Card Frame */
@@ -427,12 +436,15 @@ export default {
   font-weight: 800;
   margin: 0 0 10px 0;
   color: #1a1a1a;
+  text-align: left;
 }
 
 .sub-heading-text {
   font-size: 0.88rem;
   color: #666666;
   margin: 0;
+  text-align: left;
+  line-height: 1.6;
 }
 
 /* Services Grid */
@@ -480,13 +492,14 @@ export default {
 }
 
 .step-badge {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #ff6f00;
   background-color: #fff3e0;
   border: 1px solid #ffe0b2;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 6px;
+  white-space: nowrap;
 }
 
 .card-content {
@@ -494,18 +507,20 @@ export default {
 }
 
 .service-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 8px 0;
-  line-height: 1.35;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .service-desc {
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   color: #666666;
   margin: 0;
-  line-height: 1.45;
+  line-height: 1.6;
+  text-align: left;
 }
 
 .card-action {
@@ -579,17 +594,17 @@ export default {
 }
 
 .step-item h4 {
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   font-weight: 700;
   margin: 0 0 6px 0;
   color: #1a1a1a;
 }
 
 .step-item p {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: #666666;
   margin: 0;
-  line-height: 1.45;
+  line-height: 1.6;
 }
 
 /* Contact & Map Section */
