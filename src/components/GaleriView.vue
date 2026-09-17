@@ -255,6 +255,7 @@ export default {
   color: #1a1a1a;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Navbar (standar halaman publik) */
@@ -635,6 +636,16 @@ export default {
 
   .galeri-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  .galeri-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

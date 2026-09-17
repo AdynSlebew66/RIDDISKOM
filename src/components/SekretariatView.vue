@@ -254,6 +254,7 @@ export default {
   font-family: 'Poppins', sans-serif;
   color: #1a1a1a;
   display: flex;
+  overflow-x: hidden;
   flex-direction: column;
 }
 
@@ -684,5 +685,14 @@ export default {
     grid-template-columns: 1fr;
     gap: 16px;
   }
+}
+
+@media (max-width: 480px) {
+  .main-heading { font-size: 1.4rem; }
+  .section-desc { font-size: 0.82rem; }
+  .data-card { padding: 20px 14px; }
+  .breadcrumb { font-size: 0.78rem; }
+  .btn-back { font-size: 0.78rem; padding: 6px 12px; }
+  .section-heading { font-size: 1.05rem; }
 }
 </style>

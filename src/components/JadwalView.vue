@@ -249,6 +249,7 @@ export default {
   color: #1a1a1a;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Navbar (standar halaman publik) */
@@ -480,6 +481,8 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.03);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 .schedule-table {
@@ -606,6 +609,35 @@ export default {
 
   .schedule-table {
     min-width: 760px;
+  }
+
+  .month-title {
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  .month-title {
+    font-size: 0.95rem;
+  }
+
+  .schedule-table {
+    font-size: 0.78rem;
+  }
+
+  .schedule-table th,
+  .schedule-table td {
+    padding: 10px 12px;
+  }
+
+  .btn-daftar {
+    padding: 7px 12px;
+    font-size: 0.78rem;
   }
 }
 </style>

@@ -717,6 +717,7 @@ export default {
   font-family: 'Poppins', sans-serif;
   color: #1a1a1a;
   display: flex;
+  overflow-x: hidden;
   flex-direction: column;
 }
 

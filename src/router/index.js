@@ -12,6 +12,7 @@ import JadwalView from '../components/JadwalView.vue'
 import JadwalAdminView from '../components/JadwalAdminView.vue'
 import PegawaiAdminView from '../components/PegawaiAdminView.vue'
 import StrukturOrganisasiView from '../components/profil/StrukturOrganisasiView.vue'
+import VisiMisiView from '../components/profil/VisiMisiView.vue'
 import ProfilPlaceholderView from '../components/profil/ProfilPlaceholderView.vue'
 import SekretariatView from '../components/SekretariatView.vue'
 
@@ -50,6 +51,11 @@ const routes = [
     path: '/sekretariat',
     name: 'Sekretariat',
     component: SekretariatView
+  },
+  {
+    path: '/profil/visi-misi',
+    name: 'VisiMisi',
+    component: VisiMisiView
   },
   {
     path: '/profil/struktur-organisasi',

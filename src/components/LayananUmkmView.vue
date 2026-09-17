@@ -261,6 +261,7 @@ export default {
   font-family: 'Poppins', sans-serif;
   color: #1a1a1a;
   display: flex;
+  overflow-x: hidden;
   flex-direction: column;
 }
 
@@ -723,8 +724,21 @@ export default {
     box-sizing: border-box;
   }
 
+  .top-nav-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .breadcrumb {
+    font-size: 0.78rem;
+  }
+
   .main-heading {
     font-size: 1.8rem;
+  }
+
+  .section-desc {
+    font-size: 0.88rem;
   }
 
   .data-card {
@@ -737,6 +751,25 @@ export default {
   .contact-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-heading {
+    font-size: 1.4rem;
+  }
+
+  .section-desc {
+    font-size: 0.82rem;
+  }
+
+  .data-card {
+    padding: 20px 14px;
+  }
+
+  .btn-back {
+    font-size: 0.78rem;
+    padding: 6px 12px;
   }
 }
 </style>

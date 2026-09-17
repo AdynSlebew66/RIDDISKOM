@@ -158,7 +158,9 @@ export default {
   left: 0;
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
   background-color: #1a1a1a;
   display: flex;
   flex-direction: column;
@@ -228,7 +230,9 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-bottom: 40px;
+  padding: 20px 16px 40px 16px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* Card Utama Login */
@@ -383,6 +387,82 @@ export default {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive Mobile */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 16px 20px;
+  }
+
+  .logo {
+    height: 42px;
+  }
+
+  .back-btn {
+    padding: 7px 14px;
+    font-size: 0.85rem;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 26px 20px;
+  }
+
+  .card-logo {
+    height: 68px;
+  }
+
+  .portal-title {
+    font-size: 1.15rem;
+  }
+
+  .form-box {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 14px 16px;
+  }
+
+  .logo {
+    height: 38px;
+  }
+
+  .back-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
+  .login-container {
+    padding: 12px 12px 28px 12px;
+    align-items: flex-start;
+  }
+
+  .login-card {
+    padding: 22px 16px;
+    border-radius: 10px;
+  }
+
+  .card-logo {
+    height: 60px;
+  }
+
+  .portal-title {
+    font-size: 1rem;
+  }
+
+  .form-title {
+    font-size: 0.88rem;
+  }
+
+  .form-group input {
+    font-size: 0.85rem;
   }
 }
 </style>

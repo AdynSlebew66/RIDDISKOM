@@ -29,6 +29,12 @@
             <li class="nav-item" @click="handleNavClick('hero')">
               Beranda
             </li>
+            <li class="nav-item" @click="handleNavClick('layanan')">
+              Layanan
+            </li>
+            <li class="nav-item" @click="handleNavClick('informasi')">
+              Informasi
+            </li>
             <li
               class="nav-item has-dropdown"
               @mouseenter="openProfileMenu"
@@ -52,12 +58,6 @@
                   </li>
                 </ul>
               </transition>
-            </li>
-            <li class="nav-item" @click="handleNavClick('informasi')">
-              Informasi
-            </li>
-            <li class="nav-item" @click="handleNavClick('layanan')">
-              Layanan
             </li>
 
             <!-- Tombol Login -->

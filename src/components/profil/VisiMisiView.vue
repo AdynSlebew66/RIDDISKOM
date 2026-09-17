@@ -29,44 +29,53 @@
           </svg>
           <span>Kembali</span>
         </button>
-        <p class="breadcrumb">Profile \ <strong>{{ pageLabel }}</strong></p>
+        <p class="breadcrumb">Profile \ <strong>Visi dan Misi</strong></p>
       </div>
 
       <!-- Title Section -->
       <div class="title-section">
-        <h1 class="main-heading">{{ pageLabel }}</h1>
-        <p class="section-desc">Halaman profil Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
+        <h1 class="main-heading">
+          Visi dan <span class="highlight-red">Misi</span>
+        </h1>
+        <p class="section-desc">Visi dan Misi Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
       </div>
 
-      <!-- Placeholder sementara, diganti halaman asli satu per satu -->
-      <div class="state-container">
-        <span class="soon-badge">Segera Hadir</span>
-        <p>Halaman <strong>{{ pageLabel }}</strong> sedang dalam pengembangan dan akan segera tersedia.</p>
-        <button class="btn-retry" @click="navTo('/')">Kembali ke Beranda</button>
-      </div>
+      <!-- Visi Card -->
+      <section class="visi-card">
+        <span class="section-badge">Visi</span>
+        <p class="visi-quote-mark">&ldquo;</p>
+        <p class="visi-text">Terwujudnya Kota Banjarmasin Maju dan Sejahtera.</p>
+      </section>
+
+      <!-- Misi Card -->
+      <section class="misi-card">
+        <div class="misi-header">
+          <span class="section-badge">Misi</span>
+          <p class="misi-subtitle">Empat misi pembangunan Kota Banjarmasin:</p>
+        </div>
+        <ol class="misi-list">
+          <li v-for="(item, index) in misiList" :key="index" class="misi-item">
+            <span class="misi-number">{{ index + 1 }}</span>
+            <p class="misi-text">{{ item }}</p>
+          </li>
+        </ol>
+      </section>
     </main>
   </div>
 </template>
 
 <script>
-const LABELS = {
-  'visi-misi': 'Visi dan Misi',
-  'motto-pelayanan': 'Motto Pelayanan',
-  'tata-nilai-pelayanan': 'Tata Nilai Pelayanan',
-  'tata-tertib-pegawai': 'Tata Tertib Pegawai',
-  'kode-etik-pegawai': 'Kode Etik Pegawai'
-}
-
 export default {
-  name: 'ProfilPlaceholderView',
+  name: 'VisiMisiView',
   data() {
     return {
-      isMenuOpen: false
-    }
-  },
-  computed: {
-    pageLabel() {
-      return LABELS[this.$route.params.slug] || 'Profile'
+      isMenuOpen: false,
+      misiList: [
+        'Menciptakan generasi penerus yang sehat, cerdas, gembira, berkarakter, beriman dan bertakwa.',
+        'Memberikan pelayanan kesehatan yang lebih baik, cepat, praktis dan berbasis digital.',
+        'Mewujudkan kehidupan masyarakat yang sejahtera, makmur dan religius.',
+        'Meningkatkan kesadaran masyarakat atas kebersihan dan ketertiban lingkungan.'
+      ]
     }
   },
   methods: {
@@ -91,10 +100,10 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
-/* Page Layout (standar halaman publik) */
+/* Page Layout (standar halaman publik, warna Dashboard) */
 .page-container {
   min-height: 100vh;
-  background-color: #f7f7f5;
+  background-color: #f7f7f8;
   font-family: 'Poppins', sans-serif;
   color: #1a1a1a;
   display: flex;
@@ -118,15 +127,6 @@ export default {
   cursor: pointer;
 }
 
-.menu-toggle {
-  display: none;
-  background: transparent;
-  border: none;
-  color: #1a1a1a;
-  cursor: pointer;
-  padding: 5px;
-}
-
 .nav-links {
   display: flex;
   align-items: center;
@@ -145,7 +145,7 @@ export default {
 }
 
 .nav-item:hover {
-  color: #2e7d32;
+  color: #c0392b;
 }
 
 .login-btn {
@@ -232,6 +232,8 @@ export default {
   text-align: left;
 }
 
+.highlight-red { color: #c0392b; }
+
 .section-desc {
   font-size: 0.95rem;
   color: #555555;
@@ -241,48 +243,121 @@ export default {
   text-align: left;
 }
 
-/* States (standar halaman publik) */
-.state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  background: #ffffff;
-  border-radius: 16px;
-  color: #666666;
-  text-align: center;
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.soon-badge {
+/* Badge (aksen merah Dashboard #c0392b) */
+.section-badge {
+  display: inline-block;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #ff6f00;
-  background-color: #fff3e0;
-  border: 1px solid #ffe0b2;
-  padding: 4px 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #c0392b;
+  background-color: #fdecea;
+  border: 1px solid #f5c6c0;
+  padding: 5px 16px;
   border-radius: 20px;
   margin-bottom: 14px;
 }
 
-.btn-retry {
-  margin-top: 16px;
-  padding: 10px 24px;
-  background-color: #2e7d32;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+/* Visi Card */
+.visi-card {
+  background: #ffffff;
+  border: 1px solid #e1e1db;
+  border-left: 6px solid #c0392b;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-.btn-retry:hover {
-  background-color: #1b5e20;
+.visi-quote-mark {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #c0392b;
+  opacity: 0.25;
+  margin: 0;
+}
+
+.visi-text {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Misi Card */
+.misi-card {
+  background: #ffffff;
+  border: 1px solid #e1e1db;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.misi-header {
+  margin-bottom: 8px;
+}
+
+.misi-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #555555;
+  margin: 0 0 8px 0;
+}
+
+.misi-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.misi-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background-color: #f7f7f8;
+  border: 1px solid #eeeeeb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.misi-item:hover {
+  border-color: #c0392b;
+  box-shadow: 0 8px 20px rgba(192, 57, 43, 0.10);
+  transform: translateY(-2px);
+}
+
+.misi-number {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #c0392b;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.misi-text {
+  margin: 0;
+  padding-top: 5px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.6;
 }
 
 /* Responsive Styles */
@@ -336,6 +411,19 @@ export default {
   .section-desc {
     font-size: 0.88rem;
   }
+
+  .visi-card,
+  .misi-card {
+    padding: 22px 20px;
+  }
+
+  .visi-text {
+    font-size: 1.1rem;
+  }
+
+  .misi-text {
+    font-size: 0.88rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -343,6 +431,9 @@ export default {
   .section-desc { font-size: 0.82rem; }
   .breadcrumb { font-size: 0.78rem; }
   .btn-back { font-size: 0.78rem; padding: 6px 12px; }
-  .state-container { padding: 40px 16px; }
+  .visi-card, .misi-card { padding: 20px 14px; }
+  .visi-text { font-size: 1rem; }
+  .misi-item { padding: 12px; gap: 10px; }
+  .misi-number { width: 30px; height: 30px; font-size: 0.85rem; }
 }
 </style>
