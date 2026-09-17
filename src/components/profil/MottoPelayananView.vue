@@ -29,39 +29,28 @@
           </svg>
           <span>Kembali</span>
         </button>
-        <p class="breadcrumb">Profile \ <strong>Visi dan Misi</strong></p>
+        <p class="breadcrumb">Profile \ <strong>Motto Pelayanan</strong></p>
       </div>
 
       <!-- Title Section -->
       <div class="title-section">
         <h1 class="main-heading">
-          Visi dan <span class="highlight-red">Misi</span>
+          Motto <span class="highlight-red">Pelayanan</span>
         </h1>
-        <p class="section-desc">Visi dan Misi Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
+        <p class="section-desc">Motto pelayanan Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
       </div>
 
-      <!-- Visi + Misi + Sidebar -->
+      <!-- Motto + Sidebar -->
       <div class="profile-layout">
         <div class="profile-main">
-          <!-- Visi Card -->
-          <section class="visi-card">
-            <span class="section-badge">Visi</span>
-            <p class="visi-quote-mark">&ldquo;</p>
-            <p class="visi-text">Terwujudnya Kota Banjarmasin Maju dan Sejahtera.</p>
-          </section>
-
-          <!-- Misi Card -->
-          <section class="misi-card">
-            <div class="misi-header">
-              <span class="section-badge">Misi</span>
-              <p class="misi-subtitle">Empat misi pembangunan Kota Banjarmasin:</p>
-            </div>
-            <ol class="misi-list">
-              <li v-for="(item, index) in misiList" :key="index" class="misi-item">
-                <span class="misi-number">{{ index + 1 }}</span>
-                <p class="misi-text">{{ item }}</p>
-              </li>
-            </ol>
+          <!-- Motto Card -->
+          <section class="motto-card">
+            <span class="section-badge">Motto Pelayanan</span>
+            <p class="motto-org">Dinas Koperasi, Usaha Mikro dan Tenaga Kerja<br />Kota Banjarmasin</p>
+            <p class="motto-quote-mark">&ldquo;</p>
+            <h2 class="motto-text">Anda Sukses, Kami Puas</h2>
+            <div class="motto-divider"></div>
+            <p class="motto-sub">- Sukses Dalam Bekerja, Sukses Dalam Berusaha -</p>
           </section>
         </div>
 
@@ -76,17 +65,11 @@
 import ProfilSidebar from './ProfilSidebar.vue'
 
 export default {
-  name: 'VisiMisiView',
+  name: 'MottoPelayananView',
   components: { ProfilSidebar },
   data() {
     return {
-      isMenuOpen: false,
-      misiList: [
-        'Menciptakan generasi penerus yang sehat, cerdas, gembira, berkarakter, beriman dan bertakwa.',
-        'Memberikan pelayanan kesehatan yang lebih baik, cepat, praktis dan berbasis digital.',
-        'Mewujudkan kehidupan masyarakat yang sejahtera, makmur dan religius.',
-        'Meningkatkan kesadaran masyarakat atas kebersihan dan ketertiban lingkungan.'
-      ]
+      isMenuOpen: false
     }
   },
   methods: {
@@ -283,20 +266,29 @@ export default {
   margin-bottom: 14px;
 }
 
-/* Visi Card */
-.visi-card {
+/* Motto Card */
+.motto-card {
   background: #ffffff;
   border: 1px solid #e1e1db;
-  border-left: 6px solid #c0392b;
+  border-top: 6px solid #c0392b;
   border-radius: 16px;
-  padding: 28px 32px;
+  padding: 36px 32px 40px 32px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  margin-bottom: 20px;
   text-align: center;
 }
 
-.visi-quote-mark {
-  font-size: 3rem;
+.motto-org {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #888888;
+  line-height: 1.7;
+  margin: 0 0 6px 0;
+}
+
+.motto-quote-mark {
+  font-size: 3.2rem;
   line-height: 1;
   font-weight: 800;
   color: #c0392b;
@@ -304,85 +296,32 @@ export default {
   margin: 0;
 }
 
-.visi-text {
-  font-size: 1.35rem;
+.motto-text {
+  font-size: 2.2rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: #1a1a1a;
-  line-height: 1.6;
+  line-height: 1.35;
   margin: 0;
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-/* Misi Card */
-.misi-card {
-  background: #ffffff;
-  border: 1px solid #e1e1db;
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+.motto-divider {
+  width: 72px;
+  height: 4px;
+  border-radius: 4px;
+  background-color: #c0392b;
+  margin: 20px auto;
 }
 
-.misi-header {
-  margin-bottom: 8px;
-}
-
-.misi-subtitle {
+.motto-sub {
   font-size: 0.95rem;
   font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: #555555;
-  margin: 0 0 8px 0;
-}
-
-.misi-list {
-  list-style: none;
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 16px;
-}
-
-.misi-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  background-color: #f7f7f8;
-  border: 1px solid #eeeeeb;
-  border-radius: 12px;
-  padding: 14px 16px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.misi-item:hover {
-  border-color: #c0392b;
-  box-shadow: 0 8px 20px rgba(192, 57, 43, 0.10);
-  transform: translateY(-2px);
-}
-
-.misi-number {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background-color: #c0392b;
-  color: #ffffff;
-  font-size: 0.95rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.misi-text {
-  margin: 0;
-  padding-top: 5px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #1a1a1a;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 /* Responsive Styles */
@@ -441,17 +380,16 @@ export default {
     font-size: 0.88rem;
   }
 
-  .visi-card,
-  .misi-card {
-    padding: 22px 20px;
+  .motto-card {
+    padding: 28px 20px 32px 20px;
   }
 
-  .visi-text {
-    font-size: 1.1rem;
+  .motto-text {
+    font-size: 1.6rem;
   }
 
-  .misi-text {
-    font-size: 0.88rem;
+  .motto-sub {
+    font-size: 0.82rem;
   }
 }
 
@@ -460,9 +398,9 @@ export default {
   .section-desc { font-size: 0.82rem; }
   .breadcrumb { font-size: 0.78rem; }
   .btn-back { font-size: 0.78rem; padding: 6px 12px; }
-  .visi-card, .misi-card { padding: 20px 14px; }
-  .visi-text { font-size: 1rem; }
-  .misi-item { padding: 12px; gap: 10px; }
-  .misi-number { width: 30px; height: 30px; font-size: 0.85rem; }
+  .motto-card { padding: 24px 14px 28px 14px; }
+  .motto-org { font-size: 0.68rem; }
+  .motto-text { font-size: 1.25rem; }
+  .motto-sub { font-size: 0.72rem; }
 }
 </style>

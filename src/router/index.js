@@ -13,6 +13,10 @@ import JadwalAdminView from '../components/JadwalAdminView.vue'
 import PegawaiAdminView from '../components/PegawaiAdminView.vue'
 import StrukturOrganisasiView from '../components/profil/StrukturOrganisasiView.vue'
 import VisiMisiView from '../components/profil/VisiMisiView.vue'
+import MottoPelayananView from '../components/profil/MottoPelayananView.vue'
+import TataNilaiPelayananView from '../components/profil/TataNilaiPelayananView.vue'
+import TataTertibPegawaiView from '../components/profil/TataTertibPegawaiView.vue'
+import KodeEtikPegawaiView from '../components/profil/KodeEtikPegawaiView.vue'
 import ProfilPlaceholderView from '../components/profil/ProfilPlaceholderView.vue'
 import SekretariatView from '../components/SekretariatView.vue'
 
@@ -56,6 +60,26 @@ const routes = [
     path: '/profil/visi-misi',
     name: 'VisiMisi',
     component: VisiMisiView
+  },
+  {
+    path: '/profil/motto-pelayanan',
+    name: 'MottoPelayanan',
+    component: MottoPelayananView
+  },
+  {
+    path: '/profil/tata-nilai-pelayanan',
+    name: 'TataNilaiPelayanan',
+    component: TataNilaiPelayananView
+  },
+  {
+    path: '/profil/tata-tertib-pegawai',
+    name: 'TataTertibPegawai',
+    component: TataTertibPegawaiView
+  },
+  {
+    path: '/profil/kode-etik-pegawai',
+    name: 'KodeEtikPegawai',
+    component: KodeEtikPegawaiView
   },
   {
     path: '/profil/struktur-organisasi',

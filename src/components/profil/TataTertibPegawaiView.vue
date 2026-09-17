@@ -29,41 +29,29 @@
           </svg>
           <span>Kembali</span>
         </button>
-        <p class="breadcrumb">Profile \ <strong>Visi dan Misi</strong></p>
+        <p class="breadcrumb">Profile \ <strong>Tata Tertib Pegawai</strong></p>
       </div>
 
       <!-- Title Section -->
       <div class="title-section">
         <h1 class="main-heading">
-          Visi dan <span class="highlight-red">Misi</span>
+          Tata Tertib <span class="highlight-red">Pegawai</span>
         </h1>
-        <p class="section-desc">Visi dan Misi Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
+        <p class="section-desc">Tata tertib pegawai Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
       </div>
 
-      <!-- Visi + Misi + Sidebar -->
       <div class="profile-layout">
-        <div class="profile-main">
-          <!-- Visi Card -->
-          <section class="visi-card">
-            <span class="section-badge">Visi</span>
-            <p class="visi-quote-mark">&ldquo;</p>
-            <p class="visi-text">Terwujudnya Kota Banjarmasin Maju dan Sejahtera.</p>
-          </section>
-
-          <!-- Misi Card -->
-          <section class="misi-card">
-            <div class="misi-header">
-              <span class="section-badge">Misi</span>
-              <p class="misi-subtitle">Empat misi pembangunan Kota Banjarmasin:</p>
-            </div>
-            <ol class="misi-list">
-              <li v-for="(item, index) in misiList" :key="index" class="misi-item">
-                <span class="misi-number">{{ index + 1 }}</span>
-                <p class="misi-text">{{ item }}</p>
-              </li>
-            </ol>
-          </section>
-        </div>
+        <!-- Main Content -->
+        <section class="aturan-card">
+          <span class="section-badge">Tata Tertib Pegawai</span>
+          <p class="aturan-org">Dinas Koperasi, Usaha Mikro dan Tenaga Kerja<br />Kota Banjarmasin</p>
+          <ol class="aturan-list">
+            <li v-for="(item, index) in tertibList" :key="index" class="aturan-item">
+              <span class="aturan-number">{{ index + 1 }}</span>
+              <p class="aturan-text">{{ item }}</p>
+            </li>
+          </ol>
+        </section>
 
         <!-- Sidebar Kanan -->
         <ProfilSidebar />
@@ -76,16 +64,25 @@
 import ProfilSidebar from './ProfilSidebar.vue'
 
 export default {
-  name: 'VisiMisiView',
+  name: 'TataTertibPegawaiView',
   components: { ProfilSidebar },
   data() {
     return {
       isMenuOpen: false,
-      misiList: [
-        'Menciptakan generasi penerus yang sehat, cerdas, gembira, berkarakter, beriman dan bertakwa.',
-        'Memberikan pelayanan kesehatan yang lebih baik, cepat, praktis dan berbasis digital.',
-        'Mewujudkan kehidupan masyarakat yang sejahtera, makmur dan religius.',
-        'Meningkatkan kesadaran masyarakat atas kebersihan dan ketertiban lingkungan.'
+      tertibList: [
+        'ASN dan Non-ASN wajib mematuhi jam kerja sesuai dengan aturan yang berlaku.',
+        'ASN dan Non-ASN wajib mengikuti apel pagi.',
+        'Selama jam kantor, ASN dan Non-ASN dilarang meninggalkan tugas tanpa izin atasan.',
+        'ASN dan Non ASN harus berpakaian rapi sesuai dengan ketentuan berlaku.',
+        'Setiap penggunaan/pemakaian barang milik kantor harus seizin pejabat pemegang barang.',
+        'Wajib memberikan pelayanan yang baik, ramah dan sopan kepada masyarakat/pengguna layanan.',
+        'Menjaga keamanan dan ketertiban serta kebersihan lingkungan kantor.',
+        'ASN dan Non ASN dilarang keras menyalahgunakan Narkoba, apabila tes urine dinyatakan positif maka ASN dan Non ASN bersedia menjalani program rehabilitasi dan mendapat sanksi yang berlaku di lingkungan ASN.',
+        'Bagi Non ASN yang menyalahgunakan Narkoba maka diberikan sanksi pemutusan kontrak kerja.',
+        'Menjaga keamanan data serta wajib minta persetujuan pimpinan atas pemberian data pada pihak lain.',
+        'Menjaga dan memelihara barang inventaris kantor.',
+        'Dilarang merokok di lingkungan kantor kecuali di tempat yang telah disediakan.',
+        'Melaksanakan tugas yang dipercayakan kepada ASN maupun Non ASN dengan penuh pengabdian, kesadaran serta tanggung jawab.'
       ]
     }
   },
@@ -262,12 +259,6 @@ export default {
   align-items: start;
 }
 
-.profile-main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
 /* Badge (aksen merah Dashboard #c0392b) */
 .section-badge {
   display: inline-block;
@@ -283,69 +274,38 @@ export default {
   margin-bottom: 14px;
 }
 
-/* Visi Card */
-.visi-card {
+/* Aturan Card */
+.aturan-card {
   background: #ffffff;
   border: 1px solid #e1e1db;
-  border-left: 6px solid #c0392b;
+  border-top: 6px solid #c0392b;
   border-radius: 16px;
-  padding: 28px 32px;
+  padding: 32px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.aturan-org {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #888888;
+  line-height: 1.7;
+  margin: 0 0 20px 0;
   text-align: center;
 }
 
-.visi-quote-mark {
-  font-size: 3rem;
-  line-height: 1;
-  font-weight: 800;
-  color: #c0392b;
-  opacity: 0.25;
-  margin: 0;
-}
-
-.visi-text {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #1a1a1a;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Misi Card */
-.misi-card {
-  background: #ffffff;
-  border: 1px solid #e1e1db;
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.misi-header {
-  margin-bottom: 8px;
-}
-
-.misi-subtitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #555555;
-  margin: 0 0 8px 0;
-}
-
-.misi-list {
+.aturan-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-top: 16px;
+  gap: 12px;
 }
 
-.misi-item {
+.aturan-item {
   display: flex;
   align-items: flex-start;
   gap: 14px;
@@ -356,33 +316,33 @@ export default {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.misi-item:hover {
+.aturan-item:hover {
   border-color: #c0392b;
   box-shadow: 0 8px 20px rgba(192, 57, 43, 0.10);
   transform: translateY(-2px);
 }
 
-.misi-number {
+.aturan-number {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: #c0392b;
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.misi-text {
+.aturan-text {
   margin: 0;
-  padding-top: 5px;
-  font-size: 0.95rem;
+  padding-top: 4px;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #1a1a1a;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 /* Responsive Styles */
@@ -441,17 +401,12 @@ export default {
     font-size: 0.88rem;
   }
 
-  .visi-card,
-  .misi-card {
-    padding: 22px 20px;
+  .aturan-card {
+    padding: 24px 18px;
   }
 
-  .visi-text {
-    font-size: 1.1rem;
-  }
-
-  .misi-text {
-    font-size: 0.88rem;
+  .aturan-text {
+    font-size: 0.85rem;
   }
 }
 
@@ -460,9 +415,9 @@ export default {
   .section-desc { font-size: 0.82rem; }
   .breadcrumb { font-size: 0.78rem; }
   .btn-back { font-size: 0.78rem; padding: 6px 12px; }
-  .visi-card, .misi-card { padding: 20px 14px; }
-  .visi-text { font-size: 1rem; }
-  .misi-item { padding: 12px; gap: 10px; }
-  .misi-number { width: 30px; height: 30px; font-size: 0.85rem; }
+  .aturan-card { padding: 20px 14px; }
+  .aturan-item { padding: 12px; gap: 10px; }
+  .aturan-number { width: 28px; height: 28px; font-size: 0.78rem; }
+  .aturan-text { font-size: 0.8rem; }
 }
 </style>

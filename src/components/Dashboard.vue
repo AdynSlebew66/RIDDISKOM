@@ -103,6 +103,7 @@
               <div class="news-text">
                 <h4>{{ item.title }}</h4>
                 <p>{{ item.desc }}</p>
+                <p v-if="item.date" class="news-date">{{ item.date }}</p>
               </div>
             </div>
           </div>
@@ -243,6 +244,7 @@
 
 <script>
 import kadisImg from '../assets/fotokadis.png'
+import { infoTerbaru } from '../data/infoTerbaru.js'
 
 export default {
   name: 'PublicDashboard',
@@ -251,7 +253,7 @@ export default {
       isMenuOpen: false,
       isProfileOpen: false,
       kadisPhoto: kadisImg,
-      newsList: [],
+      newsList: infoTerbaru,
       profileMenu: [
         { slug: 'visi-misi', label: 'Visi dan Misi' },
         { slug: 'struktur-organisasi', label: 'Struktur Organisasi' },
@@ -601,6 +603,11 @@ export default {
   margin: 2px 0 0 0;
   font-size: 0.8rem;
   color: #666666;
+}
+
+.news-text .news-date {
+  font-size: 0.75rem;
+  color: #888888;
 }
 
 .kadis-card {

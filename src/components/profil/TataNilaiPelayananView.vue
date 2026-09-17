@@ -29,41 +29,33 @@
           </svg>
           <span>Kembali</span>
         </button>
-        <p class="breadcrumb">Profile \ <strong>Visi dan Misi</strong></p>
+        <p class="breadcrumb">Profile \ <strong>Tata Nilai Pelayanan</strong></p>
       </div>
 
       <!-- Title Section -->
       <div class="title-section">
         <h1 class="main-heading">
-          Visi dan <span class="highlight-red">Misi</span>
+          Tata Nilai <span class="highlight-red">Pelayanan</span>
         </h1>
-        <p class="section-desc">Visi dan Misi Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
+        <p class="section-desc">Tata nilai pelayanan Dinas Koperasi, Usaha Mikro dan Tenaga Kerja Kota Banjarmasin.</p>
       </div>
 
-      <!-- Visi + Misi + Sidebar -->
       <div class="profile-layout">
-        <div class="profile-main">
-          <!-- Visi Card -->
-          <section class="visi-card">
-            <span class="section-badge">Visi</span>
-            <p class="visi-quote-mark">&ldquo;</p>
-            <p class="visi-text">Terwujudnya Kota Banjarmasin Maju dan Sejahtera.</p>
-          </section>
-
-          <!-- Misi Card -->
-          <section class="misi-card">
-            <div class="misi-header">
-              <span class="section-badge">Misi</span>
-              <p class="misi-subtitle">Empat misi pembangunan Kota Banjarmasin:</p>
-            </div>
-            <ol class="misi-list">
-              <li v-for="(item, index) in misiList" :key="index" class="misi-item">
-                <span class="misi-number">{{ index + 1 }}</span>
-                <p class="misi-text">{{ item }}</p>
-              </li>
-            </ol>
-          </section>
-        </div>
+        <!-- Main Content -->
+        <section class="nilai-card">
+          <span class="section-badge">Tata Nilai Pelayanan</span>
+          <p class="nilai-org">Dinas Koperasi, Usaha Mikro dan Tenaga Kerja<br />Kota Banjarmasin</p>
+          <h2 class="ikhlas-title">&ldquo;IKHLAS&rdquo;</h2>
+          <div class="nilai-list">
+            <article v-for="(item, index) in nilaiList" :key="index" class="nilai-item">
+              <span class="nilai-arrow">&gt;</span>
+              <div class="nilai-body">
+                <h3 class="nilai-kata"><span class="huruf-red">{{ item.huruf }}</span>{{ item.kata }}</h3>
+                <p class="nilai-desc">{{ item.desc }}</p>
+              </div>
+            </article>
+          </div>
+        </section>
 
         <!-- Sidebar Kanan -->
         <ProfilSidebar />
@@ -76,16 +68,18 @@
 import ProfilSidebar from './ProfilSidebar.vue'
 
 export default {
-  name: 'VisiMisiView',
+  name: 'TataNilaiPelayananView',
   components: { ProfilSidebar },
   data() {
     return {
       isMenuOpen: false,
-      misiList: [
-        'Menciptakan generasi penerus yang sehat, cerdas, gembira, berkarakter, beriman dan bertakwa.',
-        'Memberikan pelayanan kesehatan yang lebih baik, cepat, praktis dan berbasis digital.',
-        'Mewujudkan kehidupan masyarakat yang sejahtera, makmur dan religius.',
-        'Meningkatkan kesadaran masyarakat atas kebersihan dan ketertiban lingkungan.'
+      nilaiList: [
+        { huruf: 'I', kata: 'NTEGRITAS', desc: 'Jujur dapat dipercaya, mengikuti aturan yang berlaku dan menjaga nama baik institusi' },
+        { huruf: 'K', kata: 'EBERSAMAAN', desc: 'Saling membantu mencapai tujuan' },
+        { huruf: 'H', kata: 'ARMONI', desc: 'Saling peduli dan menghargai perbedaan' },
+        { huruf: 'L', kata: 'OYAL', desc: 'Berdedikasi dan mengutamakan kepentingan masyarakat' },
+        { huruf: 'A', kata: 'MANAH', desc: 'Memegang teguh kepercayaan yang diberikan' },
+        { huruf: 'S', kata: 'ENYUM', desc: 'Ikhlas dan tulus dalam memberikan pelayanan' }
       ]
     }
   },
@@ -262,12 +256,6 @@ export default {
   align-items: start;
 }
 
-.profile-main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
 /* Badge (aksen merah Dashboard #c0392b) */
 .section-badge {
   display: inline-block;
@@ -283,72 +271,48 @@ export default {
   margin-bottom: 14px;
 }
 
-/* Visi Card */
-.visi-card {
+/* Nilai Card */
+.nilai-card {
   background: #ffffff;
   border: 1px solid #e1e1db;
-  border-left: 6px solid #c0392b;
+  border-top: 6px solid #c0392b;
   border-radius: 16px;
-  padding: 28px 32px;
+  padding: 32px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.nilai-org {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #888888;
+  line-height: 1.7;
+  margin: 0 0 10px 0;
   text-align: center;
 }
 
-.visi-quote-mark {
-  font-size: 3rem;
-  line-height: 1;
+.ikhlas-title {
+  font-size: 2rem;
   font-weight: 800;
+  font-style: italic;
+  letter-spacing: 4px;
   color: #c0392b;
-  opacity: 0.25;
-  margin: 0;
+  text-align: center;
+  margin: 0 0 24px 0;
 }
 
-.visi-text {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #1a1a1a;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Misi Card */
-.misi-card {
-  background: #ffffff;
-  border: 1px solid #e1e1db;
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.misi-header {
-  margin-bottom: 8px;
-}
-
-.misi-subtitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #555555;
-  margin: 0 0 8px 0;
-}
-
-.misi-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.nilai-list {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 16px;
 }
 
-.misi-item {
+.nilai-item {
   display: flex;
+  gap: 10px;
   align-items: flex-start;
-  gap: 14px;
   background-color: #f7f7f8;
   border: 1px solid #eeeeeb;
   border-radius: 12px;
@@ -356,32 +320,36 @@ export default {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.misi-item:hover {
+.nilai-item:hover {
   border-color: #c0392b;
   box-shadow: 0 8px 20px rgba(192, 57, 43, 0.10);
   transform: translateY(-2px);
 }
 
-.misi-number {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background-color: #c0392b;
-  color: #ffffff;
-  font-size: 0.95rem;
+.nilai-arrow {
+  font-size: 1.2rem;
   font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #1e385c;
+  line-height: 1.4;
 }
 
-.misi-text {
+.nilai-kata {
   margin: 0;
-  padding-top: 5px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #1a1a1a;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #1e385c;
+  line-height: 1.4;
+}
+
+.huruf-red {
+  color: #c0392b;
+}
+
+.nilai-desc {
+  margin: 4px 0 0 0;
+  font-size: 0.88rem;
+  color: #555555;
   line-height: 1.6;
 }
 
@@ -441,17 +409,12 @@ export default {
     font-size: 0.88rem;
   }
 
-  .visi-card,
-  .misi-card {
-    padding: 22px 20px;
+  .nilai-card {
+    padding: 24px 18px;
   }
 
-  .visi-text {
-    font-size: 1.1rem;
-  }
-
-  .misi-text {
-    font-size: 0.88rem;
+  .ikhlas-title {
+    font-size: 1.6rem;
   }
 }
 
@@ -460,9 +423,9 @@ export default {
   .section-desc { font-size: 0.82rem; }
   .breadcrumb { font-size: 0.78rem; }
   .btn-back { font-size: 0.78rem; padding: 6px 12px; }
-  .visi-card, .misi-card { padding: 20px 14px; }
-  .visi-text { font-size: 1rem; }
-  .misi-item { padding: 12px; gap: 10px; }
-  .misi-number { width: 30px; height: 30px; font-size: 0.85rem; }
+  .nilai-card { padding: 20px 14px; }
+  .ikhlas-title { font-size: 1.3rem; letter-spacing: 2px; }
+  .nilai-kata { font-size: 0.92rem; }
+  .nilai-desc { font-size: 0.8rem; }
 }
 </style>
