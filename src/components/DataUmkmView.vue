@@ -23,10 +23,6 @@
         <router-link to="/admin/jadwal" class="nav-link" active-class="active">
           Jadwal
         </router-link>
-
-        <router-link to="/admin/pegawai" class="nav-link" active-class="active">
-          Pegawai
-        </router-link>
       </div>
       
       <!-- Right Nav / Profile -->
@@ -76,6 +72,66 @@
         <button class="btn-add" @click="openAddModal">
           + Tambah
         </button>
+
+        <button class="btn-excel" @click="exportCurrentPage" title="Download 10 data yang tampil di halaman ini saja - cepat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+          <span>Halaman Ini</span>
+        </button>
+
+        <button class="btn-excel btn-excel-all" @click="exportToExcel" :disabled="exportingExcel" title="Download Excel dari server sesuai filter (tahun, skala, kecamatan, search)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>{{ exportingExcel ? (exportProgress || 'Mengekspor...') : 'Export Semua' }}</span>
+        </button>
+      </div>
+
+      <!-- Filter Export (sesuai API GET /api/admin/umkm/export) -->
+      <div class="filter-bar">
+        <div class="filter-item">
+          <label>Tahun</label>
+          <input
+            type="number"
+            v-model.number="filterTahun"
+            placeholder="cth: 2025"
+            min="2000"
+            max="2100"
+            class="filter-input"
+          />
+        </div>
+        <div class="filter-item">
+          <label>Skala Usaha</label>
+          <select v-model="filterSkala" class="filter-input">
+            <option value="">Semua</option>
+            <option value="Usaha Mikro">Usaha Mikro</option>
+            <option value="Usaha Kecil">Usaha Kecil</option>
+            <option value="Usaha Menengah">Usaha Menengah</option>
+            <option value="Usaha Besar">Usaha Besar</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Kecamatan</label>
+          <select
+            v-model="filterKecamatanId"
+            class="filter-input"
+            title="Pilih kecamatan. ID otomatis dikirim sebagai kecamatan_id ke API."
+          >
+            <option value="">Semua</option>
+            <option :value="1">Banjarmasin Tengah</option>
+            <option :value="2">Banjarmasin Barat</option>
+            <option :value="3">Banjarmasin Timur</option>
+            <option :value="4">Banjarmasin Selatan</option>
+            <option :value="5">Banjarmasin Utara</option>
+          </select>
+        </div>
+        <div class="filter-item filter-hint">
+          <span>Filter dipakai saat klik <b>Export Semua</b>. Search box juga ikut sebagai <code>search</code>.</span>
+        </div>
+        <button
+          v-if="filterTahun || filterSkala || filterKecamatanId"
+          class="btn-reset-filter"
+          @click="resetExportFilter"
+        >
+          Reset
+        </button>
       </div>
 
       <!-- Error Alert -->
@@ -100,7 +156,7 @@
                 <th>Kecamatan</th>
                 <th>Kelurahan</th>
                 <th>Judul KBLI</th>
-                <th class="text-center" style="width: 110px;">Aksi</th>
+                <th class="text-center" style="width: 140px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -138,6 +194,9 @@
                     </button>
                     <button class="btn-icon btn-delete" title="Hapus" @click="handleDelete(item)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                    <button class="btn-icon btn-pdf-row" title="Cetak PDF surat 1 data ini" @click="exportSingleRow(item)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                     </button>
                   </div>
                 </td>
@@ -446,6 +505,13 @@ export default {
       searchTimeout: null,
       perPage: 10,
       sortOrder: 'desc',
+      exportingExcel: false,
+      exportProgress: '',
+      // Filter untuk API GET /api/admin/umkm/export
+      // ?tahun=2022&skala_usaha=Usaha Mikro&kecamatan_id=1&search=...
+      filterTahun: '',
+      filterSkala: '',
+      filterKecamatanId: '',
       
       displayedUmkmList: [],
       pagination: {
@@ -535,6 +601,12 @@ export default {
   },
   mounted() {
     this.fetchUmkmData(1)
+    // Preload library xlsx saat idle agar klik Export pertama tidak nunggu download 424KB.
+    try {
+      const preload = () => import('xlsx').catch(() => {})
+      if ('requestIdleCallback' in window) requestIdleCallback(preload, { timeout: 5000 })
+      else setTimeout(preload, 3000)
+    } catch (e) { /* abaikan */ }
   },
   methods: {
     getAuthToken() {
@@ -831,6 +903,387 @@ export default {
       }
     },
 
+    formatTanggalSurat(val) {
+      if (!val) return '-'
+      const d = new Date(val)
+      if (isNaN(d.getTime())) return String(val).slice(0, 10)
+      return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    },
+
+    mapExcelRow(item, idx) {
+      return {
+        'No': idx + 1,
+        'Nama Perusahaan': item?.nama_perusahaan || '-',
+        'Nama Proyek': item?.nama_proyek || '-',
+        'Jenis Perusahaan': item?.jenis_perusahaan || '-',
+        'Risiko Proyek': item?.risiko_proyek || '-',
+        'Skala Usaha': item?.skala_usaha || '-',
+        'Sektor Pembina': item?.sektor_pembina || '-',
+        'Alamat Usaha': item?.alamat_usaha || '-',
+        'Kab/Kota Usaha': item?.kab_kota_usaha || item?.kab_kota?.nama || '-',
+        'Kecamatan': item?.kecamatan_usaha || item?.kecamatan?.nama || '-',
+        'Kelurahan': item?.kelurahan_usaha || item?.kelurahan?.nama || '-',
+        'Jumlah TKI': item?.jumlah_tki ?? 0,
+        'Kode KBLI': item?.kbli || item?.kbli_data?.kode || '-',
+        'Judul KBLI': item?.judul_kbli || item?.kbli_data?.judul || '-'
+      }
+    },
+
+    writeExcelFile(rows, filename, sheetName = 'Data UMKM') {
+      return import('xlsx').then((XLSX) => {
+        const worksheet = XLSX.utils.json_to_sheet(rows)
+        worksheet['!cols'] = [
+          { wch: 5 }, { wch: 30 }, { wch: 30 }, { wch: 20 }, { wch: 16 },
+          { wch: 18 }, { wch: 25 }, { wch: 35 }, { wch: 20 }, { wch: 22 },
+          { wch: 22 }, { wch: 12 }, { wch: 15 }, { wch: 40 }
+        ]
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
+        XLSX.writeFile(workbook, filename)
+      })
+    },
+
+    async exportCurrentPage() {
+      // Jalur CEPAT: export 10 data yang tampil saja, tanpa fetch ulang -> instant.
+      if (this.displayedUmkmList.length === 0) {
+        alert('Tidak ada data di halaman ini untuk diekspor.')
+        return
+      }
+      try {
+        const startNo = (this.pagination.current_page - 1) * this.perPage
+        const rows = this.displayedUmkmList.map((item, i) => this.mapExcelRow(item, startNo + i))
+        const dateStr = new Date().toISOString().slice(0, 10)
+        await this.writeExcelFile(rows, `Data_UMKM_hal${this.pagination.current_page}_${dateStr}.xlsx`)
+      } catch (error) {
+        alert(`Gagal mengekspor halaman ini: ${error.message}`)
+      }
+    },
+
+    resetExportFilter() {
+      this.filterTahun = ''
+      this.filterSkala = ''
+      this.filterKecamatanId = ''
+    },
+
+    buildExportQuery() {
+      // Samakan persis dengan docs: kecamatan_id, search, skala_usaha, tahun
+      const q = new URLSearchParams()
+      q.append('ngrok-skip-browser-warning', '69420')
+      if (this.searchQuery.trim()) q.append('search', this.searchQuery.trim())
+      if (this.filterSkala) q.append('skala_usaha', this.filterSkala)
+      if (this.filterTahun !== '' && this.filterTahun !== null && this.filterTahun !== undefined) {
+        q.append('tahun', String(this.filterTahun))
+      }
+      if (this.filterKecamatanId !== '' && this.filterKecamatanId !== null && this.filterKecamatanId !== undefined) {
+        q.append('kecamatan_id', String(this.filterKecamatanId))
+      }
+      return q.toString()
+    },
+
+    downloadBlob(blob, fallbackName, contentDisposition) {
+      let filename = fallbackName
+      if (contentDisposition) {
+        const m = /filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i.exec(contentDisposition)
+        if (m && m[1]) {
+          try { filename = decodeURIComponent(m[1].trim()) } catch (e) { filename = m[1].trim() }
+        }
+      }
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 5000)
+    },
+
+    async exportToExcel() {
+      // Jalur utama: GET /api/admin/umkm/export?kecamatan_id=&search=&skala_usaha=&tahun=
+      // -> file .xlsx langsung dari backend (Bearer Auth).
+      // Kalau backend gagal / belum bisa, fallback ke generate xlsx di frontend.
+      if (this.exportingExcel) return
+      this.exportingExcel = true
+      this.exportProgress = 'Menyiapkan...'
+      const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm'
+      try {
+        const xlsxPromise = import('xlsx')
+        const token = this.getAuthToken()
+        if (!token) {
+          this.$router.push('/login')
+          return
+        }
+        const headers = {
+          // Minta file biner, bukan JSON
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/octet-stream, */*',
+          'ngrok-skip-browser-warning': '69420',
+          'Authorization': `Bearer ${token}`
+        }
+
+        // 1) Jalur cepat backend.
+        try {
+          this.exportProgress = 'Meminta file ke server...'
+          const query = this.buildExportQuery()
+          const expRes = await fetch(`${API_BASE}/export?${query}`, { method: 'GET', headers })
+          const ctype = (expRes.headers.get('content-type') || '').toLowerCase()
+
+          if (expRes.status === 401) {
+            this.$router.push('/login')
+            return
+          }
+
+          // Backend validasi gagal (422) -> tampilkan pesan, jangan fallback diam-diam.
+          if (expRes.status === 422) {
+            const j = await expRes.json().catch(() => ({}))
+            const msg = j.message || 'Validasi filter gagal. Cek tahun (2000-2100) / skala_usaha (max 100 char).'
+            alert(msg)
+            return
+          }
+
+          const isFile = expRes.ok && (
+            ctype.includes('spreadsheet') || ctype.includes('excel') ||
+            ctype.includes('octet-stream') || ctype.includes('csv') ||
+            ctype.includes('application/vnd')
+          )
+
+          if (isFile) {
+            const blob = await expRes.blob()
+            if (blob.size === 0) throw new Error('File kosong dari server')
+            const dateStr = new Date().toISOString().slice(0, 10)
+            this.downloadBlob(
+              blob,
+              `Data_UMKM_${dateStr}.xlsx`,
+              expRes.headers.get('content-disposition')
+            )
+            return
+          }
+
+          // Kalau backend jawab JSON tapi status OK (misal error dibungkus JSON) -> lempar ke fallback?
+          // Cek dulu: kalau content-type json, baca pesannya.
+          if (ctype.includes('json')) {
+            const j = await expRes.json().catch(() => null)
+            // Kalau 404 / pesan "not found" berarti endpoint belum match -> fallback.
+            // Selain itu tampilkan pesan.
+            if (expRes.ok) throw new Error('fallback')
+            throw new Error(j?.message || `Export gagal (status ${expRes.status})`)
+          }
+
+          if (!expRes.ok) throw new Error(`Export gagal (status ${expRes.status})`)
+          throw new Error('fallback')
+        } catch (e) {
+          const msg = e?.message || ''
+          // Error validasi / auth dari backend -> tampilkan & stop, jangan fallback diam-diam.
+          if (msg !== 'fallback' && (msg.startsWith('Export gagal') || msg.includes('Validasi') || msg.includes('File kosong'))) {
+            alert(`Gagal mengekspor dari server: ${msg}`)
+            return
+          }
+          // else: lanjut fallback frontend (endpoint 404 / network aneh / jawab JSON saat OK)
+        }
+
+        const jsonHeaders = {
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': '69420',
+          'Authorization': `Bearer ${token}`
+        }
+        const buildQuery = (page, perPage) => {
+          const q = new URLSearchParams({
+            page: page,
+            per_page: perPage,
+            'ngrok-skip-browser-warning': '69420'
+          })
+          if (this.searchQuery.trim()) q.append('search', this.searchQuery.trim())
+          return q.toString()
+        }
+        const fetchPage = async (page, perPage) => {
+          const res = await fetch(`${API_BASE}?${buildQuery(page, perPage)}`, { method: 'GET', headers: jsonHeaders })
+          if (!res.ok) throw new Error(`Gagal mengambil data (status ${res.status})`)
+          return res.json()
+        }
+        const extractList = (result) => {
+          const pageData = result.data || {}
+          if (pageData && Array.isArray(pageData.data)) return { list: pageData.data, lastPage: Number(pageData.last_page) || 1, total: Number(pageData.total) || 0 }
+          if (Array.isArray(result.data)) return { list: result.data, lastPage: 1, total: result.data.length }
+          return { list: [], lastPage: 1, total: 0 }
+        }
+
+        // Ambil halaman 1 dulu dengan per_page BESAR (1000) agar request sedikit.
+        let perPageFetch = 1000
+        let first
+        try {
+          this.exportProgress = 'Mengambil data (hal 1)...'
+          first = await fetchPage(1, perPageFetch)
+        } catch (e) {
+          perPageFetch = 500
+          first = await fetchPage(1, perPageFetch)
+        }
+        let { list: firstList, lastPage } = extractList(first)
+        let allData = [...firstList]
+
+        if (lastPage > 1) {
+          // Ambil sisa halaman SECARA PARALEL (batch 5).
+          const pages = []
+          for (let p = 2; p <= lastPage; p++) pages.push(p)
+          const CONCURRENCY = 5
+          let done = 1
+          for (let i = 0; i < pages.length; i += CONCURRENCY) {
+            const batch = pages.slice(i, i + CONCURRENCY)
+            this.exportProgress = `Mengambil data (${Math.min(done + batch.length, lastPage)}/${lastPage})...`
+            const results = await Promise.all(batch.map((p) => fetchPage(p, perPageFetch)))
+            results.forEach((r) => {
+              const { list } = extractList(r)
+              allData = allData.concat(list)
+            })
+            done += batch.length
+          }
+        }
+
+        if (allData.length === 0) {
+          alert('Tidak ada data untuk diekspor.')
+          return
+        }
+
+        // Urutkan sesuai sortOrder yang aktif
+        allData = this.sortListLocally(allData)
+
+        // Petakan ke kolom Excel yang rapi
+        const rows = allData.map((item, idx) => this.mapExcelRow(item, idx))
+
+        this.exportProgress = `Membuat file (${rows.length} baris)...`
+        // Beri jeda kecil agar teks progres sempat tampil sebelum CPU sibuk bikin file
+        await new Promise((r) => setTimeout(r, 30))
+        await xlsxPromise
+        const dateStr = new Date().toISOString().slice(0, 10)
+        const hasFilter = this.searchQuery.trim() || this.filterSkala || this.filterTahun !== '' || this.filterKecamatanId !== ''
+        const suffix = hasFilter ? '-filtered' : ''
+        await this.writeExcelFile(rows, `Data_UMKM${suffix}_${dateStr}.xlsx`)
+      } catch (error) {
+        alert(`Gagal mengekspor Excel: ${error.message}`)
+      } finally {
+        this.exportingExcel = false
+        this.exportProgress = ''
+      }
+    },
+
+    async exportSingleRow(item) {
+      // Cetak 1 data sebagai PDF model surat (instant, tanpa loop pagination).
+      // Ambil detail lengkap dulu (1 request), kalau gagal pakai data baris apa adanya.
+      try {
+        let d = item
+        try {
+          const token = this.getAuthToken()
+          const headers = { 'Accept': 'application/json', 'ngrok-skip-browser-warning': '69420' }
+          if (token) headers['Authorization'] = `Bearer ${token}`
+          const res = await fetch(`https://harvest-protegee-symptom.ngrok-free.dev/api/admin/umkm/${item.id}?ngrok-skip-browser-warning=69420`, { method: 'GET', headers })
+          if (res.ok) {
+            const j = await res.json()
+            if (j.data) d = j.data
+          }
+        } catch (e) { /* abaikan, pakai data baris */ }
+
+        const { jsPDF } = await import('jspdf')
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+        const pageW = doc.internal.pageSize.getWidth()
+        const margin = 18
+        let y = 18
+
+        // Kop surat
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(13)
+        doc.text('DINAS KOPERASI, USAHA MIKRO, KERJA DAN ENERGI', pageW / 2, y, { align: 'center' })
+        y += 6
+        doc.setFontSize(11)
+        doc.text('KOTA BANJARMASIN', pageW / 2, y, { align: 'center' })
+        y += 5
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8.5)
+        doc.setTextColor(90)
+        doc.text('Jl. Pangeran Hidayatullah No.12, Sungai Jingah, Kec. Banjarmasin Utara, Kota Banjarmasin', pageW / 2, y, { align: 'center' })
+        y += 4
+        doc.setDrawColor(30, 56, 92)
+        doc.setLineWidth(0.8)
+        doc.line(margin, y, pageW - margin, y)
+        y += 8
+
+        // Judul surat
+        doc.setTextColor(0)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(12)
+        doc.text('DATA USAHA MIKRO', pageW / 2, y, { align: 'center' })
+        y += 6
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(10)
+        doc.text(`Nomor: ${d?.id || '-'}/UMKM/${new Date().getFullYear()}`, pageW / 2, y, { align: 'center' })
+        y += 8
+
+        // Paragraf pembuka
+        doc.setFontSize(10)
+        const pembuka = doc.splitTextToSize(
+          'Berdasarkan data yang tercatat pada Dinas Koperasi, Usaha Mikro, Kerja dan Energi Kota Banjarmasin, dengan ini menerangkan data usaha mikro sebagai berikut:',
+          pageW - margin * 2
+        )
+        doc.text(pembuka, margin, y)
+        y += pembuka.length * 5 + 4
+
+        // Tabel data (label : value)
+        const rows = [
+          ['Nama Perusahaan', d?.nama_perusahaan || '-'],
+          ['Nama Proyek', d?.nama_proyek || '-'],
+          ['Jenis Perusahaan', d?.jenis_perusahaan || '-'],
+          ['Risiko Proyek', d?.risiko_proyek || '-'],
+          ['Skala Usaha', d?.skala_usaha || '-'],
+          ['Sektor Pembina', d?.sektor_pembina || '-'],
+          ['Alamat Usaha', d?.alamat_usaha || '-'],
+          ['Kab / Kota Usaha', d?.kab_kota_usaha || d?.kab_kota?.nama || '-'],
+          ['Kecamatan', d?.kecamatan_usaha || d?.kecamatan?.nama || '-'],
+          ['Kelurahan', d?.kelurahan_usaha || d?.kelurahan?.nama || '-'],
+          ['Jumlah Tenaga Kerja', `${d?.jumlah_tki ?? 0} Orang`],
+          ['Kode KBLI', d?.kbli || d?.kbli_data?.kode || '-'],
+          ['Judul KBLI', d?.judul_kbli || d?.kbli_data?.judul || '-']
+        ]
+        doc.setFontSize(10)
+        const labelW = 42
+        const lineH = 7
+        rows.forEach(([label, value]) => {
+          const valLines = doc.splitTextToSize(String(value), pageW - margin * 2 - labelW - 4)
+          const rowH = Math.max(lineH, valLines.length * 5 + 2)
+          if (y + rowH > 275) { doc.addPage(); y = 20 }
+          doc.setFont('helvetica', 'bold')
+          doc.text(label, margin, y)
+          doc.setFont('helvetica', 'normal')
+          doc.text(':', margin + labelW, y)
+          doc.text(valLines, margin + labelW + 4, y)
+          y += rowH
+        })
+        y += 4
+
+        // Paragraf penutup
+        const penutup = doc.splitTextToSize(
+          'Demikian data ini dibuat untuk dipergunakan sebagaimana mestinya.',
+          pageW - margin * 2
+        )
+        doc.text(penutup, margin, y)
+        y += penutup.length * 5 + 10
+
+        // Tanda tangan
+        const tgl = this.formatTanggalSurat(new Date())
+        doc.text(`Banjarmasin, ${tgl}`, pageW - margin, y, { align: 'right' })
+        y += 6
+        doc.text('Kepala Dinas,', pageW - margin, y, { align: 'right' })
+        y += 22
+        doc.setFont('helvetica', 'bold')
+        doc.text('( ............................................ )', pageW - margin, y, { align: 'right' })
+        y += 6
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.text('NIP. ............................................', pageW - margin, y, { align: 'right' })
+
+        const safeName = String(d?.nama_perusahaan || `UMKM-${d?.id || 'data'}`).replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'UMKM'
+        doc.save(`Surat_Data_UMKM_${safeName}_${d?.id || ''}.pdf`)
+      } catch (error) {
+        alert(`Gagal membuat PDF: ${error.message}`)
+      }
+    },
+
     toggleDropdown() {
       this.showDropdown = !this.showDropdown
     },
@@ -902,8 +1355,8 @@ export default {
 }
 
 .action-bar {
-  display: flex; gap: 16px; align-items: center; margin-bottom: 20px;
-  background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 4px;
+  display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;
+  background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px;
 }
 .search-box { position: relative; flex: 1; display: flex; align-items: center; }
 .search-icon { position: absolute; left: 16px; color: #94a3b8; }
@@ -916,11 +1369,38 @@ export default {
   padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #f8fafc;
   font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; color: #334155; outline: none; cursor: pointer;
 }
+.filter-bar {
+  display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; margin-top: -12px; flex-wrap: wrap;
+  background-color: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; padding: 12px 16px;
+}
+.filter-item { display: flex; flex-direction: column; gap: 6px; }
+.filter-item label { font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; }
+.filter-input {
+  padding: 9px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #ffffff;
+  font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: #1e293b; outline: none; min-width: 160px;
+}
+.filter-input:focus { border-color: #1e385c; }
+.filter-hint { font-size: 0.78rem; color: #64748b; max-width: 320px; line-height: 1.5; padding-bottom: 8px; }
+.filter-hint code { background: #e2e8f0; padding: 1px 5px; border-radius: 4px; font-size: 0.75rem; }
+.btn-reset-filter {
+  background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 9px 16px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.82rem; cursor: pointer;
+}
+.btn-reset-filter:hover { background-color: #f1f5f9; }
 .btn-add {
   background-color: #1e385c; color: #ffffff; border: none; padding: 12px 32px;
   border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
 }
 .btn-add:hover { background-color: #162a45; }
+.btn-excel {
+  background-color: #217346; color: #ffffff; border: none; padding: 12px 20px;
+  border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.btn-excel:hover:not(:disabled) { background-color: #1a5c38; }
+.btn-excel:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-excel-all { background-color: #1e385c; }
+.btn-excel-all:hover:not(:disabled) { background-color: #162a45; }
 
 .data-card { background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); }
 .card-header-navy { background-color: #1e385c; color: #ffffff; padding: 16px 24px; }
@@ -938,6 +1418,7 @@ export default {
 .btn-info { color: #1e293b; }
 .btn-edit { color: #1e385c; }
 .btn-delete { color: #dc2626; }
+.btn-pdf-row { color: #991b1b; }
 
 .card-footer-pagination {
   padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9;
