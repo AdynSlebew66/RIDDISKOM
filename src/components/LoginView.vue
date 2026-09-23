@@ -130,9 +130,14 @@ export default {
         const userEmail = this.email.toLowerCase()
 
         // Akun Sekretariat langsung ke dashboard Pegawai,
+        // akun P3TK ke dashboard Pencaker,
         // akun lain tetap ke Dashboard Admin UMKM.
+        const isP3tk = ['p3tk', 'pencaker', 'pencaker', 'naker', 'tenaga kerja', 'tenagakerja', 'blk', 'pelatihan', 'penempatan']
+          .some((key) => userRole.includes(key) || userEmail.includes(key))
         if (userRole.includes('sekretariat') || userEmail.includes('sekretariat')) {
           this.$router.push('/admin/pegawai')
+        } else if (isP3tk) {
+          this.$router.push('/admin/pencaker')
         } else if (userRole.includes('umkm') || userEmail.includes('umkm') || userRole === '' || userRole.includes('admin')) {
           this.$router.push('/admin/umkm')
         } else {

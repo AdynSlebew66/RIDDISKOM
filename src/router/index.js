@@ -20,6 +20,7 @@ import KodeEtikPegawaiView from '../components/profil/KodeEtikPegawaiView.vue'
 import ProfilPlaceholderView from '../components/profil/ProfilPlaceholderView.vue'
 import SekretariatView from '../components/SekretariatView.vue'
 import P3tkPublicView from '../components/P3tkPublicView.vue'
+import PencakerAdminView from '../components/PencakerAdminView.vue'
 
 const routes = [
   {
@@ -128,6 +129,11 @@ const routes = [
     path: '/admin/pegawai',
     name: 'AdminPegawai',
     component: PegawaiAdminView
+  },
+  {
+    path: '/admin/pencaker',
+    name: 'AdminPencaker',
+    component: PencakerAdminView
   },
   // Alias lama / halaman setelah login — arahkan ke dashboard admin UMKM
   // Sebelumnya '/dashboard' tidak terdaftar sehingga halaman blank putih.

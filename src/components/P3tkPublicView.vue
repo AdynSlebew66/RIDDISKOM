@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :style="themeVars">
     <!-- Header / Navbar Public -->
     <header class="navbar">
       <div class="brand" @click="navTo('/')">
@@ -23,7 +23,7 @@
         <li class="nav-item" @click="navTo('/')">Beranda</li>
         <li class="nav-item" @click="handleScrollGrafik">Grafik</li>
         <li class="nav-item" @click="navTo('/layanan')">Layanan P3TK</li>
-        <li class="nav-item" @click="navTo('/galeri')">Galeri</li>
+        <li class="nav-item" @click="navTo('')">Galeri</li>
         <li class="nav-item login-btn" @click="navTo('/login')">
           <span>Login</span>
           <svg xmlns="http://www.w3.org/2000/svg" class="icon-login" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,7 +84,7 @@
             :key="tab.id"
             class="tab-item"
             :class="{ active: activeTab === tab.id }"
-            @click="activeTab = tab.id"
+            @click="switchTab(tab.id)"
           >
             {{ tab.label }}
           </button>
@@ -163,17 +163,17 @@
             </div>
           </div>
 
-          <!-- Right stat cards : horizontal scroll agar hemat tempat -->
+          <!-- Right stat cards : grid 2x2 per halaman, tanpa kartu kepotong -->
           <div class="cards-scroll-section">
             <div class="cards-scroll-header">
-              <span class="scroll-hint">Geser ke kanan untuk melihat semua &rarr;</span>
+              <span class="scroll-hint">{{ pageLabel }}</span>
               <div class="scroll-nav">
-                <button class="scroll-btn" @click="scrollCards(-1)" aria-label="Geser kiri">&#8592;</button>
-                <button class="scroll-btn" @click="scrollCards(1)" aria-label="Geser kanan">&#8594;</button>
+                <button class="scroll-btn" :disabled="cardPage === 0" @click="prevCards" aria-label="Halaman sebelumnya">&#8592;</button>
+                <button class="scroll-btn" :disabled="cardPage >= pageCount - 1" @click="nextCards" aria-label="Halaman berikutnya">&#8594;</button>
               </div>
             </div>
-            <div ref="cardsScroll" class="chart-right cards-horizontal">
-              <div v-for="(card, i) in rightCards" :key="i" class="stat-card-framed snap-card">
+            <div class="chart-right cards-paged">
+              <div v-for="(card, i) in visibleCards" :key="`${activeTab}-${cardPage}-${i}`" class="stat-card-framed">
                 <span class="year-badge">{{ yearBadge }}</span>
                 <h3 class="stat-title">{{ card.label }}</h3>
                 <div class="card-inner-grid">
@@ -188,6 +188,15 @@
                 </div>
               </div>
             </div>
+            <div v-if="pageCount > 1" class="page-dots">
+              <span
+                v-for="p in pageCount"
+                :key="p"
+                class="page-dot"
+                :class="{ active: cardPage === p - 1 }"
+                @click="cardPage = p - 1"
+              ></span>
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +205,25 @@
 </template>
 
 <script>
+// ============================================================
+// TEMA WARNA PER-BIDANG — ubah cukup di objek THEME ini.
+// Halaman bidang lain (Koperasi, UMPEG, HI, BLK, dsb.) bisa
+// menyalin file ini lalu mengganti nilai THEME agar selaras
+// namun tetap punya identitas warna sendiri.
+// ============================================================
+const THEME = {
+  chartBar: '#8070FF', // warna batang bar chart (Pendidikan & Rentang Usia)
+  tabActive: '#2e7d32', // warna tab aktif (disamakan dgn halaman publik lain)
+  badgeText: '#ff6f00', // warna teks badge tahun
+  badgeBg: '#fff8f0', // latar badge tahun
+  // Warna pie dipetakan dari LABEL agar konsisten walau urutan API berubah
+  pieByLabel: {
+    'laki-laki': '#4A89DC', // biru
+    'perempuan': '#EC5F8A' // pink
+  },
+  pieFallback: ['#8070FF', '#FF7E72', '#38CDF2', '#FFA726'] // cadangan kategori lain
+}
+
 const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pencaker'
 
 export default {
@@ -236,10 +264,20 @@ export default {
       },
       loading: false,
       error: null,
-      pieColors: ['#8070FF', '#FF7E72', '#38CDF2', '#FFA726']
+      theme: THEME,
+      cardPage: 0, // halaman aktif grid kartu (4 kartu per halaman = 2x2)
+      cardPageSize: 4
     }
   },
   computed: {
+    themeVars() {
+      return {
+        '--bidang-chart': this.theme.chartBar,
+        '--bidang-accent': this.theme.tabActive,
+        '--bidang-badge-text': this.theme.badgeText,
+        '--bidang-badge-bg': this.theme.badgeBg
+      }
+    },
     totalPencaker() {
       return Number(this.statistik.total) || 0
     },
@@ -285,6 +323,21 @@ export default {
         ...item,
         percent: total > 0 ? ((item.value / total) * 100).toFixed(0) : '0'
       }))
+    },
+    pageCount() {
+      return Math.max(1, Math.ceil(this.rightCards.length / this.cardPageSize))
+    },
+    visibleCards() {
+      const start = this.cardPage * this.cardPageSize
+      return this.rightCards.slice(start, start + this.cardPageSize)
+    },
+    pageLabel() {
+      if (this.rightCards.length <= this.cardPageSize) {
+        return `${this.rightCards.length} kategori`
+      }
+      const start = this.cardPage * this.cardPageSize + 1
+      const end = Math.min(start + this.cardPageSize - 1, this.rightCards.length)
+      return `${start}–${end} dari ${this.rightCards.length} kategori`
     },
     yMax() {
       const maxVal = Math.max(0, ...this.currentItems.map((i) => i.value))
@@ -341,7 +394,7 @@ export default {
           label: item.label,
           value,
           percent: percent.toFixed(1),
-          color: this.pieColors[index % this.pieColors.length],
+          color: this.colorForPie(item.label, index),
           pathData
         }
       })
@@ -393,6 +446,7 @@ export default {
     async fetchStatistik() {
       this.loading = true
       this.error = null
+      this.cardPage = 0
       try {
         const params = new URLSearchParams()
         if (this.selectedTahun) params.append('tahun', this.selectedTahun)
@@ -424,10 +478,20 @@ export default {
       if (!val || !this.yMax) return 0
       return Math.min(Math.max((val / this.yMax) * 100, val > 0 ? 4 : 0), 100)
     },
-    scrollCards(dir) {
-      const el = this.$refs.cardsScroll
-      if (!el) return
-      el.scrollBy({ left: dir * 480, behavior: 'smooth' })
+    colorForPie(label, index) {
+      const key = String(label || '').trim().toLowerCase()
+      if (this.theme.pieByLabel[key]) return this.theme.pieByLabel[key]
+      return this.theme.pieFallback[index % this.theme.pieFallback.length]
+    },
+    switchTab(tabId) {
+      this.activeTab = tabId
+      this.cardPage = 0
+    },
+    prevCards() {
+      if (this.cardPage > 0) this.cardPage -= 1
+    },
+    nextCards() {
+      if (this.cardPage < this.pageCount - 1) this.cardPage += 1
     }
   }
 }
@@ -608,7 +672,7 @@ export default {
   padding: 0 0 6px 0;
   position: relative;
 }
-.tab-item.active { color: #2e7d32; }
+.tab-item.active { color: var(--bidang-accent, #2e7d32); }
 .tab-item.active::after {
   content: '';
   position: absolute;
@@ -616,7 +680,7 @@ export default {
   left: 0;
   width: 100%;
   height: 3px;
-  background-color: #2e7d32;
+  background-color: var(--bidang-accent, #2e7d32);
   border-radius: 2px;
 }
 
@@ -632,7 +696,7 @@ export default {
 .btn-retry {
   margin-top: 16px;
   padding: 10px 24px;
-  background-color: #2e7d32;
+  background-color: var(--bidang-accent, #2e7d32);
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -716,7 +780,7 @@ export default {
 .bar-fill {
   width: 65%;
   max-width: 32px;
-  background-color: #8070ff;
+  background-color: var(--bidang-chart, #8070ff);
   border-radius: 4px 4px 0 0;
   position: relative;
   display: flex;
@@ -752,29 +816,17 @@ export default {
 }
 
 .bar-legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; }
-.legend-square { width: 12px; height: 12px; background-color: #8070ff; }
+.legend-square { width: 12px; height: 12px; background-color: var(--bidang-chart, #8070ff); }
 .legend-text { font-size: 0.85rem; font-weight: 600; color: #555555; }
 
-.chart-right.grid-2-col,
-.chart-right.cards-horizontal {
+.chart-right.cards-paged {
   display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(2, auto);
-  grid-auto-columns: 235px;
-  column-gap: 22px;
-  row-gap: 22px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
   width: 100%;
   min-width: 0;
-  max-height: 480px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 6px 6px 16px 6px;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  align-content: start;
 }
-.chart-right.cards-horizontal::-webkit-scrollbar { height: 6px; }
-.chart-right.cards-horizontal::-webkit-scrollbar-track { background: #e7e7e0; border-radius: 4px; }
-.chart-right.cards-horizontal::-webkit-scrollbar-thumb { background: #c4c4bb; border-radius: 4px; }
 
 .cards-scroll-section { width: 100%; min-width: 0; }
 .cards-scroll-header {
@@ -798,14 +850,19 @@ export default {
   line-height: 1;
   transition: all 0.2s ease;
 }
-.scroll-btn:hover { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.scroll-btn:hover:not(:disabled) { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.scroll-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-.snap-card {
-  width: 235px;
-  min-width: 235px;
-  max-width: 235px;
-  scroll-snap-align: start;
+.page-dots { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+.page-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d5d5cd;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
+.page-dot.active { background: var(--bidang-accent, #2e7d32); transform: scale(1.25); }
 
 .stat-card-framed {
   background-color: #ffffff;
@@ -845,8 +902,8 @@ export default {
 .year-badge {
   display: inline-block;
   align-self: flex-start;
-  background-color: #fff8f0;
-  color: #ff6f00;
+  background-color: var(--bidang-badge-bg, #fff8f0);
+  color: var(--bidang-badge-text, #ff6f00);
   font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 8px;
@@ -875,8 +932,6 @@ export default {
   .navbar { padding: 20px 30px; }
   .content-wrapper { padding: 10px 20px 40px 20px; }
   .chart-content-grid { grid-template-columns: 1fr; gap: 24px; }
-  .chart-right.cards-horizontal { max-height: none; grid-template-rows: auto; grid-auto-columns: 230px; }
-  .snap-card { width: 230px; min-width: 230px; max-width: 230px; }
   .donut-wrapper { width: 250px; height: 250px; }
 }
 
@@ -906,14 +961,14 @@ export default {
   .tabs-header::-webkit-scrollbar { display: none; }
   .tab-item { flex-shrink: 0; font-size: 0.88rem; }
   .tab-item.active::after { bottom: -10px; }
-  .chart-right.cards-horizontal { grid-template-rows: auto; grid-auto-columns: 215px; column-gap: 16px; }
-  .snap-card { width: 215px; min-width: 215px; max-width: 215px; }
+  .chart-right.cards-paged { gap: 16px; }
 }
 
 @media (max-width: 480px) {
   .main-heading { font-size: 1.4rem; }
-  .chart-right.cards-horizontal { grid-auto-columns: 195px; column-gap: 14px; row-gap: 14px; }
-  .snap-card { width: 195px; min-width: 195px; max-width: 195px; }
+  .chart-right.cards-paged { gap: 12px; }
+  .stat-card-framed { padding: 12px; }
+  .col-value { font-size: 0.9rem; }
   .scroll-hint { font-size: 0.75rem; }
   .donut-wrapper { width: 230px; height: 230px; }
 }
