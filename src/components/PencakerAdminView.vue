@@ -35,6 +35,21 @@
     <main class="admin-content">
       <div class="page-title">
         <h2>Data Pencari Kerja (P3TK)</h2>
+        <div class="action-buttons-group">
+          <button class="btn-add" @click="openAddModal">
+            + Tambah
+          </button>
+
+          <button class="btn-import" @click="openImportModal" title="Import file Excel 1-file-1-tahun (12 sheet bulan)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>Import Excel</span>
+          </button>
+
+          <button class="btn-excel" @click="exportToExcel" :disabled="exportingExcel" title="Download Excel dari server sesuai filter yang aktif">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>{{ exportingExcel ? 'Mengekspor...' : 'Export Excel' }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- Search & Filter Bar -->
@@ -77,15 +92,6 @@
             <option v-for="p in pendidikanOptions" :key="p.id" :value="p.id">{{ p.nama }}</option>
           </select>
         </div>
-
-        <button class="btn-add" @click="openAddModal">
-          + Tambah
-        </button>
-
-        <button class="btn-excel" @click="exportToExcel" :disabled="exportingExcel" title="Download Excel dari server sesuai filter yang aktif">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          <span>{{ exportingExcel ? 'Mengekspor...' : 'Export Excel' }}</span>
-        </button>
       </div>
 
       <!-- Error Alert -->
@@ -93,7 +99,7 @@
         {{ errorMessage }}
       </div>
 
-      <!-- Info Alert (stub CRUD) -->
+      <!-- Info Alert -->
       <div v-if="infoMessage" class="info-alert">
         {{ infoMessage }}
       </div>
@@ -363,6 +369,43 @@
         </div>
       </div>
     </transition>
+
+    <!-- Modal Import Excel -->
+    <transition name="modal-fade">
+      <div v-if="showImportModal" class="modal-overlay" @click.self="closeImportModal">
+        <div class="modal-container modal-sm">
+          <div class="modal-header">
+            <h3>Import Excel Pencaker</h3>
+            <button class="btn-close" @click="closeImportModal">&times;</button>
+          </div>
+          <form @submit.prevent="submitImport">
+            <div class="modal-body">
+              <div v-if="importError" class="error-alert">{{ importError }}</div>
+              <p class="import-hint">1 file untuk 1 tahun (12 sheet bulan). Maksimal 20 MB, format .xlsx / .xls.</p>
+              <div class="form-grid form-grid-1col">
+                <div class="form-group">
+                  <label>File Excel <span class="req">*</span></label>
+                  <input ref="importFile" type="file" accept=".xlsx,.xls" @change="onImportFileChange" />
+                  <small v-if="importFileName" class="file-name">{{ importFileName }}</small>
+                </div>
+                <div class="form-group">
+                  <label>Tahun (opsional)</label>
+                  <input type="number" v-model.number="importTahun" placeholder="cth: 2025" min="2000" max="2100" />
+                </div>
+              </div>
+              <div v-if="importResult" class="import-result">
+                <p class="import-result-title">{{ importResult.message }}</p>
+                <p v-if="importResult.tahun">Tahun: <strong>{{ importResult.tahun }}</strong></p>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" @click="closeImportModal" :disabled="importing">Batal</button>
+              <button type="submit" class="btn-primary" :disabled="importing || !importFile">{{ importing ? 'Mengunggah...' : 'Upload' }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -435,6 +478,13 @@ export default {
       showDeleteModal: false,
       deleting: false,
       deleteItem: null,
+      showImportModal: false,
+      importing: false,
+      importFile: null,
+      importFileName: '',
+      importTahun: null,
+      importError: '',
+      importResult: null,
       saving: false,
       formError: '',
       validationErrors: {},
@@ -730,8 +780,7 @@ export default {
       this.deleteItem = item
       this.formError = ''
       this.showDeleteModal = true
-    },
-    closeDeleteModal() {
+    },    closeDeleteModal() {
       if (this.deleting) return
       this.showDeleteModal = false
       this.deleteItem = null
@@ -771,6 +820,99 @@ export default {
         this.formError = error.message || 'Gagal terhubung ke API.'
       } finally {
         this.deleting = false
+      }
+    },
+    openImportModal() {
+      this.importFile = null
+      this.importFileName = ''
+      this.importTahun = null
+      this.importError = ''
+      this.importResult = null
+      if (this.$refs.importFile) this.$refs.importFile.value = ''
+      this.showImportModal = true
+    },
+    closeImportModal() {
+      if (this.importing) return
+      this.showImportModal = false
+    },
+    onImportFileChange(event) {
+      const file = event.target.files?.[0] || null
+      this.importError = ''
+      this.importResult = null
+      if (!file) {
+        this.importFile = null
+        this.importFileName = ''
+        return
+      }
+      const maxBytes = 20480 * 1024 // 20 MB sesuai validasi backend
+      if (file.size > maxBytes) {
+        this.importError = `Ukuran file ${(file.size / 1024 / 1024).toFixed(1)} MB melebihi batas 20 MB.`
+        this.importFile = null
+        this.importFileName = ''
+        event.target.value = ''
+        return
+      }
+      if (!/\.(xlsx|xls)$/i.test(file.name)) {
+        this.importError = 'Format file harus .xlsx atau .xls.'
+        this.importFile = null
+        this.importFileName = ''
+        event.target.value = ''
+        return
+      }
+      this.importFile = file
+      this.importFileName = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`
+    },
+    async submitImport() {
+      if (!this.importFile || this.importing) return
+      this.importing = true
+      this.importError = ''
+      this.importResult = null
+      try {
+        const token = this.getAuthToken()
+        if (!token) {
+          this.$router.push('/login')
+          return
+        }
+        const form = new FormData()
+        form.append('file', this.importFile)
+        if (this.importTahun) form.append('tahun', this.importTahun)
+
+        const response = await fetch(`${API_BASE}/import`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'ngrok-skip-browser-warning': '69420',
+            Authorization: `Bearer ${token}`
+          },
+          body: form
+        })
+
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
+        const result = await response.json().catch(() => ({}))
+        if (response.status === 422) {
+          const errs = result.errors || {}
+          const first = Object.values(errs).flat()[0]
+          this.importError = first || result.message || 'Validasi file gagal. Periksa format dan ukuran file.'
+          return
+        }
+        if (!response.ok) {
+          throw new Error(result.message || `Import gagal (status ${response.status}).`)
+        }
+
+        const data = result.data || {}
+        this.importResult = { message: result.message || 'Import berhasil.', tahun: data.tahun || null }
+        this.infoMessage = result.message || `Import Excel berhasil (tahun ${data.tahun || ''}).`
+        setTimeout(() => { this.infoMessage = '' }, 5000)
+        this.fetchTahunOptions()
+        this.fetchPencaker(1)
+      } catch (error) {
+        this.importError = error.message || 'Gagal terhubung ke API.'
+      } finally {
+        this.importing = false
       }
     },
     async exportToExcel() {
@@ -1029,8 +1171,17 @@ export default {
   padding: 24px 28px 48px 28px;
 }
 
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
 .page-title h2 {
-  margin: 0 0 18px 0;
+  margin: 0;
   font-size: 1.4rem;
   font-weight: 800;
   color: #1e293b;
@@ -1048,7 +1199,7 @@ export default {
 .search-box {
   position: relative;
   flex: 1;
-  min-width: 220px;
+  min-width: 180px;
 }
 
 .search-icon {
@@ -1103,6 +1254,15 @@ export default {
 
 .btn-add:hover { background-color: #152a47; }
 
+/* Grup tombol aksi: selalu sebaris, turun bersama kalau layar sempit */
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  margin-left: auto;
+}
+
 .btn-excel {
   background-color: #217346;
   color: #ffffff;
@@ -1122,6 +1282,41 @@ export default {
 
 .btn-excel:hover:not(:disabled) { background-color: #1a5c38; }
 .btn-excel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-import {
+  background-color: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-import:hover { background-color: #b91c1c; }
+
+/* Import modal */
+.form-grid-1col { grid-template-columns: 1fr; }
+.import-hint { font-size: 0.85rem; color: #64748b; margin: 0 0 14px 0; line-height: 1.6; }
+.file-name { color: #1e385c; font-size: 0.78rem; margin-top: 6px; font-weight: 600; }
+.import-result {
+  margin-top: 14px;
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.import-result p { margin: 2px 0; }
+.import-result-title { font-weight: 700; }
 
 /* Alerts */
 .error-alert {
