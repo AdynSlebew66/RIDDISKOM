@@ -101,13 +101,13 @@
 
         <!-- Chart + Cards -->
         <div v-else class="chart-content-grid">
-          <!-- PIE CHART khusus Jenis Kelamin -->
-          <div v-if="activeTab === 'jenis_kelamin'" class="chart-left pie-chart-left">
+          <!-- PIE CHART (Pendidikan, Rentang Usia, Jenis Kelamin) -->
+          <div class="chart-left pie-chart-left">
             <div class="pie-chart-card">
               <div class="donut-wrapper">
                 <svg viewBox="0 0 300 300" class="donut-svg">
                   <g v-for="(slice, index) in pieSlices" :key="index">
-                    <path :d="slice.pathData" :fill="slice.color" stroke="#ffffff" stroke-width="3" />
+                    <path :d="slice.pathData" :fill="slice.color" stroke="#ffffff" stroke-width="2" />
                   </g>
                   <circle cx="150" cy="150" r="58" fill="#ffffff" />
                   <text x="150" y="148" text-anchor="middle" fill="#1a1a1a" font-size="22" font-weight="800">
@@ -118,84 +118,62 @@
                   </text>
                 </svg>
               </div>
-              <div class="pie-legend">
-                <div v-for="(item, idx) in pieSlices" :key="idx" class="pie-legend-item">
-                  <span class="dot" :style="{ backgroundColor: item.color }"></span>
-                  <span class="legend-text">{{ item.label }} — <strong>{{ item.value.toLocaleString('id-ID') }}</strong> ({{ item.percent }}%)</span>
+              <div class="pie-summary">
+                <div class="highlight-box" :style="{ borderLeftColor: colorForPie(topCategory.label, originalIndexOf(topCategory.label)) }">
+                  <span class="highlight-cap">Kategori Terbanyak</span>
+                  <span class="highlight-value">{{ topCategory.label }} — {{ topCategory.value.toLocaleString('id-ID') }} ({{ topCategory.percent }}%)</span>
                 </div>
-              </div>
-            </div>
-          </div>
-          <!-- Bar Chart (Pendidikan & Rentang Usia) -->
-          <div v-else class="chart-left bar-chart-left">
-            <div class="bar-chart-card">
-              <div class="chart-grid-wrapper">
-                <div class="y-axis">
-                  <span v-for="(tick, tIdx) in yTicks" :key="tIdx">{{ tick }}</span>
-                </div>
-
-                <div class="chart-area-scrollable">
-                  <div class="chart-area-inner" :style="{ minWidth: chartInnerWidth }">
-                    <div class="grid-lines">
-                      <div class="grid-line" v-for="n in yTicks.length" :key="n"></div>
-                    </div>
-
-                    <div class="bars-container">
-                      <div v-for="(item, idx) in currentItems" :key="idx" class="bar-col">
-                        <div class="bar-track">
-                          <div class="bar-fill" :style="{ height: barHeight(item.value) + '%' }">
-                            <span class="bar-val-badge">{{ item.value.toLocaleString('id-ID') }}</span>
-                          </div>
-                        </div>
-                        <div class="bar-x-label-wrapper">
-                          <span class="bar-x-label" :title="item.label">{{ item.label }}</span>
-                        </div>
-                      </div>
-                    </div>
+                <div class="mini-stats">
+                  <div class="mini-stat">
+                    <span class="mini-num">{{ currentItems.length }}</span>
+                    <span class="mini-cap">Total Kategori</span>
+                  </div>
+                  <div class="mini-stat">
+                    <span class="mini-num">{{ periodeLabel }}</span>
+                    <span class="mini-cap">Periode</span>
                   </div>
                 </div>
               </div>
-
-              <div class="bar-legend">
-                <span class="legend-square"></span>
-                <span class="legend-text">{{ legendLabel }}</span>
-              </div>
             </div>
           </div>
 
-          <!-- Right stat cards : grid 2x2 per halaman, tanpa kartu kepotong -->
-          <div class="cards-scroll-section">
-            <div class="cards-scroll-header">
-              <span class="scroll-hint">{{ pageLabel }}</span>
-              <div class="scroll-nav">
-                <button class="scroll-btn" :disabled="cardPage === 0" @click="prevCards" aria-label="Halaman sebelumnya">&#8592;</button>
-                <button class="scroll-btn" :disabled="cardPage >= pageCount - 1" @click="nextCards" aria-label="Halaman berikutnya">&#8594;</button>
-              </div>
-            </div>
-            <div class="chart-right cards-paged">
-              <div v-for="(card, i) in visibleCards" :key="`${activeTab}-${cardPage}-${i}`" class="stat-card-framed">
+          <!-- Tabel rincian kanan : No | Kategori | Jumlah | Persentase -->
+          <div class="table-side">
+            <div class="table-card">
+              <div class="table-card-header">
+                <h3 class="table-title">Rincian {{ legendLabel }}</h3>
                 <span class="year-badge">{{ yearBadge }}</span>
-                <h3 class="stat-title">{{ card.label }}</h3>
-                <div class="card-inner-grid">
-                  <div class="inner-col">
-                    <span class="col-label">Jumlah</span>
-                    <span class="col-value">{{ card.value.toLocaleString('id-ID') }}</span>
-                  </div>
-                  <div class="inner-col highlight-col">
-                    <span class="col-label">Persentase</span>
-                    <span class="col-value percent-text">{{ card.percent }}%</span>
-                  </div>
-                </div>
               </div>
-            </div>
-            <div v-if="pageCount > 1" class="page-dots">
-              <span
-                v-for="p in pageCount"
-                :key="p"
-                class="page-dot"
-                :class="{ active: cardPage === p - 1 }"
-                @click="cardPage = p - 1"
-              ></span>
+              <div class="table-scroll">
+                <table class="stat-table">
+                  <thead>
+                    <tr>
+                      <th class="text-center" style="width: 44px;">No</th>
+                      <th>Kategori</th>
+                      <th class="text-right">Jumlah</th>
+                      <th class="text-right" style="width: 96px;">Persentase</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, i) in rightCards" :key="`${activeTab}-${i}`">
+                      <td class="text-center">{{ i + 1 }}</td>
+                      <td>
+                        <span class="dot" :style="{ backgroundColor: colorForPie(row.label, originalIndexOf(row.label)) }"></span>
+                        {{ row.label }}
+                      </td>
+                      <td class="text-right font-bold">{{ row.value.toLocaleString('id-ID') }}</td>
+                      <td class="text-right">{{ row.percent }}%</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="2" class="font-bold">Total</td>
+                      <td class="text-right font-bold">{{ totalPencaker.toLocaleString('id-ID') }}</td>
+                      <td class="text-right font-bold">100%</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -221,7 +199,10 @@ const THEME = {
     'laki-laki': '#4A89DC', // biru
     'perempuan': '#EC5F8A' // pink
   },
-  pieFallback: ['#8070FF', '#FF7E72', '#38CDF2', '#FFA726'] // cadangan kategori lain
+  pieFallback: ['#8070FF', '#FF7E72', '#38CDF2', '#FFA726', '#4A89DC', '#AB47BC', '#00ACC1', '#EC407A', '#9CCC65', '#FFA000', '#8D6E63', '#78909C'], // cadangan kategori lain (pendidikan, usia)
+  pieTopN: 7, // pie hanya tampilkan N kategori terbesar + "Lainnya" agar terbaca
+  pieOtherLabel: 'Lainnya',
+  pieOtherColor: '#B0BEC5' // abu-abu untuk irisan gabungan
 }
 
 const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pencaker'
@@ -264,9 +245,7 @@ export default {
       },
       loading: false,
       error: null,
-      theme: THEME,
-      cardPage: 0, // halaman aktif grid kartu (4 kartu per halaman = 2x2)
-      cardPageSize: 4
+      theme: THEME
     }
   },
   computed: {
@@ -319,53 +298,42 @@ export default {
     },
     rightCards() {
       const total = this.totalPencaker
-      return this.currentItems.map((item) => ({
-        ...item,
-        percent: total > 0 ? ((item.value / total) * 100).toFixed(0) : '0'
-      }))
+      return this.currentItems
+        .map((item) => ({
+          ...item,
+          percent: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0'
+        }))
+        .sort((a, b) => b.value - a.value)
     },
-    pageCount() {
-      return Math.max(1, Math.ceil(this.rightCards.length / this.cardPageSize))
+    // Sorotan untuk ringkasan di bawah pie (kategori dengan jumlah terbesar)
+    topCategory() {
+      if (!this.rightCards.length) return { label: '-', value: 0, percent: '0.0' }
+      return this.rightCards[0]
     },
-    visibleCards() {
-      const start = this.cardPage * this.cardPageSize
-      return this.rightCards.slice(start, start + this.cardPageSize)
+    periodeLabel() {
+      const tahun = this.selectedTahun ? String(this.selectedTahun) : 'Semua'
+      if (!this.selectedBulan) return tahun
+      const b = this.bulanList.find((x) => Number(x.value) === Number(this.selectedBulan))
+      return `${b ? b.label.slice(0, 3) : this.selectedBulan} ${tahun}`
     },
-    pageLabel() {
-      if (this.rightCards.length <= this.cardPageSize) {
-        return `${this.rightCards.length} kategori`
+    // Item untuk pie: N terbesar + gabungan "Lainnya" agar pie tetap terbaca
+    pieDisplayItems() {
+      const sorted = [...this.currentItems].sort((a, b) => b.value - a.value)
+      const topN = this.theme.pieTopN || 7
+      if (sorted.length <= topN) return sorted
+      const top = sorted.slice(0, topN)
+      const rest = sorted.slice(topN)
+      const restTotal = rest.reduce((acc, cur) => acc + (Number(cur.value) || 0), 0)
+      if (restTotal > 0) {
+        top.push({ label: this.theme.pieOtherLabel, value: restTotal, isOther: true })
       }
-      const start = this.cardPage * this.cardPageSize + 1
-      const end = Math.min(start + this.cardPageSize - 1, this.rightCards.length)
-      return `${start}–${end} dari ${this.rightCards.length} kategori`
-    },
-    yMax() {
-      const maxVal = Math.max(0, ...this.currentItems.map((i) => i.value))
-      if (maxVal <= 10) return 10
-      if (maxVal <= 50) return Math.ceil(maxVal / 10) * 10
-      if (maxVal <= 100) return Math.ceil(maxVal / 20) * 20
-      if (maxVal <= 500) return Math.ceil(maxVal / 100) * 100
-      return Math.ceil(maxVal / 200) * 200
-    },
-    yTicks() {
-      const max = this.yMax
-      const steps = 5
-      const ticks = []
-      for (let i = 0; i <= steps; i++) {
-        ticks.push(Math.round(max - (max / steps) * i))
-      }
-      return ticks
-    },
-    chartInnerWidth() {
-      const n = this.currentItems.length
-      if (n <= 4) return '100%'
-      return `${n * 52}px`
+      return top
     },
     pieTotal() {
       return this.currentItems.reduce((acc, cur) => acc + (Number(cur.value) || 0), 0)
     },
     pieSlices() {
-      const data = this.currentItems
+      const data = this.pieDisplayItems
       const total = this.pieTotal
       if (!data.length || total === 0) return []
       const cx = 150
@@ -394,7 +362,7 @@ export default {
           label: item.label,
           value,
           percent: percent.toFixed(1),
-          color: this.colorForPie(item.label, index),
+          color: item.isOther ? this.theme.pieOtherColor : this.colorForPie(item.label, this.originalIndexOf(item.label)),
           pathData
         }
       })
@@ -446,7 +414,6 @@ export default {
     async fetchStatistik() {
       this.loading = true
       this.error = null
-      this.cardPage = 0
       try {
         const params = new URLSearchParams()
         if (this.selectedTahun) params.append('tahun', this.selectedTahun)
@@ -474,24 +441,19 @@ export default {
         this.loading = false
       }
     },
-    barHeight(val) {
-      if (!val || !this.yMax) return 0
-      return Math.min(Math.max((val / this.yMax) * 100, val > 0 ? 4 : 0), 100)
-    },
     colorForPie(label, index) {
       const key = String(label || '').trim().toLowerCase()
+      if (key === this.theme.pieOtherLabel.toLowerCase()) return this.theme.pieOtherColor
       if (this.theme.pieByLabel[key]) return this.theme.pieByLabel[key]
       return this.theme.pieFallback[index % this.theme.pieFallback.length]
     },
+    // Index label di currentItems agar warna pie & tabel selalu sama
+    originalIndexOf(label) {
+      const idx = this.currentItems.findIndex((i) => i.label === label)
+      return idx === -1 ? 0 : idx
+    },
     switchTab(tabId) {
       this.activeTab = tabId
-      this.cardPage = 0
-    },
-    prevCards() {
-      if (this.cardPage > 0) this.cardPage -= 1
-    },
-    nextCards() {
-      if (this.cardPage < this.pageCount - 1) this.cardPage += 1
     }
   }
 }
@@ -717,166 +679,71 @@ export default {
 .chart-content-grid > * { min-width: 0; }
 .chart-left { display: flex; flex-direction: column; width: 100%; min-width: 0; }
 
-.bar-chart-card {
+.legend-text { font-size: 0.85rem; font-weight: 600; color: #555555; }
+
+/* Tabel rincian kanan */
+.table-side { width: 100%; min-width: 0; }
+.table-card {
   background: #ffffff;
   border-radius: 12px;
-  padding: 25px 20px 15px 15px;
   box-shadow: inset 0 0 0 1px #e5e5e0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-}
-
-.chart-grid-wrapper { display: flex; gap: 10px; height: 320px; width: 100%; min-width: 0; }
-
-.y-axis {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #666666;
-  padding-bottom: 75px;
-  text-align: right;
-  min-width: 40px;
-  flex-shrink: 0;
 }
-
-.chart-area-scrollable {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 5px;
-}
-.chart-area-scrollable::-webkit-scrollbar { height: 5px; }
-.chart-area-scrollable::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-
-.chart-area-inner { position: relative; height: 100%; transition: min-width 0.3s ease; }
-
-.grid-lines {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 75px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  pointer-events: none;
-}
-.grid-line { border-bottom: 1px dashed #e2e2e2; width: 100%; }
-
-.bars-container {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-}
-
-.bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; flex: 1; min-width: 42px; }
-.bar-track { height: calc(100% - 75px); width: 100%; display: flex; align-items: flex-end; justify-content: center; }
-.bar-fill {
-  width: 65%;
-  max-width: 32px;
-  background-color: var(--bidang-chart, #8070ff);
-  border-radius: 4px 4px 0 0;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  transition: height 0.3s ease;
-}
-.bar-val-badge {
-  position: absolute;
-  top: -22px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: #1a1a1a;
-  white-space: nowrap;
-}
-.bar-x-label-wrapper {
-  height: 75px;
-  width: 100%;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 8px;
-}
-.bar-x-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #444444;
-  white-space: nowrap;
-  transform: rotate(-35deg);
-  transform-origin: top left;
-  display: inline-block;
-  line-height: 1.4;
-}
-
-.bar-legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; }
-.legend-square { width: 12px; height: 12px; background-color: var(--bidang-chart, #8070ff); }
-.legend-text { font-size: 0.85rem; font-weight: 600; color: #555555; }
-
-.chart-right.cards-paged {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 22px;
-  width: 100%;
-  min-width: 0;
-  align-content: start;
-}
-
-.cards-scroll-section { width: 100%; min-width: 0; }
-.cards-scroll-header {
+.table-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eeeee8;
 }
-.scroll-hint { font-size: 0.8rem; font-weight: 600; color: #77776f; }
-.scroll-nav { display: flex; gap: 8px; }
-.scroll-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid #d5d5cd;
-  background: #ffffff;
-  font-size: 1rem;
+.table-title { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; margin: 0; }
+.table-scroll { overflow-y: auto; max-height: 460px; }
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+.stat-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.stat-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f8f5;
+  color: #666666;
+  font-size: 0.72rem;
   font-weight: 700;
-  cursor: pointer;
-  line-height: 1;
-  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e5e0;
+  z-index: 1;
 }
-.scroll-btn:hover:not(:disabled) { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-.scroll-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-.page-dots { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
-.page-dot {
-  width: 8px;
-  height: 8px;
+.stat-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f1ec;
+  color: #333333;
+}
+.stat-table tbody tr:hover { background: #fafaf7; }
+.stat-table tfoot td {
+  padding: 12px 14px;
+  background: #f8f8f5;
+  border-top: 2px solid #e5e5e0;
+  color: #1a1a1a;
+}
+.stat-table .text-center { text-align: center; }
+.stat-table .text-right { text-align: right; }
+.stat-table .font-bold { font-weight: 700; }
+.stat-table .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: #d5d5cd;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  margin-right: 8px;
+  vertical-align: baseline;
 }
-.page-dot.active { background: var(--bidang-accent, #2e7d32); transform: scale(1.25); }
-
-.stat-card-framed {
-  background-color: #ffffff;
-  border: 1px solid #e1e1db;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-sizing: border-box;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.stat-card-framed:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
 
 /* Pie chart (Jenis Kelamin) */
 .pie-chart-left { width: 100%; min-width: 0; }
@@ -894,39 +761,43 @@ export default {
 }
 .donut-wrapper { width: 280px; height: 280px; margin-bottom: 20px; }
 .donut-svg { width: 100%; height: 100%; overflow: visible; }
-.pie-legend { display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: flex-start; }
-.pie-legend-item { display: flex; align-items: center; gap: 10px; }
-.pie-legend-item .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.pie-legend-item .legend-text { font-size: 0.88rem; font-weight: 500; color: #444444; }
+.pie-summary { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.highlight-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #f8f8f5;
+  border: 1px solid #eaeae3;
+  border-left: 5px solid #8070ff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: left;
+}
+.highlight-cap { font-size: 0.72rem; font-weight: 600; color: #888888; text-transform: uppercase; letter-spacing: 0.4px; }
+.highlight-value { font-size: 1.05rem; font-weight: 800; color: #1a1a1a; }
+.mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #f8f8f5;
+  border: 1px solid #eaeae3;
+  border-radius: 10px;
+  padding: 10px 8px;
+}
+.mini-num { font-size: 1.1rem; font-weight: 800; color: #1a1a1a; }
+.mini-cap { font-size: 0.72rem; font-weight: 600; color: #888888; text-transform: uppercase; letter-spacing: 0.4px; }
 
 .year-badge {
   display: inline-block;
-  align-self: flex-start;
   background-color: var(--bidang-badge-bg, #fff8f0);
   color: var(--bidang-badge-text, #ff6f00);
   font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 8px;
   border-radius: 6px;
-  margin-bottom: 6px;
 }
-
-.stat-title { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; margin: 0 0 10px 0; line-height: 1.4; text-align: left; }
-
-.card-inner-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  background: #f8f8f5;
-  border-radius: 8px;
-  padding: 8px 10px;
-  border: 1px solid #eaeae3;
-}
-.inner-col { display: flex; flex-direction: column; justify-content: center; }
-.inner-col.highlight-col { border-left: 1px dashed #d5d5cd; padding-left: 10px; }
-.col-label { font-size: 0.72rem; font-weight: 600; color: #666666; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
-.col-value { font-size: 1rem; font-weight: 800; color: #1a1a1a; line-height: 1.3; }
-.col-value.percent-text { color: #1a1a1a; }
 
 @media (max-width: 992px) {
   .navbar { padding: 20px 30px; }
@@ -961,15 +832,12 @@ export default {
   .tabs-header::-webkit-scrollbar { display: none; }
   .tab-item { flex-shrink: 0; font-size: 0.88rem; }
   .tab-item.active::after { bottom: -10px; }
-  .chart-right.cards-paged { gap: 16px; }
+  .table-scroll { max-height: 380px; }
+  .stat-table { font-size: 0.8rem; }
 }
 
 @media (max-width: 480px) {
   .main-heading { font-size: 1.4rem; }
-  .chart-right.cards-paged { gap: 12px; }
-  .stat-card-framed { padding: 12px; }
-  .col-value { font-size: 0.9rem; }
-  .scroll-hint { font-size: 0.75rem; }
   .donut-wrapper { width: 230px; height: 230px; }
 }
 </style>
