@@ -19,6 +19,7 @@ import TataTertibPegawaiView from '../components/profil/TataTertibPegawaiView.vu
 import KodeEtikPegawaiView from '../components/profil/KodeEtikPegawaiView.vue'
 import ProfilPlaceholderView from '../components/profil/ProfilPlaceholderView.vue'
 import SekretariatView from '../components/SekretariatView.vue'
+import P3tkPublicView from '../components/P3tkPublicView.vue'
 
 const routes = [
   {
@@ -55,6 +56,12 @@ const routes = [
     path: '/sekretariat',
     name: 'Sekretariat',
     component: SekretariatView
+  },
+  {
+    path: '/p3tk',
+    alias: '/blk',
+    name: 'P3tkPublic',
+    component: P3tkPublicView
   },
   {
     path: '/profil/visi-misi',
