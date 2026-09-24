@@ -38,13 +38,13 @@
     <!-- Main Content -->
     <main class="admin-content">
       <div class="page-title">
-        <h2>Data Pencari Kerja (P3TK)</h2>
+        <h2>Data Pekerja Migran Indonesia (PMI)</h2>
         <div class="action-buttons-group">
           <button class="btn-add" @click="openAddModal">
             + Tambah
           </button>
 
-          <button class="btn-import" @click="openImportModal" title="Import file Excel 1-file-1-tahun (12 sheet bulan)">
+          <button class="btn-import" @click="openImportModal" title="Import file Excel data PMI">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             <span>Import Excel</span>
           </button>
@@ -64,7 +64,7 @@
             type="text"
             v-model="searchQuery"
             @input="handleSearch"
-            placeholder="Cari Nama / Telepon / Alamat..."
+            placeholder="Cari Nama / No. Penempatan / Jabatan..."
           />
         </div>
 
@@ -76,9 +76,16 @@
         </div>
 
         <div class="sort-box">
-          <select v-model="filterBulan" @change="onFilterChange" class="sort-select" title="Filter bulan">
-            <option value="">Semua Bulan</option>
-            <option v-for="b in bulanOptions" :key="b.value" :value="b.value">{{ b.label }}</option>
+          <select v-model="filterNegaraId" @change="onFilterChange" class="sort-select" title="Filter negara tujuan">
+            <option value="">Semua Negara</option>
+            <option v-for="n in negaraOptions" :key="n.id" :value="n.id">{{ n.nama }}</option>
+          </select>
+        </div>
+
+        <div class="sort-box">
+          <select v-model="filterSektorId" @change="onFilterChange" class="sort-select" title="Filter sektor">
+            <option value="">Semua Sektor</option>
+            <option v-for="s in sektorOptions" :key="s.id" :value="s.id">{{ s.nama }}</option>
           </select>
         </div>
 
@@ -87,13 +94,6 @@
             <option value="">Semua JK</option>
             <option value="L">Laki-laki</option>
             <option value="P">Perempuan</option>
-          </select>
-        </div>
-
-        <div class="sort-box">
-          <select v-model="filterPendidikanId" @change="onFilterChange" class="sort-select" title="Filter pendidikan">
-            <option value="">Semua Pendidikan</option>
-            <option v-for="p in pendidikanOptions" :key="p.id" :value="p.id">{{ p.nama }}</option>
           </select>
         </div>
       </div>
@@ -111,7 +111,7 @@
       <!-- Table Card Wrapper -->
       <div class="data-card">
         <div class="card-header-navy">
-          <h3>Data Pencaker</h3>
+          <h3>Data PMI</h3>
         </div>
 
         <div class="table-container">
@@ -120,12 +120,12 @@
               <tr>
                 <th class="text-center" style="width: 60px;">No</th>
                 <th>Nama</th>
-                <th class="text-center">Jenis Kelamin</th>
-                <th>Pendidikan</th>
-                <th>Tgl Lahir</th>
-                <th>Telepon</th>
-                <th>Alamat</th>
-                <th>Tgl Daftar</th>
+                <th class="text-center">JK</th>
+                <th class="text-center" style="width: 70px;">Umur</th>
+                <th>Negara Tujuan</th>
+                <th>Jabatan</th>
+                <th>Sektor</th>
+                <th>Status</th>
                 <th class="text-center" style="width: 140px;">Aksi</th>
               </tr>
             </thead>
@@ -134,27 +134,27 @@
               <tr v-if="loading">
                 <td colspan="9" class="text-center py-5">
                   <div class="spinner"></div>
-                  <p class="loading-text">Memuat data pencari kerja...</p>
+                  <p class="loading-text">Memuat data pekerja migran...</p>
                 </td>
               </tr>
 
               <!-- Empty State -->
-              <tr v-else-if="pencakerList.length === 0">
+              <tr v-else-if="pmiList.length === 0">
                 <td colspan="9" class="text-center py-5 empty-text">
-                  Data pencari kerja tidak ditemukan.
+                  Data pekerja migran tidak ditemukan.
                 </td>
               </tr>
 
               <!-- Data Rows -->
-              <tr v-else v-for="(item, index) in pencakerList" :key="item.id || index">
+              <tr v-else v-for="(item, index) in pmiList" :key="item.id || index">
                 <td class="text-center font-bold">{{ calculateRowIndex(index) }}</td>
                 <td class="font-bold">{{ formatText(item?.nama) }}</td>
                 <td class="text-center">{{ formatJenisKelamin(item?.jenis_kelamin) }}</td>
-                <td>{{ formatPendidikan(item) }}</td>
-                <td>{{ formatDate(item?.tanggal_lahir) }}</td>
-                <td>{{ formatText(item?.telepon) }}</td>
-                <td class="td-alamat" :title="item?.alamat">{{ formatText(item?.alamat) }}</td>
-                <td>{{ formatDate(item?.tanggal_daftar) }}</td>
+                <td class="text-center">{{ item?.umur ?? '-' }}</td>
+                <td>{{ resolveNegara(item) }}</td>
+                <td class="td-alamat" :title="item?.jabatan">{{ formatText(item?.jabatan) }}</td>
+                <td>{{ resolveSektor(item) }}</td>
+                <td>{{ formatText(item?.status) }}</td>
                 <td class="text-center">
                   <div class="action-buttons">
                     <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
@@ -222,23 +222,38 @@
       <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetailModal">
         <div class="modal-container">
           <div class="modal-header">
-            <h3>Detail Pencari Kerja</h3>
+            <h3>Detail Pekerja Migran</h3>
             <button class="btn-close" @click="closeDetailModal">&times;</button>
           </div>
           <div class="modal-body">
+            <div v-if="detailLoading" class="text-center py-5">
+              <div class="spinner"></div>
+              <p class="loading-text">Memuat detail pekerja migran...</p>
+            </div>
+            <div v-else-if="detailError && !detailItem" class="error-alert">{{ detailError }}</div>
             <div v-if="detailItem" class="detail-grid">
+              <div v-if="detailError" class="error-alert" style="margin-bottom: 8px;">{{ detailError }} (menampilkan data tabel)</div>
+              <div class="detail-row"><span class="detail-label">No. Penempatan</span><span class="detail-value">{{ formatText(detailItem.id_penempatan) }}</span></div>
               <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">{{ formatText(detailItem.nama) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Tempat, Tgl Lahir</span><span class="detail-value">{{ formatText(detailItem.tempat_lahir) }}, {{ formatDate(detailItem.tanggal_lahir) }}</span></div>
               <div class="detail-row"><span class="detail-label">Jenis Kelamin</span><span class="detail-value">{{ formatJenisKelamin(detailItem.jenis_kelamin) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Pendidikan</span><span class="detail-value">{{ formatPendidikan(detailItem) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Jurusan</span><span class="detail-value">{{ formatText(detailItem.jurusan) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Status Perkawinan</span><span class="detail-value">{{ resolveStatusPerkawinan(detailItem.status_perkawinan_id) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Agama</span><span class="detail-value">{{ resolveAgama(detailItem.agama_id) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Tahun Lulus</span><span class="detail-value">{{ detailItem.tahun_lulus || '-' }}</span></div>
-              <div class="detail-row"><span class="detail-label">Alamat</span><span class="detail-value">{{ formatText(detailItem.alamat) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Telepon</span><span class="detail-value">{{ formatText(detailItem.telepon) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Tahun / Bulan</span><span class="detail-value">{{ detailItem.tahun || '-' }} / {{ namaBulan(detailItem.bulan) }}</span></div>
-              <div class="detail-row"><span class="detail-label">Tanggal Daftar</span><span class="detail-value">{{ formatDate(detailItem.tanggal_daftar) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Umur</span><span class="detail-value">{{ detailItem.umur ?? '-' }}</span></div>
+              <div class="detail-row"><span class="detail-label">Pendidikan</span><span class="detail-value">{{ resolvePendidikan(detailItem) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Negara Tujuan</span><span class="detail-value">{{ resolveNegara(detailItem) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Jabatan</span><span class="detail-value">{{ formatText(detailItem.jabatan) }}</span></div>
+              <div class="detail-row"><span class="detail-label">JO</span><span class="detail-value">{{ formatText(detailItem.jo) }}</span></div>
+              <div class="detail-row"><span class="detail-label">P3MI</span><span class="detail-value">{{ formatText(detailItem.p3mi) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Agency</span><span class="detail-value">{{ formatText(detailItem.agency) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Pemberi Kerja</span><span class="detail-value">{{ formatText(detailItem.pemberi_kerja) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Asal</span><span class="detail-value">{{ formatText(detailItem.asal_kabupaten) }}, {{ formatText(detailItem.asal_provinsi) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Program</span><span class="detail-value">{{ resolveProgram(detailItem) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Sektor</span><span class="detail-value">{{ resolveSektor(detailItem) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">{{ formatText(detailItem.status) }}</span></div>
+              <div class="detail-row"><span class="detail-label">No. Rekom Paspor</span><span class="detail-value">{{ formatText(detailItem.id_rekom_paspor) }}</span></div>
+              <div class="detail-row"><span class="detail-label">No. Paspor</span><span class="detail-value">{{ formatText(detailItem.no_paspor) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Tgl EPMI</span><span class="detail-value">{{ formatDate(detailItem.tanggal_epmi) }}</span></div>
+              <div class="detail-row"><span class="detail-label">EPMI Berakhir</span><span class="detail-value">{{ formatDate(detailItem.tanggal_berakhir_epmi) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Tahun</span><span class="detail-value">{{ detailItem.tahun ?? '-' }}</span></div>
+              <div class="detail-row"><span class="detail-label">PK Baru</span><span class="detail-value">{{ formatText(detailItem.pk_baru) }}</span></div>
             </div>
           </div>
           <div class="modal-footer">
@@ -253,7 +268,7 @@
       <div v-if="showFormModal" class="modal-overlay" @click.self="closeFormModal">
         <div class="modal-container modal-lg">
           <div class="modal-header">
-            <h3>{{ isEditMode ? 'Edit' : 'Tambah' }} Pencari Kerja</h3>
+            <h3>{{ isEditMode ? 'Edit' : 'Tambah' }} Pekerja Migran</h3>
             <button class="btn-close" @click="closeFormModal">&times;</button>
           </div>
           <form @submit.prevent="submitForm">
@@ -262,21 +277,13 @@
               <div class="form-grid">
                 <div class="form-group">
                   <label>Nama Lengkap <span class="req">*</span></label>
-                  <input type="text" v-model="formData.nama" placeholder="Nama pencari kerja" :class="{ invalid: fieldError('nama') }" />
+                  <input type="text" v-model="formData.nama" placeholder="Nama pekerja migran" :class="{ invalid: fieldError('nama') }" />
                   <small v-if="fieldError('nama')" class="field-error">{{ fieldError('nama') }}</small>
                 </div>
                 <div class="form-group">
-                  <label>Telepon</label>
-                  <input type="text" v-model="formData.telepon" placeholder="No. telepon / HP" :class="{ invalid: fieldError('telepon') }" />
-                  <small v-if="fieldError('telepon')" class="field-error">{{ fieldError('telepon') }}</small>
-                </div>
-                <div class="form-group">
-                  <label>Tempat Lahir</label>
-                  <input type="text" v-model="formData.tempat_lahir" placeholder="Tempat lahir" />
-                </div>
-                <div class="form-group">
-                  <label>Tanggal Lahir</label>
-                  <input type="date" v-model="formData.tanggal_lahir" />
+                  <label>No. Penempatan</label>
+                  <input type="text" v-model="formData.id_penempatan" placeholder="Nomor penempatan" :class="{ invalid: fieldError('id_penempatan') }" />
+                  <small v-if="fieldError('id_penempatan')" class="field-error">{{ fieldError('id_penempatan') }}</small>
                 </div>
                 <div class="form-group">
                   <label>Jenis Kelamin <span class="req">*</span></label>
@@ -288,6 +295,10 @@
                   <small v-if="fieldError('jenis_kelamin')" class="field-error">{{ fieldError('jenis_kelamin') }}</small>
                 </div>
                 <div class="form-group">
+                  <label>Umur</label>
+                  <input type="number" v-model.number="formData.umur" placeholder="Umur" min="10" max="100" />
+                </div>
+                <div class="form-group">
                   <label>Pendidikan</label>
                   <select v-model="formData.pendidikan_id">
                     <option value="">-- Pilih --</option>
@@ -295,50 +306,84 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Jurusan</label>
-                  <input type="text" v-model="formData.jurusan" placeholder="Jurusan / program studi" />
+                  <label>Negara Tujuan</label>
+                  <select v-model="formData.negara_tujuan_id">
+                    <option value="">-- Pilih negara --</option>
+                    <option v-for="n in negaraOptions" :key="n.id" :value="n.id">{{ n.nama }}</option>
+                    <option v-if="!negaraOptions.length" value="" disabled>Memuat daftar negara...</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label>Tahun Lulus</label>
-                  <input type="number" v-model.number="formData.tahun_lulus" placeholder="cth: 2024" min="1950" max="2100" />
+                  <label>Jabatan</label>
+                  <input type="text" v-model="formData.jabatan" placeholder="Jabatan / pekerjaan" />
                 </div>
-                <div class="form-group form-full form-row-3col">
-                  <div class="form-group">
-                    <label>Tanggal Daftar</label>
-                    <input type="date" v-model="formData.tanggal_daftar" />
-                  </div>
-                  <div class="form-group">
-                    <label>Tahun</label>
-                    <input type="number" v-model.number="formData.tahun" min="2000" max="2100" />
-                  </div>
-                  <div class="form-group">
-                    <label>Bulan</label>
-                    <select v-model.number="formData.bulan">
-                      <option v-for="b in bulanOptions" :key="b.value" :value="b.value">{{ b.label }}</option>
-                    </select>
-                  </div>
+                <div class="form-group">
+                  <label>JO (Job Order)</label>
+                  <input type="text" v-model="formData.jo" placeholder="Nomor JO" />
                 </div>
-                <div class="form-group form-full form-row-2col">
-                  <div class="form-group">
-                    <label>Status Perkawinan</label>
-                    <select v-model.number="formData.status_perkawinan_id" :class="{ invalid: fieldError('status_perkawinan_id') }">
-                      <option :value="null">-- Pilih --</option>
-                      <option v-for="s in statusPerkawinanOptions" :key="s.id" :value="s.id">{{ s.nama }}</option>
-                    </select>
-                    <small v-if="fieldError('status_perkawinan_id')" class="field-error">{{ fieldError('status_perkawinan_id') }}</small>
-                  </div>
-                  <div class="form-group">
-                    <label>Agama</label>
-                    <select v-model.number="formData.agama_id" :class="{ invalid: fieldError('agama_id') }">
-                      <option :value="null">-- Pilih --</option>
-                      <option v-for="a in agamaOptions" :key="a.id" :value="a.id">{{ a.nama }}</option>
-                    </select>
-                    <small v-if="fieldError('agama_id')" class="field-error">{{ fieldError('agama_id') }}</small>
-                  </div>
+                <div class="form-group">
+                  <label>P3MI</label>
+                  <input type="text" v-model="formData.p3mi" placeholder="P3MI" />
                 </div>
-                <div class="form-group form-full">
-                  <label>Alamat</label>
-                  <textarea v-model="formData.alamat" rows="2" placeholder="Alamat lengkap"></textarea>
+                <div class="form-group">
+                  <label>Agency</label>
+                  <input type="text" v-model="formData.agency" placeholder="Agency" />
+                </div>
+                <div class="form-group">
+                  <label>Pemberi Kerja</label>
+                  <input type="text" v-model="formData.pemberi_kerja" placeholder="Pemberi kerja / employer" />
+                </div>
+                <div class="form-group">
+                  <label>Sektor</label>
+                  <select v-model="formData.sektor_id">
+                    <option value="">-- Pilih sektor --</option>
+                    <option v-for="s in sektorOptions" :key="s.id" :value="s.id">{{ s.nama }}</option>
+                    <option v-if="!sektorOptions.length" value="" disabled>Memuat daftar sektor...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Program Penempatan</label>
+                  <select v-model="formData.program_penempatan_id">
+                    <option value="">-- Pilih program --</option>
+                    <option v-for="p in programOptions" :key="p.id" :value="p.id">{{ p.nama }}</option>
+                    <option v-if="!programOptions.length" value="" disabled>Memuat daftar program...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <input type="text" v-model="formData.status" placeholder="Status penempatan" />
+                </div>
+                <div class="form-group">
+                  <label>Asal Kabupaten</label>
+                  <input type="text" v-model="formData.asal_kabupaten" placeholder="Kabupaten asal" />
+                </div>
+                <div class="form-group">
+                  <label>Asal Provinsi</label>
+                  <input type="text" v-model="formData.asal_provinsi" placeholder="Provinsi asal" />
+                </div>
+                <div class="form-group">
+                  <label>No. Rekom Paspor</label>
+                  <input type="text" v-model="formData.id_rekom_paspor" placeholder="Nomor rekomendasi paspor" />
+                </div>
+                <div class="form-group">
+                  <label>No. Paspor</label>
+                  <input type="text" v-model="formData.no_paspor" placeholder="Nomor paspor" />
+                </div>
+                <div class="form-group">
+                  <label>Tanggal EPMI</label>
+                  <input type="date" v-model="formData.tanggal_epmi" />
+                </div>
+                <div class="form-group">
+                  <label>Tanggal Berakhir EPMI</label>
+                  <input type="date" v-model="formData.tanggal_berakhir_epmi" />
+                </div>
+                <div class="form-group">
+                  <label>Tahun</label>
+                  <input type="number" v-model.number="formData.tahun" placeholder="cth: 2025" min="2000" max="2100" />
+                </div>
+                <div class="form-group">
+                  <label>PK Baru</label>
+                  <input type="text" v-model="formData.pk_baru" placeholder="PK baru" />
                 </div>
               </div>
             </div>
@@ -379,13 +424,13 @@
       <div v-if="showImportModal" class="modal-overlay" @click.self="closeImportModal">
         <div class="modal-container modal-sm">
           <div class="modal-header">
-            <h3>Import Excel Pencaker</h3>
+            <h3>Import Excel PMI</h3>
             <button class="btn-close" @click="closeImportModal">&times;</button>
           </div>
           <form @submit.prevent="submitImport">
             <div class="modal-body">
               <div v-if="importError" class="error-alert">{{ importError }}</div>
-              <p class="import-hint">1 file untuk 1 tahun (12 sheet bulan). Maksimal 20 MB, format .xlsx / .xls.</p>
+              <p class="import-hint">File Excel data PMI. Maksimal 20 MB, format .xlsx / .xls.</p>
               <div class="form-grid form-grid-1col">
                 <div class="form-group">
                   <label>File Excel <span class="req">*</span></label>
@@ -414,43 +459,39 @@
 </template>
 
 <script>
-const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pencaker'
+const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pekerja-migran'
+const API_STATISTIK_PMI = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pekerja-migran'
+const API_PENDIDIKAN = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pendidikan'
 
-// ============================================================
-// PETA ID MASTER — sesuaikan angka `id` jika berbeda dengan
-// data master di backend (tidak ada endpoint master publik
-// untuk agama & status perkawinan, jadi dipetakan manual).
-// ============================================================
-const STATUS_PERKAWINAN_OPTIONS = [
-  { id: 1, nama: 'Belum Kawin' },
-  { id: 2, nama: 'Kawin' },
-  { id: 3, nama: 'Janda' },
-  { id: 4, nama: 'Duda' }
+// Kandidat endpoint master (dicoba berurutan, yang 404 dilewati otomatis)
+const NEGARA_CANDIDATES = [
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pekerja-migran-master/negara'
 ]
-
-const AGAMA_OPTIONS = [
-  { id: 1, nama: 'Islam' },
-  { id: 2, nama: 'Kristen' },
-  { id: 3, nama: 'Katolik' },
-  { id: 4, nama: 'Hindu' },
-  { id: 5, nama: 'Buddha' },
-  { id: 6, nama: 'Konghucu' }
+const SEKTOR_CANDIDATES = [
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pekerja-migran-master/sektor',
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/sektor'
+]
+const PROGRAM_CANDIDATES = [
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pekerja-migran-master/program-penempatan',
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pekerja-migran-master/program',
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/program-penempatan',
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/program'
 ]
 
 export default {
-  name: 'PencakerAdminView',
+  name: 'PmiAdminView',
   data() {
     return {
-      pencakerList: [],
+      pmiList: [],
       loading: false,
       errorMessage: '',
       infoMessage: '',
       searchQuery: '',
       searchTimer: null,
       filterTahun: '',
-      filterBulan: '',
+      filterNegaraId: '',
+      filterSektorId: '',
       filterJenisKelamin: '',
-      filterPendidikanId: '',
       exportingExcel: false,
       perPage: 10,
       pagination: {
@@ -459,23 +500,11 @@ export default {
         total: 0
       },
       tahunOptions: [],
-      bulanOptions: [
-        { value: 1, label: 'Januari' },
-        { value: 2, label: 'Februari' },
-        { value: 3, label: 'Maret' },
-        { value: 4, label: 'April' },
-        { value: 5, label: 'Mei' },
-        { value: 6, label: 'Juni' },
-        { value: 7, label: 'Juli' },
-        { value: 8, label: 'Agustus' },
-        { value: 9, label: 'September' },
-        { value: 10, label: 'Oktober' },
-        { value: 11, label: 'November' },
-        { value: 12, label: 'Desember' }
-      ],
       showDropdown: false,
       showDetailModal: false,
       detailItem: null,
+      detailLoading: false,
+      detailError: '',
       showFormModal: false,
       isEditMode: false,
       editingId: null,
@@ -493,8 +522,9 @@ export default {
       formError: '',
       validationErrors: {},
       pendidikanOptions: [],
-      statusPerkawinanOptions: STATUS_PERKAWINAN_OPTIONS,
-      agamaOptions: AGAMA_OPTIONS,
+      negaraOptions: [],
+      sektorOptions: [],
+      programOptions: [],
       formData: this.blankForm()
     }
   },
@@ -520,27 +550,36 @@ export default {
   mounted() {
     this.fetchTahunOptions()
     this.fetchPendidikanOptions()
-    this.fetchPencaker(1)
+    this.fetchNegaraOptions()
+    this.fetchSektorOptions()
+    this.fetchProgramOptions()
+    this.fetchPmi(1)
   },
   methods: {
     blankForm() {
-      const now = new Date()
-      const pad = (n) => String(n).padStart(2, '0')
       return {
+        id_penempatan: '',
         nama: '',
-        telepon: '',
-        tempat_lahir: '',
-        tanggal_lahir: '',
-        jenis_kelamin: '',
         pendidikan_id: '',
-        jurusan: '',
-        tahun_lulus: null,
-        tanggal_daftar: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
-        tahun: now.getFullYear(),
-        bulan: now.getMonth() + 1,
-        status_perkawinan_id: null,
-        agama_id: null,
-        alamat: ''
+        negara_tujuan_id: '',
+        jabatan: '',
+        jo: '',
+        p3mi: '',
+        agency: '',
+        jenis_kelamin: '',
+        umur: null,
+        asal_kabupaten: '',
+        asal_provinsi: '',
+        program_penempatan_id: '',
+        sektor_id: '',
+        status: '',
+        id_rekom_paspor: '',
+        tanggal_epmi: '',
+        tanggal_berakhir_epmi: '',
+        tahun: new Date().getFullYear(),
+        pk_baru: '',
+        pemberi_kerja: '',
+        no_paspor: ''
       }
     },
     getAuthToken() {
@@ -569,20 +608,38 @@ export default {
       return headers
     },
     async fetchTahunOptions() {
+      // Coba endpoint khusus tahun dulu, fallback ke statistik umum (by_tahun)
       try {
-        const res = await fetch('https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pencaker/tahun', {
+        const res = await fetch(`${API_STATISTIK_PMI}/tahun`, {
           method: 'GET',
           headers: this.buildHeaders()
         })
         const json = await res.json().catch(() => ({}))
         if (res.ok && Array.isArray(json.data)) {
           this.tahunOptions = json.data
+          return
         }
       } catch (e) {
-        console.error('[PencakerAdmin] gagal ambil daftar tahun:', e)
+        console.error('[PmiAdmin] gagal ambil daftar tahun:', e)
+      }
+      try {
+        const res = await fetch(API_STATISTIK_PMI, {
+          method: 'GET',
+          headers: { 'ngrok-skip-browser-warning': '69420', Accept: 'application/json' }
+        })
+        const json = await res.json().catch(() => ({}))
+        const byTahun = json.data?.by_tahun
+        if (res.ok && Array.isArray(byTahun)) {
+          this.tahunOptions = byTahun
+            .map((i) => Number(i.tahun))
+            .filter((t) => t)
+            .sort((a, b) => b - a)
+        }
+      } catch (e) {
+        console.error('[PmiAdmin] gagal ambil daftar tahun (fallback):', e)
       }
     },
-    async fetchPencaker(page = 1) {
+    async fetchPmi(page = 1) {
       this.loading = true
       this.errorMessage = ''
       try {
@@ -593,9 +650,9 @@ export default {
         const q = (this.searchQuery || '').trim()
         if (q) params.append('search', q)
         if (this.filterTahun) params.append('tahun', this.filterTahun)
-        if (this.filterBulan) params.append('bulan', this.filterBulan)
+        if (this.filterNegaraId) params.append('negara_tujuan_id', this.filterNegaraId)
+        if (this.filterSektorId) params.append('sektor_id', this.filterSektorId)
         if (this.filterJenisKelamin) params.append('jenis_kelamin', this.filterJenisKelamin)
-        if (this.filterPendidikanId) params.append('pendidikan_id', this.filterPendidikanId)
 
         const response = await fetch(`${API_BASE}?${params.toString()}`, {
           method: 'GET',
@@ -615,22 +672,22 @@ export default {
         const pageData = result.data || {}
 
         if (pageData && Array.isArray(pageData.data)) {
-          this.pencakerList = pageData.data
+          this.pmiList = pageData.data
           this.pagination = {
             current_page: Number(pageData.current_page) || page,
             last_page: Number(pageData.last_page) || 1,
             total: Number(pageData.total) || 0
           }
         } else if (Array.isArray(result.data)) {
-          this.pencakerList = result.data
+          this.pmiList = result.data
           this.pagination = { current_page: 1, last_page: 1, total: result.data.length }
         } else {
-          this.pencakerList = []
+          this.pmiList = []
           this.pagination = { current_page: 1, last_page: 1, total: 0 }
         }
       } catch (error) {
         this.errorMessage = `Error: ${error.message || 'Gagal terhubung ke API.'}`
-        this.pencakerList = []
+        this.pmiList = []
       } finally {
         this.loading = false
       }
@@ -638,29 +695,56 @@ export default {
     handleSearch() {
       clearTimeout(this.searchTimer)
       this.searchTimer = setTimeout(() => {
-        this.fetchPencaker(1)
+        this.fetchPmi(1)
       }, 500)
     },
     onFilterChange() {
-      this.fetchPencaker(1)
+      this.fetchPmi(1)
     },
     onPerPageChange() {
-      this.fetchPencaker(1)
+      this.fetchPmi(1)
     },
     changePage(page) {
       if (page < 1 || page > this.pagination.last_page) return
-      this.fetchPencaker(page)
+      this.fetchPmi(page)
     },
     calculateRowIndex(index) {
       return (this.pagination.current_page - 1) * this.perPage + index + 1
     },
-    handleDetail(item) {
+    async handleDetail(item) {
+      // GET /api/admin/pekerja-migran/{pekerjaMigran} untuk data detail terbaru.
+      // Fallback ke data baris tabel bila request gagal (misal item tanpa id).
       this.detailItem = item
+      this.detailError = ''
       this.showDetailModal = true
+      if (!item?.id) return
+      this.detailLoading = true
+      try {
+        const response = await fetch(`${API_BASE}/${item.id}`, {
+          method: 'GET',
+          headers: this.buildHeaders()
+        })
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+        if (!response.ok) throw new Error(`Gagal mengambil detail (status ${response.status}).`)
+        const result = await response.json().catch(() => ({}))
+        if (result.data && typeof result.data === 'object') {
+          this.detailItem = result.data
+        }
+      } catch (error) {
+        // Tetap tampilkan data baris + info kecil bahwa refresh detail gagal
+        this.detailError = error.message || 'Gagal memuat ulang detail dari server.'
+      } finally {
+        this.detailLoading = false
+      }
     },
     closeDetailModal() {
       this.showDetailModal = false
       this.detailItem = null
+      this.detailError = ''
+      this.detailLoading = false
     },
     // CRUD tambah/edit/hapus selesai.
     openAddModal() {
@@ -675,20 +759,28 @@ export default {
       this.isEditMode = true
       this.editingId = item.id
       this.formData = {
+        id_penempatan: item.id_penempatan || '',
         nama: item.nama || '',
-        telepon: item.telepon || '',
-        tempat_lahir: item.tempat_lahir || '',
-        tanggal_lahir: this.toDateInput(item.tanggal_lahir),
-        jenis_kelamin: this.toJenisKelaminKode(item.jenis_kelamin),
         pendidikan_id: item.pendidikan_id ?? '',
-        jurusan: item.jurusan || '',
-        tahun_lulus: item.tahun_lulus ?? null,
-        tanggal_daftar: this.toDateInput(item.tanggal_daftar) || this.blankForm().tanggal_daftar,
+        negara_tujuan_id: item.negara_tujuan_id ?? '',
+        jabatan: item.jabatan || '',
+        jo: item.jo || '',
+        p3mi: item.p3mi || '',
+        agency: item.agency || '',
+        jenis_kelamin: this.toJenisKelaminKode(item.jenis_kelamin),
+        umur: item.umur ?? null,
+        asal_kabupaten: item.asal_kabupaten || '',
+        asal_provinsi: item.asal_provinsi || '',
+        program_penempatan_id: item.program_penempatan_id ?? '',
+        sektor_id: item.sektor_id ?? '',
+        status: item.status || '',
+        id_rekom_paspor: item.id_rekom_paspor || '',
+        tanggal_epmi: this.toDateInput(item.tanggal_epmi),
+        tanggal_berakhir_epmi: this.toDateInput(item.tanggal_berakhir_epmi),
         tahun: item.tahun ?? new Date().getFullYear(),
-        bulan: item.bulan ?? (new Date().getMonth() + 1),
-        status_perkawinan_id: item.status_perkawinan_id ?? null,
-        agama_id: item.agama_id ?? null,
-        alamat: item.alamat || ''
+        pk_baru: item.pk_baru || '',
+        pemberi_kerja: item.pemberi_kerja || '',
+        no_paspor: item.no_paspor || ''
       }
       this.validationErrors = {}
       this.formError = ''
@@ -700,7 +792,7 @@ export default {
     },
     async fetchPendidikanOptions() {
       try {
-        const res = await fetch('https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pendidikan', {
+        const res = await fetch(API_PENDIDIKAN, {
           method: 'GET',
           headers: this.buildHeaders()
         })
@@ -712,8 +804,37 @@ export default {
           nama: p.nama || p.name || `Pendidikan #${p.id}`
         }))
       } catch (e) {
-        console.error('[PencakerAdmin] gagal ambil opsi pendidikan:', e)
+        console.error('[PmiAdmin] gagal ambil opsi pendidikan:', e)
       }
+    },
+    async fetchOptionsFromCandidates(candidates) {
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, { method: 'GET', headers: this.buildHeaders() })
+          if (res.status === 401) return []
+          if (!res.ok) continue
+          const json = await res.json().catch(() => ({}))
+          const raw = json.data?.data || json.data || []
+          if (Array.isArray(raw) && raw.length) {
+            return raw.map((o) => ({
+              id: o.id,
+              nama: o.nama || o.name || o.negara || `#${o.id}`
+            }))
+          }
+        } catch (e) {
+          console.error('[PmiAdmin] gagal ambil opsi:', url, e)
+        }
+      }
+      return []
+    },
+    async fetchNegaraOptions() {
+      this.negaraOptions = await this.fetchOptionsFromCandidates(NEGARA_CANDIDATES)
+    },
+    async fetchSektorOptions() {
+      this.sektorOptions = await this.fetchOptionsFromCandidates(SEKTOR_CANDIDATES)
+    },
+    async fetchProgramOptions() {
+      this.programOptions = await this.fetchOptionsFromCandidates(PROGRAM_CANDIDATES)
     },
     fieldError(name) {
       const errs = this.validationErrors[name]
@@ -726,25 +847,34 @@ export default {
       this.validationErrors = {}
       try {
         const f = this.formData
-        const payload = {
-          nama: (f.nama || '').trim(),
-          telepon: (f.telepon || '').trim() || null,
-          tempat_lahir: (f.tempat_lahir || '').trim() || null,
-          tanggal_lahir: f.tanggal_lahir || null,
-          jenis_kelamin: f.jenis_kelamin || null,
-          pendidikan_id: f.pendidikan_id === '' || f.pendidikan_id === null ? null : Number(f.pendidikan_id),
-          jurusan: (f.jurusan || '').trim() || null,
-          tahun_lulus: f.tahun_lulus || null,
-          tanggal_daftar: f.tanggal_daftar || null,
-          tahun: f.tahun || null,
-          bulan: f.bulan || null,
-          status_perkawinan_id: f.status_perkawinan_id || null,
-          agama_id: f.agama_id || null,
-          alamat: (f.alamat || '').trim() || null
+        const numOrNull = (v) => (v === '' || v === null || v === undefined ? null : Number(v))
+        const strOrNull = (v) => {
+          const s = (v ?? '').toString().trim()
+          return s ? s : null
         }
-        if (payload.tanggal_lahir) {
-          const d = new Date(payload.tanggal_lahir)
-          if (!isNaN(d.getTime())) payload.tahun_lahir = d.getFullYear()
+        const payload = {
+          id_penempatan: strOrNull(f.id_penempatan),
+          nama: (f.nama || '').trim(),
+          pendidikan_id: numOrNull(f.pendidikan_id),
+          negara_tujuan_id: numOrNull(f.negara_tujuan_id),
+          jabatan: strOrNull(f.jabatan),
+          jo: strOrNull(f.jo),
+          p3mi: strOrNull(f.p3mi),
+          agency: strOrNull(f.agency),
+          jenis_kelamin: f.jenis_kelamin || null,
+          umur: numOrNull(f.umur),
+          asal_kabupaten: strOrNull(f.asal_kabupaten),
+          asal_provinsi: strOrNull(f.asal_provinsi),
+          program_penempatan_id: numOrNull(f.program_penempatan_id),
+          sektor_id: numOrNull(f.sektor_id),
+          status: strOrNull(f.status),
+          id_rekom_paspor: strOrNull(f.id_rekom_paspor),
+          tanggal_epmi: f.tanggal_epmi || null,
+          tanggal_berakhir_epmi: f.tanggal_berakhir_epmi || null,
+          tahun: numOrNull(f.tahun),
+          pk_baru: strOrNull(f.pk_baru),
+          pemberi_kerja: strOrNull(f.pemberi_kerja),
+          no_paspor: strOrNull(f.no_paspor)
         }
 
         const url = this.isEditMode ? `${API_BASE}/${this.editingId}` : API_BASE
@@ -771,9 +901,9 @@ export default {
         }
 
         this.showFormModal = false
-        this.infoMessage = result.message || (this.isEditMode ? 'Data pencari kerja berhasil diperbarui.' : 'Data pencari kerja berhasil ditambahkan.')
+        this.infoMessage = result.message || (this.isEditMode ? 'Data PMI berhasil diperbarui.' : 'Data PMI berhasil ditambahkan.')
         setTimeout(() => { this.infoMessage = '' }, 4000)
-        this.fetchPencaker(this.pagination.current_page)
+        this.fetchPmi(this.pagination.current_page)
       } catch (error) {
         this.formError = error.message || 'Gagal terhubung ke API.'
       } finally {
@@ -811,14 +941,14 @@ export default {
 
         this.showDeleteModal = false
         this.deleteItem = null
-        this.infoMessage = result.message || 'Data pencari kerja berhasil dihapus.'
+        this.infoMessage = result.message || 'Data PMI berhasil dihapus.'
         setTimeout(() => { this.infoMessage = '' }, 4000)
 
         // Jika halaman jadi kosong dan bukan halaman 1, mundur satu halaman
-        if (this.pencakerList.length <= 1 && this.pagination.current_page > 1) {
-          this.fetchPencaker(this.pagination.current_page - 1)
+        if (this.pmiList.length <= 1 && this.pagination.current_page > 1) {
+          this.fetchPmi(this.pagination.current_page - 1)
         } else {
-          this.fetchPencaker(this.pagination.current_page)
+          this.fetchPmi(this.pagination.current_page)
         }
       } catch (error) {
         this.formError = error.message || 'Gagal terhubung ke API.'
@@ -912,7 +1042,7 @@ export default {
         this.infoMessage = result.message || `Import Excel berhasil (tahun ${data.tahun || ''}).`
         setTimeout(() => { this.infoMessage = '' }, 5000)
         this.fetchTahunOptions()
-        this.fetchPencaker(1)
+        this.fetchPmi(1)
       } catch (error) {
         this.importError = error.message || 'Gagal terhubung ke API.'
       } finally {
@@ -920,7 +1050,7 @@ export default {
       }
     },
     async exportToExcel() {
-      // GET /api/admin/pencaker/export?tahun=&bulan=&jenis_kelamin=&pendidikan_id=&search=
+      // GET /api/admin/pekerja-migran/export?tahun=&negara_tujuan_id=&sektor_id=&jenis_kelamin=&search=
       // -> file .xlsx langsung dari backend (Bearer Auth).
       if (this.exportingExcel) return
       this.exportingExcel = true
@@ -933,9 +1063,9 @@ export default {
         }
         const params = new URLSearchParams()
         if (this.filterTahun) params.append('tahun', this.filterTahun)
-        if (this.filterBulan) params.append('bulan', this.filterBulan)
+        if (this.filterNegaraId) params.append('negara_tujuan_id', this.filterNegaraId)
+        if (this.filterSektorId) params.append('sektor_id', this.filterSektorId)
         if (this.filterJenisKelamin) params.append('jenis_kelamin', this.filterJenisKelamin)
-        if (this.filterPendidikanId) params.append('pendidikan_id', this.filterPendidikanId)
         const q = (this.searchQuery || '').trim()
         if (q) params.append('search', q)
 
@@ -957,7 +1087,7 @@ export default {
         const ctype = (response.headers.get('content-type') || '').toLowerCase()
         if (response.status === 422 || ctype.includes('json')) {
           const j = await response.json().catch(() => ({}))
-          throw new Error(j.message || `Export gagal (status ${response.status}). Periksa filter tahun/bulan.`)
+          throw new Error(j.message || `Export gagal (status ${response.status}). Periksa filter yang aktif.`)
         }
         if (!response.ok) {
           throw new Error(`Export gagal (status ${response.status}).`)
@@ -967,9 +1097,8 @@ export default {
         if (!blob || blob.size === 0) throw new Error('File kosong dari server.')
 
         const dateStr = new Date().toISOString().slice(0, 10)
-        const parts = ['Data_Pencaker', dateStr]
+        const parts = ['Data_PMI', dateStr]
         if (this.filterTahun) parts.push(this.filterTahun)
-        if (this.filterBulan) parts.push(`bln${this.filterBulan}`)
         this.downloadBlob(blob, `${parts.join('_')}.xlsx`, response.headers.get('content-disposition'))
 
         this.infoMessage = 'File Excel berhasil diunduh.'
@@ -1015,14 +1144,40 @@ export default {
       if (s.startsWith('P')) return 'P'
       return s
     },
-    resolveStatusPerkawinan(id) {
+    resolveNegara(item) {
+      if (!item) return '-'
+      const nama = item.negara_tujuan?.nama || item.negara_tujuan_nama || item.negara_nama || item.negara
+      if (nama) return String(nama)
+      const id = item.negara_tujuan_id
       if (id === null || id === undefined || id === '') return '-'
-      const found = this.statusPerkawinanOptions.find((s) => Number(s.id) === Number(id))
+      const found = this.negaraOptions.find((n) => Number(n.id) === Number(id))
       return found ? found.nama : `#${id}`
     },
-    resolveAgama(id) {
+    resolveSektor(item) {
+      if (!item) return '-'
+      const nama = item.sektor?.nama || item.sektor_nama
+      if (nama) return String(nama)
+      const id = item.sektor_id
       if (id === null || id === undefined || id === '') return '-'
-      const found = this.agamaOptions.find((a) => Number(a.id) === Number(id))
+      const found = this.sektorOptions.find((s) => Number(s.id) === Number(id))
+      return found ? found.nama : `#${id}`
+    },
+    resolveProgram(item) {
+      if (!item) return '-'
+      const nama = item.program_penempatan?.nama || item.program_penempatan_nama || item.program_nama || item.program
+      if (nama) return String(nama)
+      const id = item.program_penempatan_id
+      if (id === null || id === undefined || id === '') return '-'
+      const found = this.programOptions.find((p) => Number(p.id) === Number(id))
+      return found ? found.nama : `#${id}`
+    },
+    resolvePendidikan(item) {
+      if (!item) return '-'
+      const nama = item.pendidikan?.nama || item.pendidikan_nama
+      if (nama) return String(nama)
+      const id = item.pendidikan_id
+      if (id === null || id === undefined || id === '') return '-'
+      const found = this.pendidikanOptions.find((p) => Number(p.id) === Number(id))
       return found ? found.nama : `#${id}`
     },
     formatText(val) {
@@ -1036,24 +1191,11 @@ export default {
       if (s === 'P' || s === 'PEREMPUAN') return 'Perempuan'
       return String(val)
     },
-    formatPendidikan(item) {
-      if (!item) return '-'
-      // API relasi bisa bernama `pendidikan`; fallback ke pendidikan_id + jurusan
-      const nama = item.pendidikan?.nama || item.pendidikan_nama
-      if (nama) return item.jurusan ? `${nama} - ${item.jurusan}` : String(nama)
-      const pid = item.pendidikan_id
-      if (pid === null || pid === undefined || pid === '') return '-'
-      return item.jurusan ? `#${pid} - ${item.jurusan}` : `#${pid}`
-    },
     formatDate(val) {
       if (!val) return '-'
       const d = new Date(val)
       if (isNaN(d.getTime())) return String(val)
       return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-    },
-    namaBulan(val) {
-      const found = this.bulanOptions.find((b) => Number(b.value) === Number(val))
-      return found ? found.label : (val ?? '-')
     },
     toggleDropdown() {
       this.showDropdown = !this.showDropdown

@@ -21,6 +21,7 @@ import ProfilPlaceholderView from '../components/profil/ProfilPlaceholderView.vu
 import SekretariatView from '../components/SekretariatView.vue'
 import P3tkPublicView from '../components/P3tkPublicView.vue'
 import PencakerAdminView from '../components/PencakerAdminView.vue'
+import PmiAdminView from '../components/PmiAdminView.vue'
 
 const routes = [
   {
@@ -134,6 +135,11 @@ const routes = [
     path: '/admin/pencaker',
     name: 'AdminPencaker',
     component: PencakerAdminView
+  },
+  {
+    path: '/admin/pmi',
+    name: 'AdminPmi',
+    component: PmiAdminView
   },
   // Alias lama / halaman setelah login — arahkan ke dashboard admin UMKM
   // Sebelumnya '/dashboard' tidak terdaftar sehingga halaman blank putih.
