@@ -52,19 +52,43 @@
       <!-- Title -->
       <div class="title-section">
         <h1 class="main-heading">
-          P3TK <span class="sub-heading">Bidang Pembinaan, Pelatihan Dan Penempatan Tenaga Kerja</span>
+          P3TK <span class="sub-heading">Bidang <span class="c-blue">Pembinaan,</span> <span class="c-orange">Pelatihan</span> Dan <span class="c-green">Penempatan Tenaga Kerja</span></span>
         </h1>
         <h2 ref="grafikSection" class="section-heading">Grafik Data P3TK</h2>
-        <p class="section-desc">
+        <!-- Switch Layanan -->
+        <div class="service-switch">
+          <button
+            class="service-switch-btn"
+            :class="{ active: activeService === 'pencaker' }"
+            @click="onSwitchService('pencaker')"
+          >
+            Pencari Kerja
+          </button>
+          <button
+            class="service-switch-btn"
+            :class="{ active: activeService === 'pmi' }"
+            @click="onSwitchService('pmi')"
+          >
+            Pekerja Migran Indonesia
+          </button>
+        </div>
+        <p v-if="activeService === 'pencaker'" class="section-desc">
           Visualisasi statistik pencari kerja (pencaker) berdasarkan pendidikan, rentang usia, dan jenis kelamin.
           <span v-if="!loading && totalPencaker > 0" class="total-inline">
             Total: <strong>{{ totalPencaker.toLocaleString('id-ID') }}</strong> pencaker{{ filterLabel }}.
+          </span>
+        </p>
+        <p v-else class="section-desc">
+          Visualisasi statistik Pekerja Migran Indonesia berdasarkan negara, sektor, dan program.
+          <span v-if="pmiFetched && !pmiLoading && chartTotal > 0" class="total-inline">
+            Total: <strong>{{ chartTotal.toLocaleString('id-ID') }}</strong> PMI{{ pmiFilterLabel }}.
           </span>
         </p>
       </div>
 
       <!-- Main Data Card -->
       <div class="data-card">
+        <template v-if="activeService === 'pencaker'">
         <!-- Filter Tahun & Bulan -->
         <div class="filter-row">
           <select v-model="selectedTahun" class="dropdown-select" @change="fetchStatistik">
@@ -98,10 +122,43 @@
           <button class="btn-retry" @click="fetchStatistik">Coba Lagi</button>
         </div>
         <div v-else-if="!currentItems.length" class="state-info">Belum ada data untuk filter ini.</div>
+        </template>
 
-        <!-- Chart + Cards -->
-        <div v-else class="chart-content-grid">
-          <!-- PIE CHART (Pendidikan, Rentang Usia, Jenis Kelamin) -->
+        <template v-else>
+        <!-- Filter Tahun PMI -->
+        <div class="filter-row">
+          <select v-model="selectedPmiTahun" class="dropdown-select" @change="fetchPmi">
+            <option :value="''">Semua Tahun</option>
+            <option v-for="t in pmiTahunList" :key="t" :value="t">{{ t }}</option>
+          </select>
+        </div>
+
+        <!-- Tabs Dimensi PMI -->
+        <div class="tabs-header">
+          <button
+            v-for="tab in pmiTabs"
+            :key="tab.id"
+            class="tab-item"
+            :class="{ active: activePmiTab === tab.id }"
+            @click="switchPmiTab(tab.id)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- Loading / Error PMI -->
+        <div v-if="pmiLoading" class="state-info">Memuat data statistik PMI...</div>
+        <div v-else-if="pmiError" class="state-info error">
+          {{ pmiError }}
+          <br />
+          <button class="btn-retry" @click="() => fetchPmi()">Coba Lagi</button>
+        </div>
+        <div v-else-if="!chartItems.length" class="state-info">Belum ada data untuk filter ini.</div>
+        </template>
+
+        <!-- Chart + Tabel (dipakai kedua layanan) -->
+        <div v-if="showChart" class="chart-content-grid">
+          <!-- Pie Chart -->
           <div class="chart-left pie-chart-left">
             <div class="pie-chart-card">
               <div class="donut-wrapper">
@@ -114,7 +171,7 @@
                     {{ pieTotal.toLocaleString('id-ID') }}
                   </text>
                   <text x="150" y="168" text-anchor="middle" fill="#888888" font-size="11" font-weight="600">
-                    Total Pencaker
+                    {{ donutUnit }}
                   </text>
                 </svg>
               </div>
@@ -125,7 +182,7 @@
                 </div>
                 <div class="mini-stats">
                   <div class="mini-stat">
-                    <span class="mini-num">{{ currentItems.length }}</span>
+                    <span class="mini-num">{{ chartItems.length }}</span>
                     <span class="mini-cap">Total Kategori</span>
                   </div>
                   <div class="mini-stat">
@@ -155,12 +212,9 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(row, i) in rightCards" :key="`${activeTab}-${i}`">
+                    <tr v-for="(row, i) in rightCards" :key="`${activeService}-${activeTab}${activePmiTab}-${i}`">
                       <td class="text-center">{{ i + 1 }}</td>
-                      <td>
-                        <span class="dot" :style="{ backgroundColor: colorForPie(row.label, originalIndexOf(row.label)) }"></span>
-                        {{ row.label }}
-                      </td>
+                      <td>{{ row.label }}</td>
                       <td class="text-right font-bold">{{ row.value.toLocaleString('id-ID') }}</td>
                       <td class="text-right">{{ row.percent }}%</td>
                     </tr>
@@ -168,7 +222,7 @@
                   <tfoot>
                     <tr>
                       <td colspan="2" class="font-bold">Total</td>
-                      <td class="text-right font-bold">{{ totalPencaker.toLocaleString('id-ID') }}</td>
+                      <td class="text-right font-bold">{{ chartTotal.toLocaleString('id-ID') }}</td>
                       <td class="text-right font-bold">100%</td>
                     </tr>
                   </tfoot>
@@ -206,12 +260,14 @@ const THEME = {
 }
 
 const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pencaker'
+const API_PMI = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pekerja-migran'
 
 export default {
   name: 'P3tkPublicView',
   data() {
     return {
       isMenuOpen: false,
+      activeService: 'pencaker', // 'pencaker' | 'pmi'
       activeTab: 'pendidikan',
       tabs: [
         { id: 'pendidikan', label: 'Pendidikan' },
@@ -245,6 +301,32 @@ export default {
       },
       loading: false,
       error: null,
+      // --- PMI ---
+      activePmiTab: 'negara',
+      pmiTabs: [
+        { id: 'negara', label: 'Negara' },
+        { id: 'sektor', label: 'Sektor' },
+        { id: 'jenis_kelamin', label: 'Jenis Kelamin' },
+        { id: 'pendidikan', label: 'Pendidikan' },
+        { id: 'program', label: 'Program' },
+        { id: 'rentang_usia', label: 'Rentang Usia' }
+      ],
+      selectedPmiTahun: '',
+      pmiTahunList: [],
+      pmiStatistik: {
+        tahun: null,
+        total: 0,
+        by_negara: [],
+        by_sektor: [],
+        by_jenis_kelamin: [],
+        by_pendidikan: [],
+        by_program: [],
+        by_rentang_usia: [],
+        by_tahun: []
+      },
+      pmiLoading: false,
+      pmiError: null,
+      pmiFetched: false,
       theme: THEME
     }
   },
@@ -270,9 +352,16 @@ export default {
       return parts.length ? ` (${parts.join(' • ')})` : ''
     },
     yearBadge() {
+      if (this.activeService === 'pmi') {
+        return this.pmiStatistik.tahun || this.selectedPmiTahun || new Date().getFullYear()
+      }
       return this.statistik.tahun || this.selectedTahun || new Date().getFullYear()
     },
     legendLabel() {
+      if (this.activeService === 'pmi') {
+        const found = this.pmiTabs.find((t) => t.id === this.activePmiTab)
+        return found ? found.label : 'PMI'
+      }
       if (this.activeTab === 'pendidikan') return 'Pendidikan'
       if (this.activeTab === 'rentang_usia') return 'Rentang Usia'
       return 'Jenis Kelamin'
@@ -297,13 +386,55 @@ export default {
       }))
     },
     rightCards() {
-      const total = this.totalPencaker
-      return this.currentItems
+      const total = this.chartTotal
+      return this.chartItems
         .map((item) => ({
           ...item,
           percent: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0'
         }))
         .sort((a, b) => b.value - a.value)
+    },
+    // ===== PMI =====
+    pmiTotal() {
+      return Number(this.pmiStatistik.total) || 0
+    },
+    pmiCurrentItems() {
+      const get = (arr) => (Array.isArray(arr) ? arr : [])
+      switch (this.activePmiTab) {
+        case 'negara':
+          return get(this.pmiStatistik.by_negara).map((i) => ({ label: i.nama || '-', value: Number(i.total) || 0 }))
+        case 'sektor':
+          return get(this.pmiStatistik.by_sektor).map((i) => ({ label: i.label || i.kode || '-', value: Number(i.total) || 0 }))
+        case 'jenis_kelamin':
+          return get(this.pmiStatistik.by_jenis_kelamin).map((i) => ({ label: i.label || i.kode || '-', value: Number(i.total) || 0 }))
+        case 'pendidikan':
+          return get(this.pmiStatistik.by_pendidikan).map((i) => ({ label: i.nama || '-', value: Number(i.total) || 0 }))
+        case 'program':
+          return get(this.pmiStatistik.by_program).map((i) => ({ label: i.nama || '-', value: Number(i.total) || 0 }))
+        case 'rentang_usia':
+          return get(this.pmiStatistik.by_rentang_usia).map((i) => ({ label: i.rentang || '-', value: Number(i.total) || 0 }))
+        default:
+          return []
+      }
+    },
+    // Item grafik + tabel aktif (mengikuti layanan yang dipilih)
+    chartItems() {
+      return this.activeService === 'pmi' ? this.pmiCurrentItems : this.currentItems
+    },
+    showChart() {
+      if (this.activeService === 'pmi') {
+        return this.pmiFetched && !this.pmiLoading && !this.pmiError && this.chartItems.length > 0
+      }
+      return !this.loading && !this.error && this.currentItems.length > 0
+    },
+    chartTotal() {
+      return this.activeService === 'pmi' ? this.pmiTotal : this.totalPencaker
+    },
+    donutUnit() {
+      return this.activeService === 'pmi' ? 'Total PMI' : 'Total Pencaker'
+    },
+    pmiFilterLabel() {
+      return this.selectedPmiTahun ? ` (tahun ${this.selectedPmiTahun})` : ''
     },
     // Sorotan untuk ringkasan di bawah pie (kategori dengan jumlah terbesar)
     topCategory() {
@@ -311,6 +442,9 @@ export default {
       return this.rightCards[0]
     },
     periodeLabel() {
+      if (this.activeService === 'pmi') {
+        return this.selectedPmiTahun ? String(this.selectedPmiTahun) : 'Semua'
+      }
       const tahun = this.selectedTahun ? String(this.selectedTahun) : 'Semua'
       if (!this.selectedBulan) return tahun
       const b = this.bulanList.find((x) => Number(x.value) === Number(this.selectedBulan))
@@ -318,7 +452,7 @@ export default {
     },
     // Item untuk pie: N terbesar + gabungan "Lainnya" agar pie tetap terbaca
     pieDisplayItems() {
-      const sorted = [...this.currentItems].sort((a, b) => b.value - a.value)
+      const sorted = [...this.chartItems].sort((a, b) => b.value - a.value)
       const topN = this.theme.pieTopN || 7
       if (sorted.length <= topN) return sorted
       const top = sorted.slice(0, topN)
@@ -330,7 +464,7 @@ export default {
       return top
     },
     pieTotal() {
-      return this.currentItems.reduce((acc, cur) => acc + (Number(cur.value) || 0), 0)
+      return this.chartItems.reduce((acc, cur) => acc + (Number(cur.value) || 0), 0)
     },
     pieSlices() {
       const data = this.pieDisplayItems
@@ -341,7 +475,7 @@ export default {
       const R = 125
       const r = 60
       let currentAngle = -Math.PI / 2
-      return data.map((item, index) => {
+      return data.map((item) => {
         const value = Number(item.value) || 0
         const percent = total > 0 ? (value / total) * 100 : 0
         const angleSize = Math.min(total > 0 ? (value / total) * 2 * Math.PI : 0, 2 * Math.PI - 0.0001)
@@ -371,6 +505,7 @@ export default {
   mounted() {
     this.fetchTahunList()
     this.fetchStatistik()
+    this.fetchPmi(true)
   },
   methods: {
     toggleMenu() {
@@ -447,13 +582,62 @@ export default {
       if (this.theme.pieByLabel[key]) return this.theme.pieByLabel[key]
       return this.theme.pieFallback[index % this.theme.pieFallback.length]
     },
-    // Index label di currentItems agar warna pie & tabel selalu sama
+    // Index label di chartItems agar warna pie & tabel selalu sama
     originalIndexOf(label) {
-      const idx = this.currentItems.findIndex((i) => i.label === label)
+      const idx = this.chartItems.findIndex((i) => i.label === label)
       return idx === -1 ? 0 : idx
     },
     switchTab(tabId) {
       this.activeTab = tabId
+    },
+    onSwitchService(service) {
+      this.activeService = service
+      if (service === 'pmi' && !this.pmiFetched) {
+        this.fetchPmi(true)
+      }
+    },
+    switchPmiTab(tabId) {
+      this.activePmiTab = tabId
+    },
+    async fetchPmi(collectYears = false) {
+      this.pmiLoading = true
+      this.pmiError = null
+      try {
+        const params = new URLSearchParams()
+        if (this.selectedPmiTahun) params.append('tahun', this.selectedPmiTahun)
+        const query = params.toString() ? `?${params.toString()}` : ''
+        const res = await fetch(`${API_PMI}${query}`, {
+          method: 'GET',
+          headers: { 'ngrok-skip-browser-warning': 'true', Accept: 'application/json' }
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.message || 'Gagal mengambil data statistik PMI.')
+        const d = json.data || {}
+        const arr = (v) => (Array.isArray(v) ? v : [])
+        this.pmiStatistik = {
+          tahun: d.tahun ?? this.selectedPmiTahun ?? null,
+          total: Number(d.total) || 0,
+          by_negara: arr(d.by_negara),
+          by_sektor: arr(d.by_sektor),
+          by_jenis_kelamin: arr(d.by_jenis_kelamin),
+          by_pendidikan: arr(d.by_pendidikan),
+          by_program: arr(d.by_program),
+          by_rentang_usia: arr(d.by_rentang_usia),
+          by_tahun: arr(d.by_tahun)
+        }
+        if (collectYears && !this.pmiTahunList.length && this.pmiStatistik.by_tahun.length) {
+          this.pmiTahunList = this.pmiStatistik.by_tahun
+            .map((i) => Number(i.tahun))
+            .filter((t) => t)
+            .sort((a, b) => b - a)
+        }
+        this.pmiFetched = true
+      } catch (err) {
+        console.error('[PMI] gagal ambil statistik:', err)
+        this.pmiError = err.message || 'Terjadi kesalahan koneksi ke server.'
+      } finally {
+        this.pmiLoading = false
+      }
     }
   }
 }
@@ -571,14 +755,45 @@ export default {
   text-align: left;
 }
 .sub-heading { font-size: 1.15rem; font-weight: 600; color: #1a1a1a; }
+.sub-heading .c-blue { color: #2563eb; }
+.sub-heading .c-orange { color: #f59e0b; }
+.sub-heading .c-green { color: #22c55e; }
 
 .section-heading {
   font-size: 1.1rem;
   font-weight: 700;
-  margin: 8px 0;
+  margin: 8px 0 12px 0;
   color: #1a1a1a;
   scroll-margin-top: 20px;
   text-align: left;
+}
+
+/* Switch Layanan: Pencari Kerja | PMI */
+.service-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.service-switch-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #d5d5cd;
+  background-color: transparent;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.service-switch-btn:hover { border-color: #1a1a1a; color: #1a1a1a; }
+.service-switch-btn.active {
+  background-color: #2e7d32;
+  border: 1.5px solid #2e7d32;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.35);
 }
 
 .section-desc {
@@ -618,6 +833,8 @@ export default {
 .tabs-header {
   display: flex;
   gap: 32px;
+  flex-wrap: wrap;
+  row-gap: 12px;
   border-bottom: 2px solid #e2e2dc;
   padding-bottom: 12px;
   margin-bottom: 28px;
@@ -736,16 +953,8 @@ export default {
 .stat-table .text-center { text-align: center; }
 .stat-table .text-right { text-align: right; }
 .stat-table .font-bold { font-weight: 700; }
-.stat-table .dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 8px;
-  vertical-align: baseline;
-}
 
-/* Pie chart (Jenis Kelamin) */
+/* Pie chart */
 .pie-chart-left { width: 100%; min-width: 0; }
 .pie-chart-card {
   background: #ffffff;
@@ -838,6 +1047,7 @@ export default {
 
 @media (max-width: 480px) {
   .main-heading { font-size: 1.4rem; }
+  .service-switch { grid-template-columns: 1fr; }
   .donut-wrapper { width: 230px; height: 230px; }
 }
 </style>
