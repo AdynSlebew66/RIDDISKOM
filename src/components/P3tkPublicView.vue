@@ -71,6 +71,34 @@
           >
             Pekerja Migran Indonesia
           </button>
+          <button
+            class="service-switch-btn"
+            :class="{ active: activeService === 'bkk' }"
+            @click="onSwitchService('bkk')"
+          >
+            Bursa Kerja Khusus
+          </button>
+          <button
+            class="service-switch-btn"
+            :class="{ active: activeService === 'lpk' }"
+            @click="onSwitchService('lpk')"
+          >
+            Lembaga Pelatihan Kerja
+          </button>
+          <button
+            class="service-switch-btn"
+            :class="{ active: activeService === 'ditempatkan' }"
+            @click="onSwitchService('ditempatkan')"
+          >
+            Pencari Kerja Ditempatkan
+          </button>
+          <button
+            class="service-switch-btn"
+            :class="{ active: activeService === 'perluasan' }"
+            @click="onSwitchService('perluasan')"
+          >
+            Pelatihan Perluasan Kesempatan Kerja
+          </button>
         </div>
         <p v-if="activeService === 'pencaker'" class="section-desc">
           Visualisasi statistik pencari kerja (pencaker) berdasarkan pendidikan, rentang usia, dan jenis kelamin.
@@ -78,11 +106,17 @@
             Total: <strong>{{ totalPencaker.toLocaleString('id-ID') }}</strong> pencaker{{ filterLabel }}.
           </span>
         </p>
-        <p v-else class="section-desc">
+        <p v-else-if="activeService === 'pmi'" class="section-desc">
           Visualisasi statistik Pekerja Migran Indonesia berdasarkan negara, sektor, dan program.
           <span v-if="pmiFetched && !pmiLoading && chartTotal > 0" class="total-inline">
             Total: <strong>{{ chartTotal.toLocaleString('id-ID') }}</strong> PMI{{ pmiFilterLabel }}.
           </span>
+        </p>
+        <p v-else-if="activeService === 'bkk'" class="section-desc">
+          Daftar nama-nama Perguruan Tinggi dan SMA/SMK/Sederajat yang terdaftar didalam program Bursa Kerja Khusus
+        </p>
+        <p v-else class="section-desc">
+          Data {{ comingSoonLabel }} segera hadir. Halaman ini masih dalam tahap pengembangan.
         </p>
       </div>
 
@@ -124,7 +158,7 @@
         <div v-else-if="!currentItems.length" class="state-info">Belum ada data untuk filter ini.</div>
         </template>
 
-        <template v-else>
+        <template v-else-if="activeService === 'pmi'">
         <!-- Filter Tahun PMI -->
         <div class="filter-row">
           <select v-model="selectedPmiTahun" class="dropdown-select" @change="fetchPmi">
@@ -154,6 +188,65 @@
           <button class="btn-retry" @click="() => fetchPmi()">Coba Lagi</button>
         </div>
         <div v-else-if="!chartItems.length" class="state-info">Belum ada data untuk filter ini.</div>
+        </template>
+
+        <template v-else-if="activeService === 'bkk'">
+          <!-- Loading / Error BKK -->
+          <div v-if="bkkLoading" class="state-info">Memuat data bursa kerja khusus...</div>
+          <div v-else-if="bkkError" class="state-info error">
+            {{ bkkError }}
+            <br />
+            <button class="btn-retry" @click="fetchBkk">Coba Lagi</button>
+          </div>
+          <div v-else-if="!bkkListPerguruanTinggi.length && !bkkListSmk.length" class="state-info">Belum ada data bursa kerja khusus.</div>
+
+          <!-- Dua kolom: PT & SMA/SMK — sesuai desain -->
+          <div v-else class="bkk-grid">
+            <!-- Kolom Perguruan Tinggi -->
+            <div class="bkk-card">
+              <div class="bkk-card-header">Daftar Perguruan Tinggi</div>
+              <div class="bkk-table-wrap">
+                <table class="bkk-table">
+                  <thead>
+                    <tr>
+                      <th class="text-center" style="width: 56px;">NO</th>
+                      <th>Nama Perguruan Tinggi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, i) in bkkListPerguruanTinggi" :key="`pt-${row.id ?? i}`">
+                      <td class="text-center">{{ row.no ?? (i + 1) }}</td>
+                      <td class="font-semibold">{{ row.nama }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Kolom SMA/SMK -->
+            <div class="bkk-card">
+              <div class="bkk-card-header">Daftar SMA/SMK/Sederajat</div>
+              <div class="bkk-table-wrap">
+                <table class="bkk-table">
+                  <thead>
+                    <tr>
+                      <th class="text-center" style="width: 56px;">NO</th>
+                      <th>Nama Sekolah</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, i) in bkkListSmk" :key="`smk-${row.id ?? i}`">
+                      <td class="text-center">{{ row.no ?? (i + 1) }}</td>
+                      <td class="font-semibold">{{ row.nama }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="state-info">Data {{ comingSoonLabel }} segera hadir. Silakan kembali lagi nanti.</div>
         </template>
 
         <!-- Chart + Tabel (dipakai kedua layanan) -->
@@ -261,6 +354,16 @@ const THEME = {
 
 const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pencaker'
 const API_PMI = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pekerja-migran'
+const API_BKK = 'https://harvest-protegee-symptom.ngrok-free.dev/api/bkk'
+
+const SERVICE_LABELS = {
+  pencaker: 'Pencari Kerja',
+  pmi: 'Pekerja Migran Indonesia',
+  bkk: 'Bursa Kerja Khusus',
+  lpk: 'Lembaga Pelatihan Kerja',
+  ditempatkan: 'Pencari Kerja Ditempatkan',
+  perluasan: 'Pelatihan Perluasan Kesempatan Kerja'
+}
 
 export default {
   name: 'P3tkPublicView',
@@ -327,6 +430,12 @@ export default {
       pmiLoading: false,
       pmiError: null,
       pmiFetched: false,
+      // --- BKK (Bursa Kerja Khusus, public) ---
+      bkkListPerguruanTinggi: [],
+      bkkListSmk: [],
+      bkkLoading: false,
+      bkkError: null,
+      bkkFetched: false,
       theme: THEME
     }
   },
@@ -425,7 +534,10 @@ export default {
       if (this.activeService === 'pmi') {
         return this.pmiFetched && !this.pmiLoading && !this.pmiError && this.chartItems.length > 0
       }
-      return !this.loading && !this.error && this.currentItems.length > 0
+      if (this.activeService === 'pencaker') {
+        return !this.loading && !this.error && this.currentItems.length > 0
+      }
+      return false
     },
     chartTotal() {
       return this.activeService === 'pmi' ? this.pmiTotal : this.totalPencaker
@@ -435,6 +547,9 @@ export default {
     },
     pmiFilterLabel() {
       return this.selectedPmiTahun ? ` (tahun ${this.selectedPmiTahun})` : ''
+    },
+    comingSoonLabel() {
+      return (typeof SERVICE_LABELS !== 'undefined' && SERVICE_LABELS[this.activeService]) || 'Layanan ini'
     },
     // Sorotan untuk ringkasan di bawah pie (kategori dengan jumlah terbesar)
     topCategory() {
@@ -506,6 +621,7 @@ export default {
     this.fetchTahunList()
     this.fetchStatistik()
     this.fetchPmi(true)
+    this.fetchBkk()
   },
   methods: {
     toggleMenu() {
@@ -595,6 +711,9 @@ export default {
       if (service === 'pmi' && !this.pmiFetched) {
         this.fetchPmi(true)
       }
+      if (service === 'bkk' && !this.bkkFetched && !this.bkkLoading) {
+        this.fetchBkk()
+      }
     },
     switchPmiTab(tabId) {
       this.activePmiTab = tabId
@@ -637,6 +756,54 @@ export default {
         this.pmiError = err.message || 'Terjadi kesalahan koneksi ke server.'
       } finally {
         this.pmiLoading = false
+      }
+    },
+    async fetchBkk() {
+      this.bkkLoading = true
+      this.bkkError = null
+      try {
+        const headers = { 'ngrok-skip-browser-warning': 'true', Accept: 'application/json' }
+        const fetchPage = async (page) => {
+          const res = await fetch(`${API_BKK}?page=${page}`, { method: 'GET', headers })
+          const json = await res.json()
+          if (!res.ok) throw new Error(json.message || 'Gagal mengambil data bursa kerja khusus.')
+          return json.data || {}
+        }
+        const first = await fetchPage(1)
+        let all = Array.isArray(first.data) ? [...first.data] : []
+        const lastPage = Number(first.last_page) || 1
+        for (let p = 2; p <= lastPage; p++) {
+          const d = await fetchPage(p)
+          if (Array.isArray(d.data)) all = all.concat(d.data)
+        }
+        const norm = (v) => String(v || '').toLowerCase().replace(/[^a-z]/g, '')
+        const isPT = (kat) => {
+          const k = norm(kat)
+          return k.includes('perguruantinggi') || k.includes('universitas') || k === 'pt'
+        }
+        const pt = []
+        const smk = []
+        all.forEach((item) => {
+          const row = {
+            id: item.id,
+            no: item.no,
+            nama: item.nama || '-',
+            kategori: item.kategori || ''
+          }
+          if (isPT(item.kategori)) pt.push(row)
+          else smk.push(row)
+        })
+        const byNo = (a, b) => (Number(a.no) || 0) - (Number(b.no) || 0)
+        pt.sort(byNo)
+        smk.sort(byNo)
+        this.bkkListPerguruanTinggi = pt
+        this.bkkListSmk = smk
+        this.bkkFetched = true
+      } catch (err) {
+        console.error('[BKK] gagal ambil data:', err)
+        this.bkkError = err.message || 'Terjadi kesalahan koneksi ke server.'
+      } finally {
+        this.bkkLoading = false
       }
     }
   }
@@ -998,6 +1165,58 @@ export default {
 .mini-num { font-size: 1.1rem; font-weight: 800; color: #1a1a1a; }
 .mini-cap { font-size: 0.72rem; font-weight: 600; color: #888888; text-transform: uppercase; letter-spacing: 0.4px; }
 
+/* ===== BKK (Bursa Kerja Khusus) — 2 kolom sesuai desain ===== */
+.bkk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+  width: 100%;
+}
+.bkk-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border-left: 6px solid #2e7d32;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.bkk-card-header {
+  background-color: #2e7d32;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 10px 16px;
+  margin: 14px 16px 6px 16px;
+  border-radius: 8px;
+}
+.bkk-table-wrap {
+  overflow-y: auto;
+  max-height: 460px;
+  padding: 6px 8px 16px 8px;
+}
+.bkk-table-wrap::-webkit-scrollbar { width: 6px; }
+.bkk-table-wrap::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+.bkk-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.bkk-table thead th {
+  color: #1a1a1a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+  padding: 10px 14px;
+}
+.bkk-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f1ec;
+  color: #1a1a1a;
+  vertical-align: top;
+}
+.bkk-table tbody tr:last-child td { border-bottom: none; }
+.bkk-table .text-center { text-align: center; }
+.bkk-table .font-semibold { font-weight: 600; }
+
 .year-badge {
   display: inline-block;
   background-color: var(--bidang-badge-bg, #fff8f0);
@@ -1012,6 +1231,7 @@ export default {
   .navbar { padding: 20px 30px; }
   .content-wrapper { padding: 10px 20px 40px 20px; }
   .chart-content-grid { grid-template-columns: 1fr; gap: 24px; }
+  .bkk-grid { grid-template-columns: 1fr; gap: 20px; }
   .donut-wrapper { width: 250px; height: 250px; }
 }
 
