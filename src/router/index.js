@@ -23,6 +23,7 @@ import P3tkPublicView from '../components/P3tkPublicView.vue'
 import PencakerAdminView from '../components/PencakerAdminView.vue'
 import PmiAdminView from '../components/PmiAdminView.vue'
 import BkkAdminView from '../components/BkkAdminView.vue'
+import P3tkDashboardView from '../components/P3tkDashboardView.vue'
 
 const routes = [
   {
@@ -146,6 +147,11 @@ const routes = [
     path: '/admin/bkk',
     name: 'AdminBkk',
     component: BkkAdminView
+  },
+  {
+    path: '/admin/p3tk',
+    name: 'AdminP3tkDashboard',
+    component: P3tkDashboardView
   },
   // Alias lama / halaman setelah login — arahkan ke dashboard admin UMKM
   // Sebelumnya '/dashboard' tidak terdaftar sehingga halaman blank putih.

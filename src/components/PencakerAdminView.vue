@@ -1,45 +1,6 @@
 <template>
-  <div class="admin-wrapper" @click="closeDropdownOnClickOutside">
-    <!-- Top Navbar Admin -->
-    <header class="admin-navbar">
-      <div class="nav-left">
-        <router-link to="/admin/pencaker" class="nav-link" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          Dashboard
-        </router-link>
-        <router-link to="/admin/pmi" class="nav-link" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-          PMI
-        </router-link>
-        <router-link to="/admin/bkk" class="nav-link" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-          BKK
-        </router-link>
-      </div>
-
-      <!-- Right Nav / Profile -->
-      <div class="nav-right">
-        <div class="profile-container">
-          <div class="user-profile" @click.stop="toggleDropdown">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span>AdminP3TK</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'rotate-icon': showDropdown }"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-
-          <!-- Dropdown Logout -->
-          <transition name="dropdown-fade">
-            <div v-if="showDropdown" class="profile-dropdown">
-              <button @click="handleLogout" class="dropdown-item logout-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2 2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Keluar / Logout
-              </button>
-            </div>
-          </transition>
-        </div>
-      </div>
-    </header>
-
-    <!-- Main Content -->
+  <AdminLayout group="p3tk" title="Pencari Kerja">
+<!-- Main Content -->
     <main class="admin-content">
       <div class="page-title">
         <h2>Data Pencari Kerja (P3TK)</h2>
@@ -414,10 +375,11 @@
         </div>
       </div>
     </transition>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
+import AdminLayout from './AdminLayout.vue'
 const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pencaker'
 
 // ============================================================
@@ -443,6 +405,7 @@ const AGAMA_OPTIONS = [
 
 export default {
   name: 'PencakerAdminView',
+  components: { AdminLayout },
   data() {
     return {
       pencakerList: [],
@@ -477,7 +440,6 @@ export default {
         { value: 11, label: 'November' },
         { value: 12, label: 'Desember' }
       ],
-      showDropdown: false,
       showDetailModal: false,
       detailItem: null,
       showFormModal: false,
@@ -1059,18 +1021,6 @@ export default {
       const found = this.bulanOptions.find((b) => Number(b.value) === Number(val))
       return found ? found.label : (val ?? '-')
     },
-    toggleDropdown() {
-      this.showDropdown = !this.showDropdown
-    },
-    closeDropdownOnClickOutside() {
-      this.showDropdown = false
-    },
-    handleLogout() {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      this.$router.push('/login')
-    }
   }
 }
 </script>
@@ -1078,100 +1028,18 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
-/* Layout Admin (mengikuti halaman admin lain) */
-.admin-wrapper {
-  min-height: 100vh;
-  background-color: #f4f5f7;
-  font-family: 'Poppins', sans-serif;
-  color: #1e293b;
-}
 
-.admin-navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 28px;
-  background-color: #1e385c;
-  color: #ffffff;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
 
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
-.nav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 8px 14px;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-}
 
-.nav-link:hover { background-color: #27272a; }
-.nav-link.active { border-bottom: 2px solid #ffffff; border-radius: 6px 6px 0 0; }
 
-.nav-right { position: relative; }
 
-.profile-container { position: relative; }
 
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  user-select: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
 
-.user-profile:hover { background-color: #27272a; }
-.rotate-icon { transform: rotate(180deg); transition: transform 0.2s ease; }
 
-.profile-dropdown {
-  position: absolute;
-  top: 110%;
-  right: 0;
-  min-width: 200px;
-  background-color: #27272a;
-  border: 1px solid #3f3f46;
-  border-radius: 8px;
-  padding: 6px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-}
 
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: #f87171;
-  padding: 10px 12px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-}
 
-.dropdown-item:hover { background-color: #ef4444; color: #ffffff; }
 
-.dropdown-fade-enter-active, .dropdown-fade-leave-active { transition: opacity 0.15s ease; }
-.dropdown-fade-enter-from, .dropdown-fade-leave-to { opacity: 0; }
 
 .admin-content {
   max-width: 1280px;
@@ -1687,7 +1555,6 @@ export default {
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 
 @media (max-width: 768px) {
-  .admin-navbar { padding: 12px 16px; }
   .admin-content { padding: 16px 14px 36px 14px; }
   .page-title h2 { font-size: 1.15rem; }
   .detail-row { grid-template-columns: 1fr; gap: 2px; }

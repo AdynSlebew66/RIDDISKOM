@@ -1,53 +1,6 @@
 <template>
-  <div class="admin-wrapper" @click="closeDropdownOnClickOutside">
-    <!-- Top Navbar Admin -->
-    <header class="admin-navbar">
-      <div class="nav-left">
-        <router-link to="/admin/umkm" class="nav-link" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          Dashboard
-        </router-link>
-
-        <router-link to="/admin/data" class="nav-link" active-class="active">
-          Data UMKM
-        </router-link>
-
-        <router-link to="/admin/rasio" class="nav-link" active-class="active">
-          Rasio Kewirausahaan
-        </router-link>
-
-        <router-link to="/admin/kegiatan" class="nav-link" active-class="active">
-          Galeri
-        </router-link>
-
-        <router-link to="/admin/jadwal" class="nav-link" active-class="active">
-          Jadwal
-        </router-link>
-      </div>
-
-      <!-- Right Nav / Profile -->
-      <div class="nav-right">
-        <div class="profile-container">
-          <div class="user-profile" @click.stop="toggleDropdown">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span>AdminUMKM</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'rotate-icon': showDropdown }"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-
-          <!-- Dropdown Logout -->
-          <transition name="dropdown-fade">
-            <div v-if="showDropdown" class="profile-dropdown">
-              <button @click="handleLogout" class="dropdown-item logout-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Keluar / Logout
-              </button>
-            </div>
-          </transition>
-        </div>
-      </div>
-    </header>
-
-    <!-- Main Content -->
+  <AdminLayout group="umkm" title="Jadwal">
+<!-- Main Content -->
     <main class="admin-content">
       <div class="page-title">
         <h2>Data Jadwal Admin UMKM</h2>
@@ -349,17 +302,18 @@
         </div>
       </div>
     </transition>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
+import AdminLayout from './AdminLayout.vue'
 const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/jadwal'
 
 export default {
   name: 'JadwalAdminView',
+  components: { AdminLayout },
   data() {
     return {
-      showDropdown: false,
       loading: false,
       errorMessage: '',
       successMessage: '',
@@ -809,18 +763,6 @@ export default {
       }
     },
 
-    toggleDropdown() {
-      this.showDropdown = !this.showDropdown
-    },
-    closeDropdownOnClickOutside() {
-      this.showDropdown = false
-    },
-    handleLogout() {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      this.$router.push('/')
-    }
   }
 }
 </script>
@@ -828,50 +770,9 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
-.admin-wrapper {
-  min-height: 100vh;
-  background-color: #f4f5f7;
-  font-family: 'Poppins', sans-serif;
-  color: #1e293b;
-}
 
-.admin-navbar {
-  background-color: #1e385c;
-  color: #ffffff;
-  padding: 14px 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-.nav-left { display: flex; gap: 25px; align-items: center; }
-.nav-link {
-  color: #ffffff; text-decoration: none; font-weight: 600; font-size: 0.95rem;
-  display: flex; align-items: center; gap: 8px; padding-bottom: 6px; transition: all 0.2s;
-  border-bottom: 2px solid transparent;
-}
-.nav-link.active, .nav-link:hover {
-  color: #ffffff;
-  border-bottom: 2px solid #ffffff;
-}
 
-.profile-container { position: relative; }
-.user-profile {
-  display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem;
-  cursor: pointer; color: #ffffff; padding: 6px 12px; border-radius: 6px; user-select: none;
-}
-.user-profile:hover { background-color: #27272a; }
-.rotate-icon { transform: rotate(180deg); transition: transform 0.2s ease; }
-.profile-dropdown {
-  position: absolute; top: 110%; right: 0; background-color: #27272a; border: 1px solid #3f3f46;
-  border-radius: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); padding: 6px; min-width: 160px; z-index: 100;
-}
-.dropdown-item {
-  width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none;
-  color: #f87171; padding: 10px 12px; font-family: 'Poppins', sans-serif; font-size: 0.85rem;
-  font-weight: 600; cursor: pointer; border-radius: 6px;
-}
-.dropdown-item:hover { background-color: #ef4444; color: #ffffff; }
 
 .admin-content { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
 .page-title h2 { margin: 0 0 18px 0; font-size: 1.25rem; font-weight: 700; color: #1a1a1a; }

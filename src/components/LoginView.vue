@@ -137,7 +137,7 @@ export default {
         if (userRole.includes('sekretariat') || userEmail.includes('sekretariat')) {
           this.$router.push('/admin/pegawai')
         } else if (isP3tk) {
-          this.$router.push('/admin/pencaker')
+          this.$router.push('/admin/p3tk')
         } else if (userRole.includes('umkm') || userEmail.includes('umkm') || userRole === '' || userRole.includes('admin')) {
           this.$router.push('/admin/umkm')
         } else {
