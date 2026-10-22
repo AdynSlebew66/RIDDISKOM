@@ -112,6 +112,12 @@
             Total: <strong>{{ chartTotal.toLocaleString('id-ID') }}</strong> PMI{{ pmiFilterLabel }}.
           </span>
         </p>
+        <p v-else-if="activeService === 'ditempatkan'" class="section-desc">
+          Visualisasi statistik pencari kerja yang sudah ditempatkan berdasarkan pendidikan dan jenis kelamin.
+          <span v-if="ditempatkanFetched && !ditempatkanLoading && chartTotal > 0" class="total-inline">
+            Total: <strong>{{ chartTotal.toLocaleString('id-ID') }}</strong> pencaker ditempatkan{{ ditempatkanFilterLabel }}.
+          </span>
+        </p>
         <p v-else-if="activeService === 'bkk'" class="section-desc">
           Daftar nama-nama Perguruan Tinggi dan SMA/SMK/Sederajat yang terdaftar didalam program Bursa Kerja Khusus
         </p>
@@ -186,6 +192,42 @@
           {{ pmiError }}
           <br />
           <button class="btn-retry" @click="() => fetchPmi()">Coba Lagi</button>
+        </div>
+        <div v-else-if="!chartItems.length" class="state-info">Belum ada data untuk filter ini.</div>
+        </template>
+
+        <template v-else-if="activeService === 'ditempatkan'">
+        <!-- Filter Tahun & Bulan -->
+        <div class="filter-row">
+          <select v-model="selectedDitempatkanTahun" class="dropdown-select" @change="fetchDitempatkan">
+            <option :value="''">Semua Tahun</option>
+            <option v-for="t in ditempatkanTahunList" :key="t" :value="t">{{ t }}</option>
+          </select>
+          <select v-model="selectedDitempatkanBulan" class="dropdown-select" @change="fetchDitempatkan">
+            <option :value="''">Semua Bulan</option>
+            <option v-for="b in bulanList" :key="b.value" :value="b.value">{{ b.label }}</option>
+          </select>
+        </div>
+
+        <!-- Tabs Dimensi Ditempatkan -->
+        <div class="tabs-header">
+          <button
+            v-for="tab in ditempatkanTabs"
+            :key="tab.id"
+            class="tab-item"
+            :class="{ active: activeDitempatkanTab === tab.id }"
+            @click="switchDitempatkanTab(tab.id)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- Loading / Error Ditempatkan -->
+        <div v-if="ditempatkanLoading" class="state-info">Memuat data pencari kerja ditempatkan...</div>
+        <div v-else-if="ditempatkanError" class="state-info error">
+          {{ ditempatkanError }}
+          <br />
+          <button class="btn-retry" @click="() => fetchDitempatkan()">Coba Lagi</button>
         </div>
         <div v-else-if="!chartItems.length" class="state-info">Belum ada data untuk filter ini.</div>
         </template>
@@ -355,6 +397,7 @@ const THEME = {
 const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pencaker'
 const API_PMI = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pekerja-migran'
 const API_BKK = 'https://harvest-protegee-symptom.ngrok-free.dev/api/bkk'
+const API_DITEMPATKAN = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pekerja-ditempatkan'
 
 const SERVICE_LABELS = {
   pencaker: 'Pencari Kerja',
@@ -430,6 +473,25 @@ export default {
       pmiLoading: false,
       pmiError: null,
       pmiFetched: false,
+      // --- Pencari Kerja Ditempatkan ---
+      activeDitempatkanTab: 'jenis_kelamin',
+      ditempatkanTabs: [
+        { id: 'jenis_kelamin', label: 'Jenis Kelamin' },
+        { id: 'pendidikan', label: 'Pendidikan' }
+      ],
+      selectedDitempatkanTahun: '',
+      selectedDitempatkanBulan: '',
+      ditempatkanTahunList: [],
+      ditempatkanStatistik: {
+        tahun: null,
+        total: 0,
+        by_jenis_kelamin: [],
+        by_pendidikan: [],
+        by_tahun: []
+      },
+      ditempatkanLoading: false,
+      ditempatkanError: null,
+      ditempatkanFetched: false,
       // --- BKK (Bursa Kerja Khusus, public) ---
       bkkListPerguruanTinggi: [],
       bkkListSmk: [],
@@ -464,12 +526,19 @@ export default {
       if (this.activeService === 'pmi') {
         return this.pmiStatistik.tahun || this.selectedPmiTahun || new Date().getFullYear()
       }
+      if (this.activeService === 'ditempatkan') {
+        return this.ditempatkanStatistik.tahun || this.selectedDitempatkanTahun || new Date().getFullYear()
+      }
       return this.statistik.tahun || this.selectedTahun || new Date().getFullYear()
     },
     legendLabel() {
       if (this.activeService === 'pmi') {
         const found = this.pmiTabs.find((t) => t.id === this.activePmiTab)
         return found ? found.label : 'PMI'
+      }
+      if (this.activeService === 'ditempatkan') {
+        const found = this.ditempatkanTabs.find((t) => t.id === this.activeDitempatkanTab)
+        return found ? found.label : 'Ditempatkan'
       }
       if (this.activeTab === 'pendidikan') return 'Pendidikan'
       if (this.activeTab === 'rentang_usia') return 'Rentang Usia'
@@ -528,11 +597,16 @@ export default {
     },
     // Item grafik + tabel aktif (mengikuti layanan yang dipilih)
     chartItems() {
-      return this.activeService === 'pmi' ? this.pmiCurrentItems : this.currentItems
+      if (this.activeService === 'pmi') return this.pmiCurrentItems
+      if (this.activeService === 'ditempatkan') return this.ditempatkanCurrentItems
+      return this.currentItems
     },
     showChart() {
       if (this.activeService === 'pmi') {
         return this.pmiFetched && !this.pmiLoading && !this.pmiError && this.chartItems.length > 0
+      }
+      if (this.activeService === 'ditempatkan') {
+        return this.ditempatkanFetched && !this.ditempatkanLoading && !this.ditempatkanError && this.chartItems.length > 0
       }
       if (this.activeService === 'pencaker') {
         return !this.loading && !this.error && this.currentItems.length > 0
@@ -540,13 +614,43 @@ export default {
       return false
     },
     chartTotal() {
-      return this.activeService === 'pmi' ? this.pmiTotal : this.totalPencaker
+      if (this.activeService === 'pmi') return this.pmiTotal
+      if (this.activeService === 'ditempatkan') return this.ditempatkanTotal
+      return this.totalPencaker
     },
     donutUnit() {
-      return this.activeService === 'pmi' ? 'Total PMI' : 'Total Pencaker'
+      if (this.activeService === 'pmi') return 'Total PMI'
+      if (this.activeService === 'ditempatkan') return 'Total Ditempatkan'
+      return 'Total Pencaker'
     },
     pmiFilterLabel() {
       return this.selectedPmiTahun ? ` (tahun ${this.selectedPmiTahun})` : ''
+    },
+    // ===== Pencari Kerja Ditempatkan =====
+    ditempatkanTotal() {
+      return Number(this.ditempatkanStatistik.total) || 0
+    },
+    ditempatkanCurrentItems() {
+      const get = (arr) => (Array.isArray(arr) ? arr : [])
+      if (this.activeDitempatkanTab === 'pendidikan') {
+        return get(this.ditempatkanStatistik.by_pendidikan).map((i) => ({
+          label: i.nama || '-',
+          value: Number(i.total) || 0
+        }))
+      }
+      return get(this.ditempatkanStatistik.by_jenis_kelamin).map((i) => ({
+        label: i.label || i.nama || i.jenis_kelamin || i.kode || '-',
+        value: Number(i.total) || 0
+      }))
+    },
+    ditempatkanFilterLabel() {
+      const parts = []
+      if (this.selectedDitempatkanTahun) parts.push(`tahun ${this.selectedDitempatkanTahun}`)
+      if (this.selectedDitempatkanBulan) {
+        const b = this.bulanList.find((x) => Number(x.value) === Number(this.selectedDitempatkanBulan))
+        parts.push(`bulan ${b ? b.label : this.selectedDitempatkanBulan}`)
+      }
+      return parts.length ? ` (${parts.join(' • ')})` : ''
     },
     comingSoonLabel() {
       return (typeof SERVICE_LABELS !== 'undefined' && SERVICE_LABELS[this.activeService]) || 'Layanan ini'
@@ -559,6 +663,12 @@ export default {
     periodeLabel() {
       if (this.activeService === 'pmi') {
         return this.selectedPmiTahun ? String(this.selectedPmiTahun) : 'Semua'
+      }
+      if (this.activeService === 'ditempatkan') {
+        const tahun = this.selectedDitempatkanTahun ? String(this.selectedDitempatkanTahun) : 'Semua'
+        if (!this.selectedDitempatkanBulan) return tahun
+        const b = this.bulanList.find((x) => Number(x.value) === Number(this.selectedDitempatkanBulan))
+        return `${b ? b.label.slice(0, 3) : this.selectedDitempatkanBulan} ${tahun}`
       }
       const tahun = this.selectedTahun ? String(this.selectedTahun) : 'Semua'
       if (!this.selectedBulan) return tahun
@@ -621,6 +731,7 @@ export default {
     this.fetchTahunList()
     this.fetchStatistik()
     this.fetchPmi(true)
+    this.fetchDitempatkan(true)
     this.fetchBkk()
   },
   methods: {
@@ -711,12 +822,55 @@ export default {
       if (service === 'pmi' && !this.pmiFetched) {
         this.fetchPmi(true)
       }
+      if (service === 'ditempatkan' && !this.ditempatkanFetched) {
+        this.fetchDitempatkan(true)
+      }
       if (service === 'bkk' && !this.bkkFetched && !this.bkkLoading) {
         this.fetchBkk()
       }
     },
     switchPmiTab(tabId) {
       this.activePmiTab = tabId
+    },
+    switchDitempatkanTab(tabId) {
+      this.activeDitempatkanTab = tabId
+    },
+    async fetchDitempatkan(collectYears = false) {
+      this.ditempatkanLoading = true
+      this.ditempatkanError = null
+      try {
+        const params = new URLSearchParams()
+        if (this.selectedDitempatkanTahun) params.append('tahun', this.selectedDitempatkanTahun)
+        if (this.selectedDitempatkanBulan) params.append('bulan', this.selectedDitempatkanBulan)
+        const query = params.toString() ? `?${params.toString()}` : ''
+        const res = await fetch(`${API_DITEMPATKAN}${query}`, {
+          method: 'GET',
+          headers: { 'ngrok-skip-browser-warning': 'true', Accept: 'application/json' }
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.message || 'Gagal mengambil data statistik pencari kerja ditempatkan.')
+        const d = json.data || {}
+        const arr = (v) => (Array.isArray(v) ? v : [])
+        this.ditempatkanStatistik = {
+          tahun: d.tahun ?? this.selectedDitempatkanTahun ?? null,
+          total: Number(d.total) || 0,
+          by_jenis_kelamin: arr(d.by_jenis_kelamin),
+          by_pendidikan: arr(d.by_pendidikan),
+          by_tahun: arr(d.by_tahun)
+        }
+        if (collectYears && !this.ditempatkanTahunList.length && this.ditempatkanStatistik.by_tahun.length) {
+          this.ditempatkanTahunList = this.ditempatkanStatistik.by_tahun
+            .map((i) => Number(i.tahun))
+            .filter((t) => t)
+            .sort((a, b) => b - a)
+        }
+        this.ditempatkanFetched = true
+      } catch (err) {
+        console.error('[Ditempatkan] gagal ambil statistik:', err)
+        this.ditempatkanError = err.message || 'Terjadi kesalahan koneksi ke server.'
+      } finally {
+        this.ditempatkanLoading = false
+      }
     },
     async fetchPmi(collectYears = false) {
       this.pmiLoading = true
