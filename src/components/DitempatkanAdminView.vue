@@ -1,0 +1,1565 @@
+<template>
+  <AdminLayout group="p3tk" title="Pencari Kerja Ditempatkan">
+    <!-- Main Content -->
+    <main class="admin-content">
+      <div class="page-title">
+        <h2>Data Pencari Kerja Ditempatkan</h2>
+        <div class="action-buttons-group">
+          <button class="btn-add" @click="openAddModal">
+            + Tambah
+          </button>
+
+          <button class="btn-import" @click="openImportModal" title="Import file Excel data pencari kerja ditempatkan">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>Import Excel</span>
+          </button>
+
+          <button class="btn-excel" @click="exportToExcel" :disabled="exportingExcel" title="Download Excel dari server sesuai filter yang aktif">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>{{ exportingExcel ? 'Mengekspor...' : 'Export Excel' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="action-bar">
+        <div class="search-box">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input
+            type="text"
+            v-model="searchQuery"
+            @input="handleSearch"
+            placeholder="Cari Nama / Jabatan / Perusahaan..."
+          />
+        </div>
+
+        <div class="sort-box">
+          <select v-model="filterTahun" @change="onFilterChange" class="sort-select" title="Filter tahun">
+            <option value="">Semua Tahun</option>
+            <option v-for="t in tahunOptions" :key="t" :value="t">{{ t }}</option>
+          </select>
+        </div>
+
+        <div class="sort-box">
+          <select v-model="filterBulan" @change="onFilterChange" class="sort-select" title="Filter bulan">
+            <option value="">Semua Bulan</option>
+            <option v-for="b in bulanOptions" :key="b.value" :value="b.value">{{ b.label }}</option>
+          </select>
+        </div>
+
+        <div class="sort-box">
+          <select v-model="filterJenisKelamin" @change="onFilterChange" class="sort-select" title="Filter jenis kelamin">
+            <option value="">Semua JK</option>
+            <option value="L">Laki-laki</option>
+            <option value="P">Perempuan</option>
+          </select>
+        </div>
+
+        <div class="sort-box">
+          <select v-model="filterPendidikanId" @change="onFilterChange" class="sort-select" title="Filter pendidikan">
+            <option value="">Semua Pendidikan</option>
+            <option v-for="p in pendidikanOptions" :key="p.id" :value="p.id">{{ p.nama }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      <div v-if="errorMessage" class="error-alert">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Info Alert -->
+      <div v-if="infoMessage" class="info-alert">
+        {{ infoMessage }}
+      </div>
+
+      <!-- Table Card Wrapper -->
+      <div class="data-card">
+        <div class="card-header-navy">
+          <h3>Pencari Kerja Ditempatkan</h3>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="text-center" style="width: 60px;">No</th>
+                <th>Nama</th>
+                <th class="text-center">Jenis Kelamin</th>
+                <th>Pendidikan</th>
+                <th>Perusahaan</th>
+                <th>Jabatan</th>
+                <th>No Handphone</th>
+                <th class="text-center">Tahun</th>
+                <th class="text-center" style="width: 140px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loading State -->
+              <tr v-if="loading">
+                <td colspan="9" class="text-center py-5">
+                  <div class="spinner"></div>
+                  <p class="loading-text">Memuat data pencari kerja ditempatkan...</p>
+                </td>
+              </tr>
+
+              <!-- Empty State -->
+              <tr v-else-if="ditempatkanList.length === 0">
+                <td colspan="9" class="text-center py-5 empty-text">
+                  Data pencari kerja ditempatkan tidak ditemukan.
+                </td>
+              </tr>
+
+              <!-- Data Rows -->
+              <tr v-else v-for="(item, index) in ditempatkanList" :key="item.id || index">
+                <td class="text-center font-bold">{{ calculateRowIndex(index) }}</td>
+                <td class="font-bold">{{ formatText(item?.nama) }}</td>
+                <td class="text-center">{{ formatJenisKelamin(item?.jenis_kelamin) }}</td>
+                <td>{{ resolvePendidikan(item) }}</td>
+                <td class="td-perusahaan" :title="resolvePerusahaan(item)">{{ resolvePerusahaan(item) }}</td>
+                <td>{{ formatText(item?.jabatan) }}</td>
+                <td>{{ formatText(item?.no_handphone) }}</td>
+                <td class="text-center">{{ item?.tahun ?? '-' }}</td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="btn-icon btn-info" title="Detail" @click="handleDetail(item)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    </button>
+                    <button class="btn-icon btn-edit" title="Edit" @click="openEditModal(item)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button class="btn-icon btn-delete" title="Hapus" @click="openDeleteModal(item)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Pagination -->
+        <div class="card-footer-pagination">
+          <div class="per-page-selector">
+            <span class="total-info">Total: {{ pagination.total }} Data</span>
+            <select v-model.number="perPage" @change="onPerPageChange" class="per-page-select">
+              <option :value="10">10 / halaman</option>
+              <option :value="15">15 / halaman</option>
+              <option :value="25">25 / halaman</option>
+              <option :value="50">50 / halaman</option>
+            </select>
+          </div>
+
+          <div v-if="pagination.last_page > 1" class="pagination-controls">
+            <button
+              class="btn-page"
+              :disabled="pagination.current_page === 1"
+              @click="changePage(pagination.current_page - 1)"
+            >
+              &laquo; Prev
+            </button>
+
+            <button
+              v-for="page in displayedPages"
+              :key="page"
+              class="btn-page"
+              :class="{ active: page === pagination.current_page }"
+              :disabled="page === '...'"
+              @click="page !== '...' && changePage(page)"
+            >
+              {{ page }}
+            </button>
+
+            <button
+              class="btn-page"
+              :disabled="pagination.current_page === pagination.last_page"
+              @click="changePage(pagination.current_page + 1)"
+            >
+              Next &raquo;
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal Detail -->
+    <transition name="modal-fade">
+      <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetailModal">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>Detail Pencari Kerja Ditempatkan</h3>
+            <button class="btn-close" @click="closeDetailModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="detailLoading" class="text-center py-5">
+              <div class="spinner"></div>
+              <p class="loading-text">Memuat detail pencari kerja ditempatkan...</p>
+            </div>
+            <div v-else-if="detailError && !detailItem" class="error-alert">{{ detailError }}</div>
+            <div v-if="detailItem" class="detail-grid">
+              <div v-if="detailError" class="error-alert" style="margin-bottom: 8px;">{{ detailError }} (menampilkan data tabel)</div>
+              <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">{{ formatText(detailItem.nama) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Jenis Kelamin</span><span class="detail-value">{{ formatJenisKelamin(detailItem.jenis_kelamin) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Pendidikan</span><span class="detail-value">{{ resolvePendidikan(detailItem) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Perusahaan</span><span class="detail-value">{{ resolvePerusahaan(detailItem) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Jabatan</span><span class="detail-value">{{ formatText(detailItem.jabatan) }}</span></div>
+              <div class="detail-row"><span class="detail-label">No. Handphone</span><span class="detail-value">{{ formatText(detailItem.no_handphone) }}</span></div>
+              <div class="detail-row"><span class="detail-label">Tahun</span><span class="detail-value">{{ detailItem.tahun ?? '-' }}</span></div>
+              <div class="detail-row"><span class="detail-label">Sumber File</span><span class="detail-value">{{ formatText(detailItem.sumber_file) }}</span></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" @click="closeDetailModal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal Tambah / Edit -->
+    <transition name="modal-fade">
+      <div v-if="showFormModal" class="modal-overlay" @click.self="closeFormModal">
+        <div class="modal-container modal-lg">
+          <div class="modal-header">
+            <h3>{{ isEditMode ? 'Edit' : 'Tambah' }} Pencari Kerja Ditempatkan</h3>
+            <button class="btn-close" @click="closeFormModal">&times;</button>
+          </div>
+          <form @submit.prevent="submitForm">
+            <div class="modal-body">
+              <div v-if="formError" class="error-alert">{{ formError }}</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Nama Lengkap <span class="req">*</span></label>
+                  <input type="text" v-model="formData.nama" placeholder="Nama pencari kerja" :class="{ invalid: fieldError('nama') }" />
+                  <small v-if="fieldError('nama')" class="field-error">{{ fieldError('nama') }}</small>
+                </div>
+                <div class="form-group">
+                  <label>Jenis Kelamin <span class="req">*</span></label>
+                  <select v-model="formData.jenis_kelamin" :class="{ invalid: fieldError('jenis_kelamin') }">
+                    <option value="">-- Pilih --</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                  <small v-if="fieldError('jenis_kelamin')" class="field-error">{{ fieldError('jenis_kelamin') }}</small>
+                </div>
+                <div class="form-group">
+                  <label>No. Handphone</label>
+                  <input type="text" v-model="formData.no_handphone" placeholder="No. handphone / HP" />
+                </div>
+                <div class="form-group">
+                  <label>Pendidikan</label>
+                  <select v-model="formData.pendidikan_id">
+                    <option value="">-- Pilih --</option>
+                    <option v-for="p in pendidikanOptions" :key="p.id" :value="p.id">{{ p.nama }}</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Perusahaan</label>
+                  <input type="text" v-model="formData.perusahaan" placeholder="Nama perusahaan" />
+                </div>
+                <div class="form-group">
+                  <label>Jabatan</label>
+                  <input type="text" v-model="formData.jabatan" placeholder="Jabatan / pekerjaan" />
+                </div>
+                <div class="form-group">
+                  <label>Tahun</label>
+                  <input type="number" v-model.number="formData.tahun" placeholder="cth: 2025" min="2000" max="2100" />
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" @click="closeFormModal" :disabled="saving">Batal</button>
+              <button type="submit" class="btn-primary" :disabled="saving">{{ saving ? 'Menyimpan...' : (isEditMode ? 'Simpan Perubahan' : 'Simpan') }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <transition name="modal-fade">
+      <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
+        <div class="modal-container modal-sm">
+          <div class="modal-header modal-header-danger">
+            <h3>Hapus Data</h3>
+            <button class="btn-close" @click="closeDeleteModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="formError" class="error-alert">{{ formError }}</div>
+            <p class="delete-text">
+              Yakin ingin menghapus data <strong>{{ deleteItem?.nama || '-' }}</strong>?
+              Tindakan ini tidak dapat dibatalkan.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" @click="closeDeleteModal" :disabled="deleting">Batal</button>
+            <button class="btn-danger" @click="confirmDelete" :disabled="deleting">{{ deleting ? 'Menghapus...' : 'Ya, Hapus' }}</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal Import Excel -->
+    <transition name="modal-fade">
+      <div v-if="showImportModal" class="modal-overlay" @click.self="closeImportModal">
+        <div class="modal-container modal-sm">
+          <div class="modal-header">
+            <h3>Import Excel Pencari Kerja Ditempatkan</h3>
+            <button class="btn-close" @click="closeImportModal">&times;</button>
+          </div>
+          <form @submit.prevent="submitImport">
+            <div class="modal-body">
+              <div v-if="importError" class="error-alert">{{ importError }}</div>
+              <p class="import-hint">File Excel data pencari kerja ditempatkan. Maksimal 20 MB, format .xlsx / .xls.</p>
+              <div class="form-grid form-grid-1col">
+                <div class="form-group">
+                  <label>File Excel <span class="req">*</span></label>
+                  <input ref="importFile" type="file" accept=".xlsx,.xls" @change="onImportFileChange" />
+                  <small v-if="importFileName" class="file-name">{{ importFileName }}</small>
+                </div>
+                <div class="form-group">
+                  <label>Tahun (opsional)</label>
+                  <input type="number" v-model.number="importTahun" placeholder="cth: 2025" min="2000" max="2100" />
+                </div>
+              </div>
+              <div v-if="importResult" class="import-result">
+                <p class="import-result-title">{{ importResult.message }}</p>
+                <p v-if="importResult.tahun">Tahun: <strong>{{ importResult.tahun }}</strong></p>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" @click="closeImportModal" :disabled="importing">Batal</button>
+              <button type="submit" class="btn-primary" :disabled="importing || !importFile">{{ importing ? 'Mengunggah...' : 'Upload' }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+  </AdminLayout>
+</template>
+
+<script>
+import AdminLayout from './AdminLayout.vue'
+const API_BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pekerja-ditempatkan'
+const API_PENDIDIKAN = 'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/pendidikan'
+const API_STATISTIK_DITEMPATKAN = 'https://harvest-protegee-symptom.ngrok-free.dev/api/statistik/pekerja-ditempatkan'
+
+// Kandidat endpoint master perusahaan (dicoba berurutan, yang 404 dilewati otomatis)
+const PERUSAHAAN_CANDIDATES = [
+  'https://harvest-protegee-symptom.ngrok-free.dev/api/admin/perusahaan'
+]
+
+export default {
+  name: 'DitempatkanAdminView',
+  components: { AdminLayout },
+  data() {
+    return {
+      ditempatkanList: [],
+      loading: false,
+      errorMessage: '',
+      infoMessage: '',
+      searchQuery: '',
+      searchTimer: null,
+      filterTahun: '',
+      filterBulan: '',
+      filterJenisKelamin: '',
+      filterPendidikanId: '',
+      exportingExcel: false,
+      perPage: 10,
+      pagination: {
+        current_page: 1,
+        last_page: 1,
+        total: 0
+      },
+      tahunOptions: [],
+      bulanOptions: [
+        { value: 1, label: 'Januari' },
+        { value: 2, label: 'Februari' },
+        { value: 3, label: 'Maret' },
+        { value: 4, label: 'April' },
+        { value: 5, label: 'Mei' },
+        { value: 6, label: 'Juni' },
+        { value: 7, label: 'Juli' },
+        { value: 8, label: 'Agustus' },
+        { value: 9, label: 'September' },
+        { value: 10, label: 'Oktober' },
+        { value: 11, label: 'November' },
+        { value: 12, label: 'Desember' }
+      ],
+      showDetailModal: false,
+      detailItem: null,
+      detailLoading: false,
+      detailError: '',
+      showFormModal: false,
+      isEditMode: false,
+      editingId: null,
+      showDeleteModal: false,
+      deleting: false,
+      deleteItem: null,
+      showImportModal: false,
+      importing: false,
+      importFile: null,
+      importFileName: '',
+      importTahun: null,
+      importError: '',
+      importResult: null,
+      saving: false,
+      formError: '',
+      validationErrors: {},
+      pendidikanOptions: [],
+      perusahaanOptions: [],
+      formData: this.blankForm()
+    }
+  },
+  computed: {
+    displayedPages() {
+      const current = this.pagination.current_page
+      const last = this.pagination.last_page
+      const pages = []
+      if (last <= 7) {
+        for (let i = 1; i <= last; i++) pages.push(i)
+      } else {
+        pages.push(1)
+        if (current > 3) pages.push('...')
+        const start = Math.max(2, current - 1)
+        const end = Math.min(last - 1, current + 1)
+        for (let i = start; i <= end; i++) pages.push(i)
+        if (current < last - 2) pages.push('...')
+        pages.push(last)
+      }
+      return pages
+    }
+  },
+  mounted() {
+    this.fetchTahunOptions()
+    this.fetchPendidikanOptions()
+    this.fetchPerusahaanOptions()
+    this.fetchDitempatkan(1)
+  },
+  methods: {
+    blankForm() {
+      return {
+        nama: '',
+        jenis_kelamin: '',
+        no_handphone: '',
+        pendidikan_id: '',
+        perusahaan: '',
+        perusahaan_id: '',
+        jabatan: '',
+        tahun: new Date().getFullYear()
+      }
+    },
+    getAuthToken() {
+      let token = localStorage.getItem('access_token') || localStorage.getItem('token')
+      if (!token) {
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser)
+            token = parsed.token || parsed.access_token
+          } catch (e) {
+            console.error('Error parsing token:', e)
+          }
+        }
+      }
+      return token || ''
+    },
+    buildHeaders(isJson = false) {
+      const headers = {
+        Accept: 'application/json',
+        'ngrok-skip-browser-warning': '69420'
+      }
+      const token = this.getAuthToken()
+      if (token) headers.Authorization = `Bearer ${token}`
+      if (isJson) headers['Content-Type'] = 'application/json'
+      return headers
+    },
+    async fetchTahunOptions() {
+      // Coba endpoint khusus tahun dulu, fallback ke statistik pekerja ditempatkan (by_tahun)
+      try {
+        const res = await fetch(`${API_STATISTIK_DITEMPATKAN}/tahun`, {
+          method: 'GET',
+          headers: this.buildHeaders()
+        })
+        const json = await res.json().catch(() => ({}))
+        if (res.ok && Array.isArray(json.data)) {
+          this.tahunOptions = json.data
+          return
+        }
+      } catch (e) {
+        console.error('[DitempatkanAdmin] gagal ambil daftar tahun:', e)
+      }
+      try {
+        const res = await fetch(API_STATISTIK_DITEMPATKAN, {
+          method: 'GET',
+          headers: { 'ngrok-skip-browser-warning': '69420', Accept: 'application/json' }
+        })
+        const json = await res.json().catch(() => ({}))
+        const byTahun = json.data?.by_tahun
+        if (res.ok && Array.isArray(byTahun)) {
+          this.tahunOptions = byTahun
+            .map((i) => Number(i.tahun))
+            .filter((t) => t)
+            .sort((a, b) => b - a)
+        }
+      } catch (e) {
+        console.error('[DitempatkanAdmin] gagal ambil daftar tahun (fallback):', e)
+      }
+    },
+    async fetchDitempatkan(page = 1) {
+      this.loading = true
+      this.errorMessage = ''
+      try {
+        const params = new URLSearchParams({
+          page: page,
+          per_page: this.perPage
+        })
+        const q = (this.searchQuery || '').trim()
+        if (q) params.append('search', q)
+        if (this.filterTahun) params.append('tahun', this.filterTahun)
+        if (this.filterBulan) params.append('bulan', this.filterBulan)
+        if (this.filterJenisKelamin) params.append('jenis_kelamin', this.filterJenisKelamin)
+        if (this.filterPendidikanId) params.append('pendidikan_id', this.filterPendidikanId)
+
+        const response = await fetch(`${API_BASE}?${params.toString()}`, {
+          method: 'GET',
+          headers: this.buildHeaders()
+        })
+
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+        if (!response.ok) {
+          const body = await response.text().catch(() => '')
+          throw new Error(`Gagal mengambil data. Status: ${response.status}${body ? ` - ${body.slice(0, 200)}` : ''}`)
+        }
+
+        const result = await response.json()
+        const pageData = result.data || {}
+
+        if (pageData && Array.isArray(pageData.data)) {
+          this.ditempatkanList = pageData.data
+          this.pagination = {
+            current_page: Number(pageData.current_page) || page,
+            last_page: Number(pageData.last_page) || 1,
+            total: Number(pageData.total) || 0
+          }
+        } else if (Array.isArray(result.data)) {
+          this.ditempatkanList = result.data
+          this.pagination = { current_page: 1, last_page: 1, total: result.data.length }
+        } else {
+          this.ditempatkanList = []
+          this.pagination = { current_page: 1, last_page: 1, total: 0 }
+        }
+      } catch (error) {
+        this.errorMessage = `Error: ${error.message || 'Gagal terhubung ke API.'}`
+        this.ditempatkanList = []
+      } finally {
+        this.loading = false
+      }
+    },
+    handleSearch() {
+      clearTimeout(this.searchTimer)
+      this.searchTimer = setTimeout(() => {
+        this.fetchDitempatkan(1)
+      }, 500)
+    },
+    onFilterChange() {
+      this.fetchDitempatkan(1)
+    },
+    onPerPageChange() {
+      this.fetchDitempatkan(1)
+    },
+    changePage(page) {
+      if (page < 1 || page > this.pagination.last_page) return
+      this.fetchDitempatkan(page)
+    },
+    calculateRowIndex(index) {
+      return (this.pagination.current_page - 1) * this.perPage + index + 1
+    },
+    async handleDetail(item) {
+      // GET /api/admin/pekerja-migran/{pekerjaMigran} untuk data detail terbaru.
+      // Fallback ke data baris tabel bila request gagal (misal item tanpa id).
+      this.detailItem = item
+      this.detailError = ''
+      this.showDetailModal = true
+      if (!item?.id) return
+      this.detailLoading = true
+      try {
+        const response = await fetch(`${API_BASE}/${item.id}`, {
+          method: 'GET',
+          headers: this.buildHeaders()
+        })
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+        if (!response.ok) throw new Error(`Gagal mengambil detail (status ${response.status}).`)
+        const result = await response.json().catch(() => ({}))
+        if (result.data && typeof result.data === 'object') {
+          this.detailItem = result.data
+        }
+      } catch (error) {
+        // Tetap tampilkan data baris + info kecil bahwa refresh detail gagal
+        this.detailError = error.message || 'Gagal memuat ulang detail dari server.'
+      } finally {
+        this.detailLoading = false
+      }
+    },
+    closeDetailModal() {
+      this.showDetailModal = false
+      this.detailItem = null
+      this.detailError = ''
+      this.detailLoading = false
+    },
+    // CRUD tambah/edit/hapus selesai.
+    openAddModal() {
+      this.isEditMode = false
+      this.editingId = null
+      this.formData = this.blankForm()
+      this.validationErrors = {}
+      this.formError = ''
+      this.showFormModal = true
+    },
+    openEditModal(item) {
+      this.isEditMode = true
+      this.editingId = item.id
+      this.formData = {
+        nama: item.nama || '',
+        jenis_kelamin: this.toJenisKelaminKode(item.jenis_kelamin),
+        no_handphone: item.no_handphone || '',
+        pendidikan_id: item.pendidikan_id ?? '',
+        perusahaan: item.perusahaan?.nama || item.perusahaan || item.perusahaan_nama || '',
+        perusahaan_id: item.perusahaan_id ?? '',
+        jabatan: item.jabatan || '',
+        tahun: item.tahun ?? new Date().getFullYear()
+      }
+      this.validationErrors = {}
+      this.formError = ''
+      this.showFormModal = true
+    },
+    closeFormModal() {
+      if (this.saving) return
+      this.showFormModal = false
+    },
+    async fetchPendidikanOptions() {
+      try {
+        const res = await fetch(API_PENDIDIKAN, {
+          method: 'GET',
+          headers: this.buildHeaders()
+        })
+        if (res.status === 401) return
+        const json = await res.json().catch(() => ({}))
+        const raw = json.data?.data || json.data || []
+        this.pendidikanOptions = (Array.isArray(raw) ? raw : []).map((p) => ({
+          id: p.id,
+          nama: p.nama || p.name || `Pendidikan #${p.id}`
+        }))
+      } catch (e) {
+        console.error('[DitempatkanAdmin] gagal ambil opsi pendidikan:', e)
+      }
+    },
+    async fetchOptionsFromCandidates(candidates) {
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, { method: 'GET', headers: this.buildHeaders() })
+          if (res.status === 401) return []
+          if (!res.ok) continue
+          const json = await res.json().catch(() => ({}))
+          const raw = json.data?.data || json.data || []
+          if (Array.isArray(raw) && raw.length) {
+            return raw.map((o) => ({
+              id: o.id,
+              nama: o.nama || o.name || `#${o.id}`
+            }))
+          }
+        } catch (e) {
+          console.error('[DitempatkanAdmin] gagal ambil opsi:', url, e)
+        }
+      }
+      return []
+    },
+    async fetchPerusahaanOptions() {
+      this.perusahaanOptions = await this.fetchOptionsFromCandidates(PERUSAHAAN_CANDIDATES)
+    },
+    fieldError(name) {
+      const errs = this.validationErrors[name]
+      if (Array.isArray(errs) && errs.length) return errs[0]
+      return ''
+    },
+    async submitForm() {
+      this.saving = true
+      this.formError = ''
+      this.validationErrors = {}
+      try {
+        const f = this.formData
+        const numOrNull = (v) => (v === '' || v === null || v === undefined ? null : Number(v))
+        const strOrNull = (v) => {
+          const s = (v ?? '').toString().trim()
+          return s ? s : null
+        }
+        const payload = {
+          tahun: numOrNull(f.tahun),
+          nama: (f.nama || '').trim(),
+          jenis_kelamin: f.jenis_kelamin || null,
+          no_handphone: strOrNull(f.no_handphone),
+          pendidikan_id: numOrNull(f.pendidikan_id),
+          jabatan: strOrNull(f.jabatan),
+          perusahaan: strOrNull(f.perusahaan),
+          perusahaan_id: numOrNull(f.perusahaan_id)
+        }
+
+        const url = this.isEditMode ? `${API_BASE}/${this.editingId}` : API_BASE
+        const response = await fetch(url, {
+          method: this.isEditMode ? 'PUT' : 'POST',
+          headers: this.buildHeaders(true),
+          body: JSON.stringify(payload)
+        })
+
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
+        const result = await response.json().catch(() => ({}))
+
+        if (response.status === 422) {
+          this.validationErrors = result.errors || {}
+          this.formError = result.message || 'Periksa kembali isian form (validasi gagal).'
+          return
+        }
+        if (!response.ok) {
+          throw new Error(result.message || `Gagal menyimpan data. Status: ${response.status}`)
+        }
+
+        this.showFormModal = false
+        this.infoMessage = result.message || (this.isEditMode ? 'Data pencari kerja ditempatkan berhasil diperbarui.' : 'Data pencari kerja ditempatkan berhasil ditambahkan.')
+        setTimeout(() => { this.infoMessage = '' }, 4000)
+        this.fetchDitempatkan(this.pagination.current_page)
+      } catch (error) {
+        this.formError = error.message || 'Gagal terhubung ke API.'
+      } finally {
+        this.saving = false
+      }
+    },
+    openDeleteModal(item) {
+      this.deleteItem = item
+      this.formError = ''
+      this.showDeleteModal = true
+    },    closeDeleteModal() {
+      if (this.deleting) return
+      this.showDeleteModal = false
+      this.deleteItem = null
+    },
+    async confirmDelete() {
+      if (!this.deleteItem?.id) return
+      this.deleting = true
+      this.formError = ''
+      try {
+        const response = await fetch(`${API_BASE}/${this.deleteItem.id}`, {
+          method: 'DELETE',
+          headers: this.buildHeaders()
+        })
+
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(result.message || `Gagal menghapus data. Status: ${response.status}`)
+        }
+
+        this.showDeleteModal = false
+        this.deleteItem = null
+        this.infoMessage = result.message || 'Data pencari kerja ditempatkan berhasil dihapus.'
+        setTimeout(() => { this.infoMessage = '' }, 4000)
+
+        // Jika halaman jadi kosong dan bukan halaman 1, mundur satu halaman
+        if (this.ditempatkanList.length <= 1 && this.pagination.current_page > 1) {
+          this.fetchDitempatkan(this.pagination.current_page - 1)
+        } else {
+          this.fetchDitempatkan(this.pagination.current_page)
+        }
+      } catch (error) {
+        this.formError = error.message || 'Gagal terhubung ke API.'
+      } finally {
+        this.deleting = false
+      }
+    },
+    openImportModal() {
+      this.importFile = null
+      this.importFileName = ''
+      this.importTahun = null
+      this.importError = ''
+      this.importResult = null
+      if (this.$refs.importFile) this.$refs.importFile.value = ''
+      this.showImportModal = true
+    },
+    closeImportModal() {
+      if (this.importing) return
+      this.showImportModal = false
+    },
+    onImportFileChange(event) {
+      const file = event.target.files?.[0] || null
+      this.importError = ''
+      this.importResult = null
+      if (!file) {
+        this.importFile = null
+        this.importFileName = ''
+        return
+      }
+      const maxBytes = 20480 * 1024 // 20 MB sesuai validasi backend
+      if (file.size > maxBytes) {
+        this.importError = `Ukuran file ${(file.size / 1024 / 1024).toFixed(1)} MB melebihi batas 20 MB.`
+        this.importFile = null
+        this.importFileName = ''
+        event.target.value = ''
+        return
+      }
+      if (!/\.(xlsx|xls)$/i.test(file.name)) {
+        this.importError = 'Format file harus .xlsx atau .xls.'
+        this.importFile = null
+        this.importFileName = ''
+        event.target.value = ''
+        return
+      }
+      this.importFile = file
+      this.importFileName = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`
+    },
+    async submitImport() {
+      if (!this.importFile || this.importing) return
+      this.importing = true
+      this.importError = ''
+      this.importResult = null
+      try {
+        const token = this.getAuthToken()
+        if (!token) {
+          this.$router.push('/login')
+          return
+        }
+        const form = new FormData()
+        form.append('file', this.importFile)
+        if (this.importTahun) form.append('tahun', this.importTahun)
+
+        const response = await fetch(`${API_BASE}/import`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'ngrok-skip-browser-warning': '69420',
+            Authorization: `Bearer ${token}`
+          },
+          body: form
+        })
+
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
+        const result = await response.json().catch(() => ({}))
+        if (response.status === 422) {
+          const errs = result.errors || {}
+          const first = Object.values(errs).flat()[0]
+          this.importError = first || result.message || 'Validasi file gagal. Periksa format dan ukuran file.'
+          return
+        }
+        if (!response.ok) {
+          throw new Error(result.message || `Import gagal (status ${response.status}).`)
+        }
+
+        const data = result.data || {}
+        this.importResult = { message: result.message || 'Import berhasil.', tahun: data.tahun || null }
+        this.infoMessage = result.message || `Import Excel berhasil (tahun ${data.tahun || ''}).`
+        setTimeout(() => { this.infoMessage = '' }, 5000)
+        this.fetchTahunOptions()
+        this.fetchDitempatkan(1)
+      } catch (error) {
+        this.importError = error.message || 'Gagal terhubung ke API.'
+      } finally {
+        this.importing = false
+      }
+    },
+    async exportToExcel() {
+      // GET /api/admin/pekerja-ditempatkan/export?tahun=&bulan=&jenis_kelamin=&pendidikan_id=&search=
+      // -> file .xlsx langsung dari backend (Bearer Auth).
+      if (this.exportingExcel) return
+      this.exportingExcel = true
+      this.errorMessage = ''
+      try {
+        const token = this.getAuthToken()
+        if (!token) {
+          this.$router.push('/login')
+          return
+        }
+        const params = new URLSearchParams()
+        if (this.filterTahun) params.append('tahun', this.filterTahun)
+        if (this.filterBulan) params.append('bulan', this.filterBulan)
+        if (this.filterJenisKelamin) params.append('jenis_kelamin', this.filterJenisKelamin)
+        if (this.filterPendidikanId) params.append('pendidikan_id', this.filterPendidikanId)
+        const q = (this.searchQuery || '').trim()
+        if (q) params.append('search', q)
+
+        const query = params.toString() ? `?${params.toString()}` : ''
+        const response = await fetch(`${API_BASE}/export${query}`, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/octet-stream, */*',
+            'ngrok-skip-browser-warning': '69420',
+            Authorization: `Bearer ${token}`
+          }
+        })
+
+        if (response.status === 401) {
+          this.$router.push('/login')
+          return
+        }
+
+        const ctype = (response.headers.get('content-type') || '').toLowerCase()
+        if (response.status === 422 || ctype.includes('json')) {
+          const j = await response.json().catch(() => ({}))
+          throw new Error(j.message || `Export gagal (status ${response.status}). Periksa filter yang aktif.`)
+        }
+        if (!response.ok) {
+          throw new Error(`Export gagal (status ${response.status}).`)
+        }
+
+        const blob = await response.blob()
+        if (!blob || blob.size === 0) throw new Error('File kosong dari server.')
+
+        const dateStr = new Date().toISOString().slice(0, 10)
+        const parts = ['Data_PencariKerjaDitempatkan', dateStr]
+        if (this.filterTahun) parts.push(this.filterTahun)
+        if (this.filterBulan) parts.push(`bln${this.filterBulan}`)
+        this.downloadBlob(blob, `${parts.join('_')}.xlsx`, response.headers.get('content-disposition'))
+
+        this.infoMessage = 'File Excel berhasil diunduh.'
+        setTimeout(() => { this.infoMessage = '' }, 4000)
+      } catch (error) {
+        this.errorMessage = `Error export: ${error.message || 'Gagal terhubung ke API.'}`
+      } finally {
+        this.exportingExcel = false
+      }
+    },
+    downloadBlob(blob, fallbackName, contentDisposition) {
+      let fileName = fallbackName
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i)
+        if (match && match[1]) {
+          try {
+            fileName = decodeURIComponent(match[1].trim())
+          } catch (e) {
+            fileName = match[1].trim()
+          }
+        }
+      }
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => window.URL.revokeObjectURL(url), 2000)
+    },
+    toDateInput(val) {
+      if (!val) return ''
+      const d = new Date(val)
+      if (isNaN(d.getTime())) return ''
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    },
+    toJenisKelaminKode(val) {
+      if (!val) return ''
+      const s = String(val).trim().toUpperCase()
+      if (s.startsWith('L')) return 'L'
+      if (s.startsWith('P')) return 'P'
+      return s
+    },
+    resolvePerusahaan(item) {
+      if (!item) return '-'
+      // `perusahaan` bisa string (input manual) atau objek relasi dari API
+      const relasi = item.perusahaan?.nama || item.perusahaan_nama || item.nama_perusahaan
+      if (relasi) return String(relasi)
+      if (typeof item.perusahaan === 'string' && item.perusahaan.trim()) return item.perusahaan.trim()
+      const id = item.perusahaan_id
+      if (id === null || id === undefined || id === '') return '-'
+      const found = this.perusahaanOptions.find((p) => Number(p.id) === Number(id))
+      return found ? found.nama : `#${id}`
+    },
+    resolvePendidikan(item) {
+      if (!item) return '-'
+      const nama = item.pendidikan?.nama || item.pendidikan_nama
+      if (nama) return String(nama)
+      const id = item.pendidikan_id
+      if (id === null || id === undefined || id === '') return '-'
+      const found = this.pendidikanOptions.find((p) => Number(p.id) === Number(id))
+      return found ? found.nama : `#${id}`
+    },
+    formatText(val) {
+      if (val === null || val === undefined || val === '') return '-'
+      return String(val)
+    },
+    formatJenisKelamin(val) {
+      if (!val) return '-'
+      const s = String(val).trim().toUpperCase()
+      if (s === 'L' || s === 'LAKI-LAKI' || s === 'LAKI LAKI') return 'Laki-laki'
+      if (s === 'P' || s === 'PEREMPUAN') return 'Perempuan'
+      return String(val)
+    },
+    formatDate(val) {
+      if (!val) return '-'
+      const d = new Date(val)
+      if (isNaN(d.getTime())) return String(val)
+      return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    },
+  }
+}
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.admin-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 28px 48px 28px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.page-title h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+/* Action Bar */
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px 10px 40px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  color: #334155;
+}
+
+.search-box input:focus { border-color: #1e385c; }
+
+.sort-box .sort-select {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+}
+
+.btn-add {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  background-color: #1e385c;
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-add:hover { background-color: #152a47; }
+
+/* Grup tombol aksi: selalu sebaris, turun bersama kalau layar sempit */
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  margin-left: auto;
+}
+
+.btn-excel {
+  background-color: #217346;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-excel:hover:not(:disabled) { background-color: #1a5c38; }
+.btn-excel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-import {
+  background-color: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-import:hover { background-color: #b91c1c; }
+
+/* Import modal */
+.form-grid-1col { grid-template-columns: 1fr; }
+.import-hint { font-size: 0.85rem; color: #64748b; margin: 0 0 14px 0; line-height: 1.6; }
+.file-name { color: #1e385c; font-size: 0.78rem; margin-top: 6px; font-weight: 600; }
+.import-result {
+  margin-top: 14px;
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.import-result p { margin: 2px 0; }
+.import-result-title { font-weight: 700; }
+
+/* Alerts */
+.error-alert {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.info-alert {
+  background-color: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1e40af;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Table Card */
+.data-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.card-header-navy {
+  background-color: #1e385c;
+  color: #ffffff;
+  padding: 14px 20px;
+}
+
+.card-header-navy h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+
+.table-container { overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.87rem;
+}
+
+.data-table thead th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.data-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover { background-color: #f8fafc; }
+
+.text-center { text-align: center; }
+.py-5 { padding-top: 28px; padding-bottom: 28px; }
+.font-bold { font-weight: 700; }
+
+.td-alamat {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.td-perusahaan {
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 10px auto;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #1e385c;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text { color: #64748b; font-size: 0.9rem; }
+.empty-text { color: #94a3b8; font-size: 0.92rem; }
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-info { color: #2563eb; }
+.btn-info:hover { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+.btn-edit { color: #d97706; }
+.btn-edit:hover { background-color: #d97706; color: #ffffff; border-color: #d97706; }
+.btn-delete { color: #dc2626; }
+.btn-delete:hover { background-color: #dc2626; color: #ffffff; border-color: #dc2626; }
+
+/* Pagination */
+.card-footer-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.per-page-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.total-info { font-size: 0.85rem; font-weight: 600; color: #475569; }
+
+.per-page-select {
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+}
+
+.pagination-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.btn-page {
+  min-width: 36px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-page:hover:not(:disabled) { background-color: #1e385c; color: #ffffff; border-color: #1e385c; }
+.btn-page.active { background-color: #1e385c; color: #ffffff; border-color: #1e385c; }
+.btn-page:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal-container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-container.modal-lg { max-width: 720px; }
+.modal-container.modal-sm { max-width: 440px; }
+
+.modal-header-danger { background-color: #991b1b; }
+
+.delete-text { font-size: 0.92rem; color: #334155; line-height: 1.6; margin: 0; }
+
+.btn-danger {
+  padding: 9px 24px;
+  border-radius: 8px;
+  border: none;
+  background-color: #dc2626;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.87rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.btn-danger:hover:not(:disabled) { background-color: #b91c1c; }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background-color: #1e385c;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; min-height: 0; }
+
+/* Form di dalam modal harus ikut flex agar body bisa scroll */
+.modal-container > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.detail-grid { display: flex; flex-direction: column; }
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.88rem;
+}
+
+.detail-row:last-child { border-bottom: none; }
+.detail-label { font-weight: 600; color: #64748b; }
+.detail-value { font-weight: 600; color: #1e293b; word-break: break-word; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.btn-secondary {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.btn-secondary:hover { background-color: #f1f5f9; }
+
+.btn-primary {
+  padding: 9px 24px;
+  border-radius: 8px;
+  border: none;
+  background-color: #1e385c;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.87rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) { background-color: #152a47; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Form Tambah */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+.form-group { display: flex; flex-direction: column; min-width: 0; }
+.form-group.form-full { grid-column: 1 / -1; }
+.form-group.form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.form-group.form-row-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px 16px; }
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.form-group label .req { color: #dc2626; }
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.87rem;
+  color: #1e293b;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: #1e385c; }
+.form-group textarea { resize: vertical; }
+
+.form-group input.invalid,
+.form-group select.invalid { border-color: #dc2626; }
+
+.field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.18s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+@media (max-width: 768px) {
+  .admin-content { padding: 16px 14px 36px 14px; }
+  .page-title h2 { font-size: 1.15rem; }
+  .detail-row { grid-template-columns: 1fr; gap: 2px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .card-footer-pagination { flex-direction: column; align-items: stretch; }
+  .pagination-controls { justify-content: center; }
+}
+</style>

@@ -22,6 +22,7 @@ import SekretariatView from '../components/SekretariatView.vue'
 import P3tkPublicView from '../components/P3tkPublicView.vue'
 import PencakerAdminView from '../components/PencakerAdminView.vue'
 import PmiAdminView from '../components/PmiAdminView.vue'
+import DitempatkanAdminView from '../components/DitempatkanAdminView.vue'
 import BkkAdminView from '../components/BkkAdminView.vue'
 import P3tkDashboardView from '../components/P3tkDashboardView.vue'
 
@@ -142,6 +143,11 @@ const routes = [
     path: '/admin/pmi',
     name: 'AdminPmi',
     component: PmiAdminView
+  },
+  {
+    path: '/admin/ditempatkan',
+    name: 'AdminDitempatkan',
+    component: DitempatkanAdminView
   },
   {
     path: '/admin/bkk',

@@ -79,7 +79,8 @@ const MENUS = {
     { to: '/admin/p3tk', label: 'Dashboard', icon: ICON_HOME },
     { to: '/admin/pencaker', label: 'Pencari Kerja', icon: ICON_USER },
     { to: '/admin/pmi', label: 'Pekerja Migran Indonesia', icon: ICON_GLOBE },
-    { to: '/admin/bkk', label: 'Bursa Kerja Khusus', icon: ICON_BRIEFCASE }
+    { to: '/admin/bkk', label: 'Bursa Kerja Khusus', icon: ICON_BRIEFCASE },
+    { to: '/admin/ditempatkan', label: 'Pencari Kerja Ditempatkan', icon: ICON_USER }
   ],
   pegawai: [
     { to: '/admin/pegawai', label: 'Dashboard', icon: ICON_HOME }
