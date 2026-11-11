@@ -197,15 +197,11 @@
         </template>
 
         <template v-else-if="activeService === 'ditempatkan'">
-        <!-- Filter Tahun & Bulan -->
+        <!-- Filter Tahun -->
         <div class="filter-row">
           <select v-model="selectedDitempatkanTahun" class="dropdown-select" @change="fetchDitempatkan">
             <option :value="''">Semua Tahun</option>
             <option v-for="t in ditempatkanTahunList" :key="t" :value="t">{{ t }}</option>
-          </select>
-          <select v-model="selectedDitempatkanBulan" class="dropdown-select" @change="fetchDitempatkan">
-            <option :value="''">Semua Bulan</option>
-            <option v-for="b in bulanList" :key="b.value" :value="b.value">{{ b.label }}</option>
           </select>
         </div>
 
@@ -480,7 +476,6 @@ export default {
         { id: 'pendidikan', label: 'Pendidikan' }
       ],
       selectedDitempatkanTahun: '',
-      selectedDitempatkanBulan: '',
       ditempatkanTahunList: [],
       ditempatkanStatistik: {
         tahun: null,
@@ -646,10 +641,6 @@ export default {
     ditempatkanFilterLabel() {
       const parts = []
       if (this.selectedDitempatkanTahun) parts.push(`tahun ${this.selectedDitempatkanTahun}`)
-      if (this.selectedDitempatkanBulan) {
-        const b = this.bulanList.find((x) => Number(x.value) === Number(this.selectedDitempatkanBulan))
-        parts.push(`bulan ${b ? b.label : this.selectedDitempatkanBulan}`)
-      }
       return parts.length ? ` (${parts.join(' • ')})` : ''
     },
     comingSoonLabel() {
@@ -665,10 +656,7 @@ export default {
         return this.selectedPmiTahun ? String(this.selectedPmiTahun) : 'Semua'
       }
       if (this.activeService === 'ditempatkan') {
-        const tahun = this.selectedDitempatkanTahun ? String(this.selectedDitempatkanTahun) : 'Semua'
-        if (!this.selectedDitempatkanBulan) return tahun
-        const b = this.bulanList.find((x) => Number(x.value) === Number(this.selectedDitempatkanBulan))
-        return `${b ? b.label.slice(0, 3) : this.selectedDitempatkanBulan} ${tahun}`
+        return this.selectedDitempatkanTahun ? String(this.selectedDitempatkanTahun) : 'Semua'
       }
       const tahun = this.selectedTahun ? String(this.selectedTahun) : 'Semua'
       if (!this.selectedBulan) return tahun
@@ -841,7 +829,6 @@ export default {
       try {
         const params = new URLSearchParams()
         if (this.selectedDitempatkanTahun) params.append('tahun', this.selectedDitempatkanTahun)
-        if (this.selectedDitempatkanBulan) params.append('bulan', this.selectedDitempatkanBulan)
         const query = params.toString() ? `?${params.toString()}` : ''
         const res = await fetch(`${API_DITEMPATKAN}${query}`, {
           method: 'GET',

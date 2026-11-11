@@ -113,10 +113,10 @@
         <div class="info-right">
           <div class="kadis-card">
             <div class="kadis-photo-wrapper">
-              <img :src="kadisPhoto" alt="Foto Kadis" class="kadis-img" />
+              <span class="kadis-placeholder">Foto/nama Kadis</span>
             </div>
             <div class="kadis-info">
-              <h4>Dr. Machli Riyadi, S.H., M.H.</h4>
+              <h4></h4>
               <p>Kepala DISKOPUMKER</p>
               <div class="carousel-dots">
                 <span class="dot active"></span>
@@ -243,7 +243,6 @@
 </template>
 
 <script>
-import kadisImg from '../assets/fotokadis.png'
 import { infoTerbaru } from '../data/infoTerbaru.js'
 
 export default {
@@ -252,7 +251,6 @@ export default {
     return {
       isMenuOpen: false,
       isProfileOpen: false,
-      kadisPhoto: kadisImg,
       newsList: infoTerbaru,
       profileMenu: [
         { slug: 'visi-misi', label: 'Visi dan Misi' },
@@ -640,6 +638,12 @@ export default {
   height: 100%;
   object-fit: cover;
   object-position: top center;
+}
+
+.kadis-placeholder {
+  color: #9a9a9a;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .kadis-info h4 {
