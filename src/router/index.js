@@ -25,6 +25,7 @@ import PmiAdminView from '../components/PmiAdminView.vue'
 import DitempatkanAdminView from '../components/DitempatkanAdminView.vue'
 import BkkAdminView from '../components/BkkAdminView.vue'
 import P3tkDashboardView from '../components/P3tkDashboardView.vue'
+import PhijsPublicView from '../components/PhijsPublicView.vue'
 
 const routes = [
   {
@@ -67,6 +68,12 @@ const routes = [
     alias: '/blk',
     name: 'P3tkPublic',
     component: P3tkPublicView
+  },
+  {
+    path: '/phijs',
+    alias: '/hubungan',
+    name: 'PhijsPublic',
+    component: PhijsPublicView
   },
   {
     path: '/profil/visi-misi',
