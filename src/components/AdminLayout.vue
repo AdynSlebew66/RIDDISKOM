@@ -82,6 +82,10 @@ const MENUS = {
     { to: '/admin/bkk', label: 'Bursa Kerja Khusus', icon: ICON_BRIEFCASE },
     { to: '/admin/ditempatkan', label: 'Pencari Kerja Ditempatkan', icon: ICON_USER }
   ],
+  phijs: [
+    { to: '/admin/phijs', label: 'Dashboard', icon: ICON_HOME },
+    { to: '/admin/phijs/data', label: 'Data PHIJS', icon: ICON_DATABASE }
+  ],
   pegawai: [
     { to: '/admin/pegawai', label: 'Dashboard', icon: ICON_HOME }
   ]
@@ -90,6 +94,7 @@ const MENUS = {
 const PROFILE_NAMES = {
   umkm: 'AdminUMKM',
   p3tk: 'AdminP3TK',
+  phijs: 'AdminPHIJS',
   pegawai: 'AdminSekretariat'
 }
 
@@ -101,7 +106,7 @@ export default {
     group: {
       type: String,
       default: 'umkm',
-      validator: (v) => ['umkm', 'p3tk', 'pegawai'].includes(v)
+      validator: (v) => ['umkm', 'p3tk', 'phijs', 'pegawai'].includes(v)
     },
     title: {
       type: String,

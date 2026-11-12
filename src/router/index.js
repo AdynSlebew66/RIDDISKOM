@@ -26,6 +26,8 @@ import DitempatkanAdminView from '../components/DitempatkanAdminView.vue'
 import BkkAdminView from '../components/BkkAdminView.vue'
 import P3tkDashboardView from '../components/P3tkDashboardView.vue'
 import PhijsPublicView from '../components/PhijsPublicView.vue'
+import PhijsAdminView from '../components/PhijsAdminView.vue'
+import PhijsDashboardView from '../components/PhijsDashboardView.vue'
 
 const routes = [
   {
@@ -155,6 +157,16 @@ const routes = [
     path: '/admin/ditempatkan',
     name: 'AdminDitempatkan',
     component: DitempatkanAdminView
+  },
+  {
+    path: '/admin/phijs',
+    name: 'AdminPhijs',
+    component: PhijsDashboardView
+  },
+  {
+    path: '/admin/phijs/data',
+    name: 'AdminPhijsData',
+    component: PhijsAdminView
   },
   {
     path: '/admin/bkk',
