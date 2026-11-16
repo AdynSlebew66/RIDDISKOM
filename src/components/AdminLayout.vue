@@ -84,7 +84,8 @@ const MENUS = {
   ],
   phijs: [
     { to: '/admin/phijs', label: 'Dashboard', icon: ICON_HOME },
-    { to: '/admin/phijs/data', label: 'Data PHIJS', icon: ICON_DATABASE }
+    { to: '/admin/phijs/data', label: 'Data PHIJS', icon: ICON_DATABASE },
+    { to: '/admin/phijs/pengaduan', label: 'Pengaduan Perselisihan', icon: ICON_BRIEFCASE }
   ],
   pegawai: [
     { to: '/admin/pegawai', label: 'Dashboard', icon: ICON_HOME }

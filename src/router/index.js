@@ -28,6 +28,8 @@ import P3tkDashboardView from '../components/P3tkDashboardView.vue'
 import PhijsPublicView from '../components/PhijsPublicView.vue'
 import PhijsAdminView from '../components/PhijsAdminView.vue'
 import PhijsDashboardView from '../components/PhijsDashboardView.vue'
+import PengaduanPublicView from '../components/PengaduanPublicView.vue'
+import PengaduanAdminView from '../components/PengaduanAdminView.vue'
 
 const routes = [
   {
@@ -167,6 +169,16 @@ const routes = [
     path: '/admin/phijs/data',
     name: 'AdminPhijsData',
     component: PhijsAdminView
+  },
+  {
+    path: '/admin/phijs/pengaduan',
+    name: 'AdminPhijsPengaduan',
+    component: PengaduanAdminView
+  },
+  {
+    path: '/pengaduan',
+    name: 'PengaduanPublic',
+    component: PengaduanPublicView
   },
   {
     path: '/admin/bkk',

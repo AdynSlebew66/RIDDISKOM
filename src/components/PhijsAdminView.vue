@@ -105,9 +105,29 @@
         </div>
 
         <div class="sort-box">
-          <select v-model="filterKecamatanId" @change="onFilterChange" class="sort-select" title="Filter kecamatan">
+          <select v-model="filterKecamatanId" @change="onFilterKecamatanChange" class="sort-select" title="Filter kecamatan">
             <option value="">Semua Kecamatan</option>
             <option v-for="k in kecamatanOptions" :key="k.id" :value="String(k.id)">{{ k.nama }}</option>
+          </select>
+        </div>
+
+        <div class="sort-box">
+          <select
+            v-model="filterKelurahanId"
+            @change="onFilterChange"
+            class="sort-select"
+            title="Filter kelurahan"
+            :disabled="!filterKecamatanId"
+          >
+            <option value="">{{ filterKecamatanId ? 'Semua Kelurahan' : 'Pilih kecamatan dulu' }}</option>
+            <option v-for="l in filterKelurahanOptions" :key="l.id" :value="String(l.id)">{{ l.nama }}</option>
+          </select>
+        </div>
+
+        <div class="sort-box">
+          <select v-model="filterSektorId" @change="onFilterChange" class="sort-select" title="Filter sektor usaha">
+            <option value="">Semua Sektor</option>
+            <option v-for="s in sektorOptions" :key="s.id" :value="String(s.id)">{{ s.nama }}</option>
           </select>
         </div>
 
@@ -183,7 +203,7 @@
                 <td class="td-nib" :title="item.nib">{{ formatText(item.nib) }}</td>
                 <td>{{ resolveKecamatan(item) }}</td>
                 <td>{{ formatText(item.klasifikasi) }}</td>
-                <td class="td-sektor" :title="item.sektor">{{ formatText(item.sektor) }}</td>
+                <td class="td-sektor" :title="item.sektor">{{ resolveSektorRow(item) }}</td>
                 <td class="text-center">{{ formatNumber(item.pria) }}</td>
                 <td class="text-center">{{ formatNumber(item.wanita) }}</td>
                 <td class="text-center font-bold">{{ formatNumber(resolveTotalTk(item)) }}</td>
@@ -274,8 +294,8 @@
 
               <h4 class="detail-section">Wilayah</h4>
               <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Kelurahan</span><span class="detail-value">{{ formatText(detailItem.kelurahan) }}</span></div>
-                <div class="detail-row"><span class="detail-label">Kecamatan</span><span class="detail-value">{{ formatText(detailItem.kecamatan) }}</span></div>
+                <div class="detail-row"><span class="detail-label">Kelurahan</span><span class="detail-value">{{ resolveKelurahanRow(detailItem) }}</span></div>
+                <div class="detail-row"><span class="detail-label">Kecamatan</span><span class="detail-value">{{ resolveKecamatan(detailItem) }}</span></div>
                 <div class="detail-row"><span class="detail-label">Kota</span><span class="detail-value">{{ formatText(detailItem.kota) }}</span></div>
                 <div class="detail-row"><span class="detail-label">Provinsi</span><span class="detail-value">{{ formatText(detailItem.provinsi) }}</span></div>
               </div>
@@ -290,7 +310,8 @@
 
               <h4 class="detail-section">Usaha &amp; Klasifikasi</h4>
               <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Sektor</span><span class="detail-value">{{ formatText(detailItem.sektor) }}</span></div>
+                <div class="detail-row"><span class="detail-label">Sektor</span><span class="detail-value">{{ resolveSektorRow(detailItem) }}</span></div>
+                <div class="detail-row"><span class="detail-label">Sektor ID</span><span class="detail-value">{{ formatText(detailItem.sektor_id) }}</span></div>
                 <div class="detail-row"><span class="detail-label">Klasifikasi</span><span class="detail-value">{{ formatText(detailItem.klasifikasi) }}</span></div>
                 <div class="detail-row"><span class="detail-label">Status Kepemilikan</span><span class="detail-value">{{ formatText(detailItem.status_kepemilikan) }}</span></div>
                 <div class="detail-row"><span class="detail-label">Permodalan</span><span class="detail-value">{{ formatText(detailItem.permodalan) }}</span></div>
@@ -410,7 +431,14 @@
                 </div>
                 <div class="form-group">
                   <label>Kelurahan</label>
-                  <input type="text" v-model="formData.kelurahan" placeholder="Nama kelurahan" maxlength="100" />
+                  <select
+                    v-model="formData.kelurahan_id"
+                    @change="onKelurahanFormChange"
+                    :disabled="!formData.kecamatan_id"
+                  >
+                    <option value="">{{ formData.kecamatan_id ? '-- Pilih kelurahan --' : 'Pilih kecamatan dulu' }}</option>
+                    <option v-for="l in formKelurahanOptions" :key="l.id" :value="l.id">{{ l.nama }}</option>
+                  </select>
                 </div>
                 <div class="form-group">
                   <label>Kota</label>
@@ -444,9 +472,22 @@
 
               <h4 class="detail-section">Usaha &amp; Klasifikasi</h4>
               <div class="form-grid">
-                <div class="form-group">
-                  <label>Sektor</label>
-                  <input type="text" v-model="formData.sektor" placeholder="Sektor usaha" maxlength="255" />
+                <div class="form-group form-full">
+                  <label>Sektor Usaha</label>
+                  <input
+                    type="text"
+                    v-model="sektorSearch"
+                    placeholder="Ketik untuk mencari sektor (1.034 pilihan)..."
+                    class="sektor-search"
+                  />
+                  <select v-model="formData.sektor_id" @change="onSektorFormChange" size="6" class="sektor-select">
+                    <option value="">-- Tanpa sektor --</option>
+                    <option v-for="s in filteredSektorOptions" :key="s.id" :value="s.id">{{ s.nama }}</option>
+                  </select>
+                  <small class="sektor-hint">
+                    Terpilih: <strong>{{ formData.sektor || '-' }}</strong>
+                    <span v-if="filteredSektorOptions.length"> &middot; {{ filteredSektorOptions.length }} sektor cocok</span>
+                  </small>
                 </div>
                 <div class="form-group">
                   <label>Klasifikasi</label>
@@ -721,6 +762,7 @@ const BASE = 'https://harvest-protegee-symptom.ngrok-free.dev/api'
 const API_BASE = `${BASE}/admin/data-phi-js`
 const API_PERIODE = `${BASE}/admin/data-phi-js-periode`
 const API_STATISTIK = `${BASE}/statistik/data-phi-js`
+const API_MASTER = `${BASE}/admin/data-phi-js-master`
 
 const PREVIEW_LIMIT = 15 // backend memakai 15 baris per halaman (param per_page diabaikan)
 
@@ -740,6 +782,8 @@ export default {
       filterTahun: '',
       filterBulan: '',
       filterKecamatanId: '',
+      filterKelurahanId: '',
+      filterSektorId: '',
       filterKlasifikasi: '',
       filterPp: '',
       filterPkb: '',
@@ -754,6 +798,10 @@ export default {
 
       tahunOptions: [],
       kecamatanOptions: [],
+      sektorOptions: [],
+      sektorSearch: '',
+      filterKelurahanOptions: [],
+      formKelurahanOptions: [],
       klasifikasiOptions: ['Mikro', 'Kecil', 'Menengah', 'Besar', 'Belum Input Data'],
       bulanOptions: [
         { value: 1, label: 'Januari' },
@@ -829,6 +877,11 @@ export default {
         pages.push(last)
       }
       return pages
+    },
+    filteredSektorOptions() {
+      const q = (this.sektorSearch || '').trim().toLowerCase()
+      if (!q) return this.sektorOptions.slice(0, 200)
+      return this.sektorOptions.filter((s) => String(s.nama).toLowerCase().includes(q)).slice(0, 200)
     }
   },
   mounted() {
@@ -859,6 +912,7 @@ export default {
         kota: '',
         provinsi: '',
         sektor: '',
+        sektor_id: '',
         klasifikasi: '',
         status_kepemilikan: '',
         permodalan: '',
@@ -955,6 +1009,16 @@ export default {
       if (!item) return '-'
       return item.kecamatan_master?.nama || item.kecamatan || '-'
     },
+    resolveKelurahanRow(item) {
+      if (!item) return '-'
+      return item.kelurahan_master?.nama || item.kelurahan || '-'
+    },
+    resolveSektorRow(item) {
+      if (!item) return '-'
+      if (item.sektor) return String(item.sektor)
+      const found = this.sektorOptions.find((s) => Number(s.id) === Number(item.sektor_id))
+      return found ? found.nama : '-'
+    },
     resolveTotalTk(item) {
       if (!item) return 0
       if (item.total_tk !== null && item.total_tk !== undefined) return Number(item.total_tk) || 0
@@ -969,14 +1033,35 @@ export default {
     /* ================== Master options ================== */
     async fetchMasterOptions() {
       try {
+        const [kecRes, sekRes] = await Promise.all([
+          fetch(`${API_MASTER}/kecamatan`, { headers: this.buildHeaders() }),
+          fetch(`${API_MASTER}/sektor`, { headers: this.buildHeaders() })
+        ])
+        if (this.handleUnauthorized(kecRes.status) || this.handleUnauthorized(sekRes.status)) return
+
+        const kecJson = await kecRes.json().catch(() => ({}))
+        if (Array.isArray(kecJson.data)) {
+          this.kecamatanOptions = kecJson.data
+            .map((k) => ({ id: k.id, nama: k.nama }))
+            .sort((a, b) => String(a.nama).localeCompare(String(b.nama)))
+        }
+
+        const sekJson = await sekRes.json().catch(() => ({}))
+        if (Array.isArray(sekJson.data)) {
+          this.sektorOptions = sekJson.data
+            .map((s) => ({ id: s.id, nama: s.nama }))
+            .sort((a, b) => String(a.nama).localeCompare(String(b.nama)))
+        }
+      } catch (e) {
+        console.error('[PhijsAdmin] gagal ambil master options:', e)
+      }
+      this.fetchKlasifikasiTahun()
+    },
+    async fetchKlasifikasiTahun() {
+      try {
         const res = await fetch(API_STATISTIK, { headers: this.buildHeaders() })
         const json = await res.json().catch(() => ({}))
         const d = json.data || {}
-        if (Array.isArray(d.by_kecamatan)) {
-          this.kecamatanOptions = d.by_kecamatan
-            .filter((k) => k.kecamatan_id !== null && k.kecamatan_id !== undefined)
-            .map((k) => ({ id: k.kecamatan_id, nama: k.kecamatan }))
-        }
         if (Array.isArray(d.by_klasifikasi)) {
           const names = d.by_klasifikasi.map((k) => k.klasifikasi).filter(Boolean)
           if (names.length) this.klasifikasiOptions = names
@@ -985,8 +1070,33 @@ export default {
           this.tahunOptions = d.by_tahun.map((i) => Number(i.tahun)).filter(Boolean).sort((a, b) => b - a)
         }
       } catch (e) {
-        console.error('[PhijsAdmin] gagal ambil master options:', e)
+        console.error('[PhijsAdmin] gagal ambil klasifikasi/tahun:', e)
       }
+    },
+    async fetchKelurahan(kecamatanId) {
+      if (!kecamatanId) return []
+      try {
+        const res = await fetch(`${API_MASTER}/kelurahan?kecamatan_id=${kecamatanId}`, {
+          headers: this.buildHeaders()
+        })
+        if (this.handleUnauthorized(res.status)) return []
+        const json = await res.json().catch(() => ({}))
+        if (!Array.isArray(json.data)) return []
+        return json.data
+          .map((l) => ({ id: l.id, nama: l.nama }))
+          .sort((a, b) => String(a.nama).localeCompare(String(b.nama)))
+      } catch (e) {
+        console.error('[PhijsAdmin] gagal ambil kelurahan:', e)
+        return []
+      }
+    },
+    async onFilterKecamatanChange() {
+      this.filterKelurahanId = ''
+      this.filterKelurahanOptions = []
+      if (this.filterKecamatanId) {
+        this.filterKelurahanOptions = await this.fetchKelurahan(this.filterKecamatanId)
+      }
+      this.fetchPhijs(1)
     },
 
     /* ================== Periode ================== */
@@ -1089,6 +1199,8 @@ export default {
       if (this.filterTahun) params.append('tahun', this.filterTahun)
       if (this.filterBulan) params.append('bulan', this.filterBulan)
       if (this.filterKecamatanId) params.append('kecamatan_id', this.filterKecamatanId)
+      if (this.filterKelurahanId) params.append('kelurahan_id', this.filterKelurahanId)
+      if (this.filterSektorId) params.append('sektor_id', this.filterSektorId)
       if (this.filterKlasifikasi) params.append('klasifikasi', this.filterKlasifikasi)
       if (this.filterPp) params.append('pp', this.filterPp)
       if (this.filterPkb) params.append('pkb', this.filterPkb)
@@ -1173,10 +1285,14 @@ export default {
     openAddModal() {
       this.isEditMode = false
       this.editingId = null
+      this.sektorSearch = ''
+      this.formKelurahanOptions = []
       this.formData = this.blankForm()
       if (this.filterPeriodeId) this.formData.periode_id = Number(this.filterPeriodeId)
       else if (this.periodeList.length === 1) this.formData.periode_id = this.periodeList[0].id
       this.formData.kecamatan_id = this.filterKecamatanId ? Number(this.filterKecamatanId) : ''
+      this.formData.sektor_id = this.filterSektorId ? Number(this.filterSektorId) : ''
+      if (this.formData.sektor_id) this.onSektorFormChange()
       this.onKecamatanFormChange()
       this.validationErrors = {}
       this.formError = ''
@@ -1206,6 +1322,7 @@ export default {
         kota: item.kota || '',
         provinsi: item.provinsi || '',
         sektor: item.sektor || '',
+        sektor_id: item.sektor_id ?? '',
         klasifikasi: item.klasifikasi || '',
         status_kepemilikan: item.status_kepemilikan || '',
         permodalan: item.permodalan || '',
@@ -1231,6 +1348,13 @@ export default {
         pkb: item.pkb || '',
         is_publik: item.is_publik !== false
       }
+      this.sektorSearch = ''
+      this.formKelurahanOptions = []
+      if (this.formData.kecamatan_id) {
+        this.fetchKelurahan(this.formData.kecamatan_id).then((rows) => {
+          this.formKelurahanOptions = rows
+        })
+      }
       this.validationErrors = {}
       this.formError = ''
       this.showFormModal = true
@@ -1239,9 +1363,23 @@ export default {
       if (this.saving) return
       this.showFormModal = false
     },
-    onKecamatanFormChange() {
+    async onKecamatanFormChange() {
       const found = this.kecamatanOptions.find((k) => Number(k.id) === Number(this.formData.kecamatan_id))
       this.formData.kecamatan = found ? found.nama : ''
+      this.formData.kelurahan_id = ''
+      this.formData.kelurahan = ''
+      this.formKelurahanOptions = []
+      if (this.formData.kecamatan_id) {
+        this.formKelurahanOptions = await this.fetchKelurahan(this.formData.kecamatan_id)
+      }
+    },
+    onKelurahanFormChange() {
+      const found = this.formKelurahanOptions.find((l) => Number(l.id) === Number(this.formData.kelurahan_id))
+      this.formData.kelurahan = found ? found.nama : ''
+    },
+    onSektorFormChange() {
+      const found = this.sektorOptions.find((s) => Number(s.id) === Number(this.formData.sektor_id))
+      this.formData.sektor = found ? found.nama : ''
     },
     syncTotals() {
       const n = (v) => Number(v) || 0
@@ -1284,6 +1422,7 @@ export default {
           kota: strOrNull(f.kota),
           provinsi: strOrNull(f.provinsi),
           sektor: strOrNull(f.sektor),
+          sektor_id: numOrNull(f.sektor_id),
           klasifikasi: strOrNull(f.klasifikasi),
           status_kepemilikan: strOrNull(f.status_kepemilikan),
           permodalan: strOrNull(f.permodalan),
@@ -1853,7 +1992,6 @@ export default {
 .td-perusahaan { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .td-nib { max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .td-sektor { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
 .badge {
   display: inline-block;
   padding: 2px 9px;
@@ -2170,6 +2308,24 @@ export default {
 
 .import-hint { font-size: 0.85rem; color: #64748b; margin: 0 0 14px 0; line-height: 1.6; }
 .file-name { color: #1e385c; font-size: 0.78rem; margin-top: 6px; font-weight: 600; }
+
+.sektor-search { margin-bottom: 6px; }
+
+.sektor-select {
+  height: auto;
+  padding: 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  color: #1e293b;
+}
+
+.sektor-select option { padding: 5px 8px; border-radius: 4px; }
+
+.sektor-hint { font-size: 0.75rem; color: #64748b; margin-top: 6px; }
+.sektor-hint strong { color: #1e385c; }
 
 .import-result {
   margin-top: 14px;
