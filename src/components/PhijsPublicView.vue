@@ -53,6 +53,16 @@
           PHIJS <span class="sub-heading">Pembinaan <span class="c-blue">Hubungan Industrial</span> dan <span class="c-orange">Jaminan Sosial</span> Tenaga Kerja</span>
         </h1>
         <h2 class="section-heading">Grafik Data PHIJS</h2>
+        <div class="cta-row">
+          <div class="cta-text">
+            <strong>Mengalami perselisihan hubungan industrial?</strong>
+            <span>Sampaikan pengaduan dan pantau tindak lanjutnya secara online.</span>
+          </div>
+          <button class="btn-cta" @click="navTo('/pengaduan')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span>Ajukan Pengaduan</span>
+          </button>
+        </div>
       </div>
 
       <div class="data-card">
@@ -570,6 +580,46 @@ export default {
 .btn-back:hover { background-color: #1a1a1a; color: #ffffff; border-color: #1a1a1a; }
 
 .breadcrumb { font-size: 0.85rem; color: #666666; margin: 0; font-weight: 500; }
+
+.title-section { margin-bottom: 24px; }
+
+.cta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 14px 18px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #1e385c;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cta-text { display: flex; flex-direction: column; gap: 2px; }
+.cta-text strong { font-size: 0.9rem; font-weight: 700; color: #1e385c; }
+.cta-text span { font-size: 0.82rem; color: #64748b; }
+
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  background-color: #1e385c;
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.87rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-cta:hover { background-color: #152a47; }
 
 .title-section { margin-bottom: 24px; }
 
